@@ -1,0 +1,71 @@
+---
+import Base from "../../layouts/Base.astro";
+
+// The prompt an assessment specialist pastes into FLO / ChatGPT / Codex so the
+// AI's output imports into the Item Workbench cleanly. This is the ingestion
+// strategy: the file format is the API, and this prompt is how writers target it.
+const itemPrompt = `You are writing assessment items in the Drawbridge item format.
+Output a single Markdown file and nothing else.
+
+Rules:
+- Each item is an H2 heading with a short display code (e.g. ## MC-001).
+- Do NOT invent an id comment; Drawbridge assigns ids on import.
+- Under each item, use these H3 sections:
+  ### Meta   (lines like  type: multiple_choice  /  status: draft  /  alignment: [co_xxx]  /  tags: [..])
+  ### Stem   (the question prompt)
+  ### Options  (a bullet list; omit for true_false)
+  ### Answer   (the correct option text; multiple lines for multiple_answer; True/False for true_false)
+  ### Rationale  (optional)
+- Allowed types: multiple_choice, multiple_answer, true_false.
+- Structure carries meaning. Do not use bold or asterisks to mark answers.
+- Keep options plausible and parallel; avoid "all of the above".
+
+Write [N] items aligned to the following outcomes: [paste outcome codes/text].`;
+---
+
+<Base title="Conventions">
+  <h1>Conventions</h1>
+  <p class="lede">
+    Drawbridge never runs an AI. Instead, the file formats are documented so any
+    AI item writer — FLO, ChatGPT, Codex — can produce content that imports
+    cleanly. Paste the prompt below into your tool of choice.
+  </p>
+
+  <h2>Item-writer prompt</h2>
+  <p>
+    Copy this, fill in the bracketed parts, and give it to your AI item writer
+    along with your design spec. The output imports directly into the Item
+    Workbench.
+  </p>
+  <pre><code>{itemPrompt}</code></pre>
+
+  <h2>Format specifications</h2>
+  <p>
+    The authoritative specs live in the repository:
+    <code>docs/formats/items-format.md</code> and
+    <code>docs/formats/outcomes-format.md</code>.
+  </p>
+
+  <style>
+    h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.75rem; }
+    h2 { font-size: 1.15rem; margin: 2rem 0 0.5rem; }
+    .lede { font-size: 1.1rem; color: var(--color-muted); max-width: 42rem; }
+    pre {
+      background: var(--color-ink);
+      color: #f4f2ec;
+      padding: 1.1rem 1.25rem;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    pre code { font-family: var(--font-mono); white-space: pre-wrap; }
+    p code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--color-accent-soft);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+  </style>
+</Base>

@@ -1,0 +1,13 @@
+[build]
+  command = "pnpm run build"
+  publish = "dist"
+
+# Privacy by architecture, enforced at the edge:
+# the CSP forbids the app from talking to any origin after page load.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Frame-Options = "DENY"

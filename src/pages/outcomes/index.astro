@@ -1,0 +1,28 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+
+<Base title="Outcome Builder">
+  <h1>Outcome Builder</h1>
+  <p class="lede">
+    Manage course outcomes, evidence outcomes, and learning objectives in one
+    portable YAML file. This is Phase 1 — the domain layer is built and tested;
+    the editing UI is next.
+  </p>
+  <p>
+    See <code>docs/formats/outcomes-format.md</code> for the file format and
+    <code>docs/02-roadmap.md</code> for scope.
+  </p>
+
+  <style>
+    h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.75rem; }
+    .lede { font-size: 1.1rem; color: var(--color-muted); max-width: 40rem; }
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--color-accent-soft);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+  </style>
+</Base>

@@ -1,0 +1,36 @@
+schema: drawbridge-outcomes/1
+
+terminology:
+  outcome: Course Outcome
+  evidence: Evidence Outcome
+  objective: Learning Objective
+
+course:
+  title: Introductory Biology
+  code: BIO101
+
+outcomes:
+  - id: co_0a1
+    text: Explain the flow of energy and matter through living systems.
+    evidence:
+      - id: eo_0a1a
+        text: Describe cellular respiration at the organelle level.
+        scope: [lo_1]        # advisory only; never enforced
+      - id: eo_0a1b
+        text: Trace ATP through a metabolic pathway.
+  - id: co_0b2
+    text: Analyze the structure and function of the cell.
+    evidence:
+      - id: eo_0b2a
+        text: Relate organelle structure to cellular function.
+
+objectives:
+  - id: lo_1
+    text: Identify the organelles involved in energy production.
+    maps_to: [co_0a1]
+  - id: lo_2
+    text: Compare aerobic and anaerobic respiration.
+    maps_to: [co_0a1]
+  - id: lo_3
+    text: Label the major organelles of a eukaryotic cell.
+    maps_to: [co_0b2]

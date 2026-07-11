@@ -1,0 +1,143 @@
+---
+import Base from "../layouts/Base.astro";
+
+const tools = [
+  {
+    href: "/outcomes",
+    name: "Outcome Builder",
+    status: "In build",
+    blurb:
+      "Manage the hierarchy of course outcomes, evidence outcomes, and learning objectives. One portable YAML file per course.",
+  },
+  {
+    href: "/items",
+    name: "Item Workbench",
+    status: "Planned",
+    blurb:
+      "Import AI-drafted items, review and refine them, align to outcomes, and export to Word for reviewers or QTI for Canvas.",
+  },
+  {
+    href: "/conventions",
+    name: "Conventions",
+    status: "Reference",
+    blurb:
+      "The file formats and copy-ready prompts that let any AI item writer produce content Drawbridge can import cleanly.",
+  },
+];
+---
+
+<Base title="Home">
+  <section class="hero">
+    <p class="eyebrow">Assessment content, kept in plain files</p>
+    <h1>A private workspace between the draft and the platform.</h1>
+    <p class="lede">
+      Drawbridge is the stable hub of your item pipeline: AI writes a draft, you
+      review and refine it here, reviewers get a Word copy, Canvas gets QTI —
+      and nothing ever leaves your machine.
+    </p>
+  </section>
+
+  <section class="tools" aria-label="Tools">
+    {
+      tools.map((t) => (
+        <a class="tool" href={t.href}>
+          <div class="tool-head">
+            <span class="tool-name">{t.name}</span>
+            <span class="tool-status">{t.status}</span>
+          </div>
+          <p class="tool-blurb">{t.blurb}</p>
+        </a>
+      ))
+    }
+  </section>
+
+  <section class="guarantee">
+    <h2>How it stays private</h2>
+    <p>
+      Drawbridge is a static site with no backend and no network calls after the
+      page loads. Your content lives in files you hold and in your browser's
+      local storage — never on a server, because there is no server. Sharing
+      happens only when you export a file and hand it over.
+    </p>
+  </section>
+
+  <style>
+    .hero {
+      padding: 3rem 0 2.5rem;
+      max-width: 44rem;
+    }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.78rem;
+      color: var(--color-accent);
+      margin: 0 0 0.75rem;
+    }
+    h1 {
+      font-size: clamp(1.9rem, 4vw, 2.7rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin: 0 0 1rem;
+    }
+    .lede {
+      font-size: 1.1rem;
+      color: var(--color-muted);
+      margin: 0;
+    }
+    .tools {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+      gap: 1rem;
+      margin: 1rem 0 3rem;
+    }
+    .tool {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      background: var(--color-surface);
+      border: 1px solid var(--color-line);
+      border-radius: 10px;
+      padding: 1.25rem;
+      transition: border-color 0.15s ease;
+    }
+    .tool:hover {
+      border-color: var(--color-accent);
+    }
+    .tool-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .tool-name {
+      font-weight: 600;
+    }
+    .tool-status {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-muted);
+      border: 1px solid var(--color-line);
+      border-radius: 999px;
+      padding: 0.1rem 0.55rem;
+    }
+    .tool-blurb {
+      margin: 0;
+      font-size: 0.925rem;
+      color: var(--color-muted);
+    }
+    .guarantee {
+      max-width: 44rem;
+      border-top: 1px solid var(--color-line);
+      padding-top: 2rem;
+    }
+    .guarantee h2 {
+      font-size: 1.1rem;
+      margin: 0 0 0.5rem;
+    }
+    .guarantee p {
+      margin: 0;
+      color: var(--color-muted);
+    }
+  </style>
+</Base>

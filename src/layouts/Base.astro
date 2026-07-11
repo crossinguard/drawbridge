@@ -1,0 +1,83 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Private, plaintext assessment content tools." } =
+  Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title} · Drawbridge</title>
+  </head>
+  <body>
+    <a href="#main" class="skip">Skip to content</a>
+    <header class="site-header">
+      <a href="/" class="wordmark">Drawbridge</a>
+      <nav aria-label="Tools">
+        <a href="/outcomes">Outcomes</a>
+        <a href="/items">Items</a>
+        <a href="/conventions">Conventions</a>
+      </nav>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+
+    <style>
+      .skip {
+        position: absolute;
+        left: -9999px;
+      }
+      .skip:focus {
+        left: 1rem;
+        top: 1rem;
+        background: var(--color-surface);
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--color-line);
+        border-radius: 6px;
+        z-index: 10;
+      }
+      .site-header {
+        display: flex;
+        align-items: baseline;
+        gap: 2rem;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--color-line);
+        background: var(--color-surface);
+      }
+      .wordmark {
+        font-weight: 600;
+        font-size: 1.05rem;
+        letter-spacing: -0.01em;
+        color: var(--color-ink);
+        text-decoration: none;
+      }
+      nav {
+        display: flex;
+        gap: 1.25rem;
+        font-size: 0.925rem;
+      }
+      nav a {
+        text-decoration: none;
+        color: var(--color-muted);
+      }
+      nav a:hover {
+        color: var(--color-accent);
+      }
+      main {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+      }
+    </style>
+  </body>
+</html>

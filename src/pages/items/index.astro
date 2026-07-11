@@ -1,0 +1,27 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+
+<Base title="Item Workbench">
+  <h1>Item Workbench</h1>
+  <p class="lede">
+    Import AI-drafted item banks, review and refine them, align to outcomes, and
+    export for reviewers or Canvas. Planned for Phase 2.
+  </p>
+  <p>
+    See <code>docs/formats/items-format.md</code> and
+    <code>docs/03-handoffs.md</code>.
+  </p>
+
+  <style>
+    h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.75rem; }
+    .lede { font-size: 1.1rem; color: var(--color-muted); max-width: 40rem; }
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--color-accent-soft);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+  </style>
+</Base>

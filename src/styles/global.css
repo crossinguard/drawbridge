@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/*
+  Drawbridge design tokens.
+  A calm, document-first workspace: this is a tool people read and edit in for
+  long stretches, not a landing page. The palette is deliberately quiet so that
+  item content — the thing that matters — carries the color. One structural
+  accent (a deep slate-teal) marks interactive and navigational elements.
+*/
+@theme {
+  --color-paper: #fbfaf7;      /* page background — warm off-white, easy on eyes */
+  --color-ink: #1f2328;        /* primary text */
+  --color-muted: #5c6370;      /* secondary text, labels */
+  --color-line: #e4e0d8;       /* hairline dividers, card borders */
+  --color-accent: #1d5b5b;     /* deep slate-teal — links, active states */
+  --color-accent-soft: #e8f0ef;/* accent wash for selected rows, chips */
+  --color-flag-error: #b3261e;
+  --color-flag-warn: #9a6700;
+  --color-surface: #ffffff;    /* cards, panels */
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { margin: 0; }
+
+a { color: var(--color-accent); }
+
+/* Respect reduced-motion as a floor, not an afterthought. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
