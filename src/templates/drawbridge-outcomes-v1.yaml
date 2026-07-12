@@ -1,0 +1,41 @@
+# drawbridge-outcomes/1 — starter template
+#
+# Copy this file, replace the example content, and open it in the Outcome Builder
+# (/outcomes) or hand it to any tool that reads the format. Comments and any keys
+# you add are preserved on export — edit freely.
+#
+# The three levels:
+#   outcomes   — broad Course Outcomes (COs): what a learner can do by the end.
+#   evidence   — Evidence Outcomes (EOs) nested under a CO: how you'd see it.
+#   objectives — Learning Objectives (LOs): granular, teachable steps that map
+#                back up to one or more COs.
+#
+# IDs are immutable once downstream work references them. Pick a short stable id
+# and never renumber it; display order is what changes, not the id.
+
+schema: drawbridge-outcomes/1
+
+# Rename these to your program's vocabulary — the UI reads these labels.
+terminology:
+  outcome: Course Outcome
+  evidence: Evidence Outcome
+  objective: Learning Objective
+
+course:
+  title: Your Course Title
+  code: ABC101
+
+outcomes:
+  - id: co_1
+    text: State a broad, end-of-course capability here.
+    evidence:
+      - id: eo_1a
+        text: Describe one observable way a learner demonstrates the outcome.
+        scope: [ lo_1 ] # advisory link to an objective; never enforced
+      - id: eo_1b
+        text: Add another piece of evidence, or delete this line.
+
+objectives:
+  - id: lo_1
+    text: A specific, teachable objective supporting the outcome above.
+    maps_to: [ co_1 ] # every objective maps to one or more course outcomes

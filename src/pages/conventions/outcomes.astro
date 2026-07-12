@@ -1,0 +1,128 @@
+---
+import Base from "../../layouts/Base.astro";
+import TemplateActions from "../../components/ui/TemplateActions.svelte";
+// Inlined at build time (?raw) — no runtime network, CSP-safe.
+import templateText from "../../templates/drawbridge-outcomes-v1.yaml?raw";
+
+// The prompt an assessment specialist pastes into FLO / ChatGPT / Codex so the
+// AI's output imports into the Outcome Builder cleanly. Drawbridge never runs an
+// AI; the file format is the contract and this prompt is how writers target it.
+const outcomePrompt = `You are drafting a course's outcome architecture in the Drawbridge outcomes format.
+Output a single YAML file and nothing else.
+
+Rules:
+- First line: schema: drawbridge-outcomes/1
+- A terminology: block (outcome / evidence / objective labels). Keep the defaults unless told otherwise.
+- A course: block with title and code.
+- outcomes: a list of Course Outcomes. Each has an id (short, e.g. co_1), text, and an
+  evidence: list of Evidence Outcomes, each with an id (e.g. eo_1a) and text.
+- objectives: a flat list of Learning Objectives. Each has an id (e.g. lo_1), text, and
+  maps_to: [co_x] listing the course-outcome ids it supports.
+- Use short, stable, opaque ids with type prefixes (co_, eo_, lo_). Never use display numbers as ids.
+- Do not invent extra structure; the three levels above are the whole format.
+
+Draft [N] course outcomes with supporting evidence and objectives for: [paste course description / topics].`;
+---
+
+<Base title="Outcomes convention">
+  <p class="mb-2 text-sm">
+    <a class="text-primary underline" href="/conventions">← Conventions</a>
+  </p>
+  <h1 class="mb-3 text-3xl font-semibold tracking-tight">Outcomes convention</h1>
+  <p class="text-muted-foreground mb-8 max-w-2xl text-lg">
+    The <code class="dw-code">drawbridge-outcomes/1</code> format: a course's
+    outcome architecture in one portable YAML file. This page is the reference; the
+    <a class="text-primary underline" href="/outcomes">Outcome Builder</a> edits it.
+  </p>
+
+  <section class="border-border bg-card mb-8 rounded-lg border p-5">
+    <h2 class="m-0 text-base font-medium">Template</h2>
+    <p class="text-muted-foreground mt-1 mb-3 max-w-2xl text-sm">
+      A blank file with the structure and comments in place — the fastest way to start.
+    </p>
+    <TemplateActions
+      client:load
+      text={templateText}
+      filename="outcomes.drawbridge.yaml"
+    />
+  </section>
+
+  <h2 class="mb-2 text-xl font-medium">The three levels</h2>
+  <ul class="text-foreground mb-6 max-w-2xl list-disc pl-5">
+    <li>
+      <strong>Course Outcomes (CO)</strong> — broad, end-of-course capabilities.
+    </li>
+    <li>
+      <strong>Evidence Outcomes (EO)</strong> — nested under a CO; how you'd
+      observe the outcome. COs and EOs form a strict parent-child tree.
+    </li>
+    <li>
+      <strong>Learning Objectives (LO)</strong> — a flat, independent list of
+      teachable steps that <code class="dw-code">maps_to</code> one or more COs.
+    </li>
+  </ul>
+  <p class="text-muted-foreground mb-8 max-w-2xl text-sm">
+    Mappings live on the LO side. Reverse views (which LOs map to a CO) are always
+    computed, never stored. An LO may also appear as advisory
+    <code class="dw-code">scope</code> on an EO — a hint, never enforced.
+  </p>
+
+  <h2 class="mb-2 text-xl font-medium">File shape</h2>
+  <pre class="dw-pre"><code>{templateText}</code></pre>
+
+  <h2 class="mt-8 mb-2 text-xl font-medium">IDs</h2>
+  <ul class="text-foreground mb-8 max-w-2xl list-disc pl-5 text-[0.95rem]">
+    <li>Opaque, short, and <strong>immutable</strong> after creation (e.g. a
+      type prefix plus 4-char base36: <code class="dw-code">co_</code>,
+      <code class="dw-code">eo_</code>, <code class="dw-code">lo_</code>).</li>
+    <li>Display numbering (CO1, EO1.2) derives from order — never stored, never
+      renumbered. Downstream item alignments depend on ID stability.</li>
+  </ul>
+
+  <h2 class="mb-2 text-xl font-medium">Validation</h2>
+  <p class="text-muted-foreground mb-2 max-w-2xl text-sm">
+    Loose by default — nothing blocks saving or exporting. Flags are advisory:
+  </p>
+  <ul class="text-foreground mb-8 max-w-2xl list-disc pl-5 text-[0.95rem]">
+    <li><strong>warn</strong> — an LO with an empty <code class="dw-code"
+        >maps_to</code>; a <code class="dw-code">scope</code> or mapping that
+      references an unknown id.</li>
+    <li><strong>info</strong> — an outcome with no text; a CO with no evidence.</li>
+  </ul>
+
+  <h2 class="mb-2 text-xl font-medium">Outcome-writer prompt</h2>
+  <p class="text-muted-foreground mb-3 max-w-2xl text-sm">
+    Copy this, fill in the bracketed parts, and hand it to your AI writer. The
+    output imports directly into the Outcome Builder.
+  </p>
+  <pre class="dw-pre"><code>{outcomePrompt}</code></pre>
+
+  <p class="text-muted-foreground mt-8 text-sm">
+    Authoritative spec: <code class="dw-code">docs/formats/outcomes-format.md</code>.
+  </p>
+
+  <style>
+    .dw-code {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+    .dw-pre {
+      background: var(--color-ink);
+      color: #f4f2ec;
+      padding: 1.1rem 1.25rem;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      max-width: 52rem;
+    }
+    .dw-pre code {
+      font-family: var(--font-mono);
+      white-space: pre-wrap;
+    }
+  </style>
+</Base>
