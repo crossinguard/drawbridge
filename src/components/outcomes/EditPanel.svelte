@@ -140,21 +140,12 @@
   }
 </script>
 
-<aside
-  class="border-border bg-card sticky top-4 h-fit rounded-lg border p-4"
-  aria-label="Editor"
->
+<div aria-label="Editor">
   {#if !entity || !sel}
-    <p class="text-muted-foreground text-sm">
-      Select an item on the left to edit it, or add a new one.
-    </p>
+    <p class="text-muted-foreground text-sm">Select an item to edit it.</p>
   {:else}
-    <div class="mb-3 flex items-baseline justify-between gap-2">
+    <div class="mb-3">
       <h3 class="text-sm font-medium">Edit {label} {labelFor(ids, sel.id)}</h3>
-      <code
-        class="bg-accent text-accent-foreground rounded px-1.5 py-0.5 font-mono text-[0.75em]"
-        >{sel.id}</code
-      >
     </div>
 
     <label class="mb-1 block text-xs font-medium" for="edit-text">Text</label>
@@ -240,4 +231,4 @@
       <Button variant="ghost" size="sm" onclick={cancel} disabled={!dirty}>Cancel</Button>
     </div>
   {/if}
-</aside>
+</div>

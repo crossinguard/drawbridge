@@ -7,7 +7,6 @@
   import { onMount } from "svelte";
   import { session, outcomeModel, recoveredAt, actions } from "../../stores/outcomes";
   import OutcomeList from "./OutcomeList.svelte";
-  import EditPanel from "./EditPanel.svelte";
   import ReviewView from "./ReviewView.svelte";
   import FlagList from "./FlagList.svelte";
   import Button from "../ui/Button.svelte";
@@ -15,6 +14,7 @@
   import { button } from "../starwind/button/variants";
   // Inlined at build time (?raw) — no runtime network, CSP-safe.
   import templateText from "../../templates/drawbridge-outcomes-v1.yaml?raw";
+  import exampleText from "../../../fixtures/algebra-1-outcomes.yaml?raw";
 
   const s = $derived($session);
   const model = $derived($outcomeModel);
@@ -62,6 +62,20 @@
     }
   }
 
+  function onClose() {
+    if (confirmDiscard()) {
+      loadError = null;
+      void actions.close();
+    }
+  }
+
+  function onLoadExample() {
+    if (confirmDiscard()) {
+      loadError = null;
+      actions.loadText(exampleText, "algebra-1-outcomes.yaml");
+    }
+  }
+
   function onExport() {
     const text = actions.exportText();
     if (text == null) return;
@@ -96,16 +110,7 @@
     <Button variant="primary" size="sm" onclick={onExport}>Export</Button>
 
     <span class="text-border" aria-hidden="true">|</span>
-    <label class={button({ variant: "ghost", size: "sm" })}>
-      <input
-        class="sr-only"
-        type="file"
-        accept=".yaml,.yml,application/yaml,text/yaml"
-        onchange={onFile}
-      />
-      Import…
-    </label>
-    <Button variant="ghost" size="sm" onclick={onNew}>New</Button>
+    <Button variant="ghost" size="sm" onclick={onClose}>← Start over</Button>
 
     {#if s.fileName}
       <span class="text-muted-foreground truncate font-mono text-xs" title={s.fileName}>
@@ -144,10 +149,19 @@
 {#if !model}
   <section class="border-border bg-card mt-6 max-w-2xl rounded-lg border p-6">
     <h2 class="text-lg font-semibold">Getting started</h2>
-    <p class="text-muted-foreground mt-1 mb-5 text-sm">
+    <p class="text-muted-foreground mt-1 mb-4 text-sm">
       Build a course's outcomes in one portable YAML file. Pick a starting point —
       nothing leaves your browser.
     </p>
+    <div class="border-border text-muted-foreground mb-5 rounded-md border border-dashed p-3 text-sm">
+      <p class="mb-1">Three tiers, top to bottom:</p>
+      <ul class="ml-4 list-disc space-y-0.5">
+        <li><span class="text-foreground font-medium">Content Domain</span> — the broad areas of the course.</li>
+        <li><span class="text-foreground font-medium">Assessed Outcome</span> — what you'd assess to see a domain is met.</li>
+        <li><span class="text-foreground font-medium">Learning Objective</span> — the granular, teachable steps that map up to a domain.</li>
+      </ul>
+      <p class="mt-1.5 text-xs">Every tier's label and prefix is editable per file.</p>
+    </div>
     <div class="divide-border flex flex-col divide-y">
       <div class="flex items-start justify-between gap-4 pb-4">
         <div>
@@ -191,6 +205,16 @@
         <div class="shrink-0">
           <TemplateActions text={templateText} filename="outcomes.drawbridge.yaml" />
         </div>
+      </div>
+
+      <div class="flex items-start justify-between gap-4 pt-4">
+        <div>
+          <p class="text-sm font-medium">Load an example</p>
+          <p class="text-muted-foreground text-sm">
+            Explore a full Common Core math course (Algebra I).
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onclick={onLoadExample}>Load Algebra I</Button>
       </div>
     </div>
   </section>
@@ -259,9 +283,6 @@
       </p>
     </details>
 
-    <div class="grid grid-cols-1 gap-5 md:grid-cols-[1fr_20rem]">
-      <OutcomeList />
-      <EditPanel />
-    </div>
+    <OutcomeList />
   {/if}
 {/if}
