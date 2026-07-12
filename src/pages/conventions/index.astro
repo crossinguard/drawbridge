@@ -1,9 +1,9 @@
 ---
 import Base from "../../layouts/Base.astro";
 
-// The prompt an assessment specialist pastes into FLO / ChatGPT / Codex so the
-// AI's output imports into the Item Workbench cleanly. This is the ingestion
-// strategy: the file format is the API, and this prompt is how writers target it.
+// The prompt an assessment specialist will paste into FLO / ChatGPT / Codex so an
+// AI's output imports into the (planned) Item Workbench cleanly. The file format
+// is the contract; this prompt is how writers target it.
 const itemPrompt = `You are writing assessment items in the Drawbridge item format.
 Output a single Markdown file and nothing else.
 
@@ -26,37 +26,55 @@ Write [N] items aligned to the following outcomes: [paste outcome codes/text].`;
 <Base title="Conventions">
   <h1>Conventions</h1>
   <p class="lede">
-    Drawbridge never runs an AI. Instead, the file formats are documented so any
-    AI item writer — FLO, ChatGPT, Codex — can produce content that imports
-    cleanly. Paste the prompt below into your tool of choice.
+    Drawbridge never runs an AI. Instead, each tool's file format is documented so
+    any assistant — FLO, ChatGPT, Codex — can produce content that imports cleanly.
+    The format is the contract; these pages are how you target it.
   </p>
 
-  <h2>Item-writer prompt</h2>
+  <h2>Outcomes <span class="tag">Ready</span></h2>
   <p>
-    Copy this, fill in the bracketed parts, and give it to your AI item writer
-    along with your design spec. The output imports directly into the Item
-    Workbench.
+    The <a href="/outcomes">Outcome Builder</a> reads and writes the
+    <code>drawbridge-outcomes/1</code> format. The
+    <a href="/conventions/outcomes">outcomes convention</a> covers the structure, a
+    downloadable starter template, and a copy-ready prompt for drafting a course's
+    outcomes with an AI.
+  </p>
+
+  <h2>Items <span class="tag tag-planned">Planned</span></h2>
+  <p>
+    The Item Workbench isn't built yet. When it ships it will import Markdown in the
+    convention below — one H2 per item with structured H3 sections — so AI-drafted
+    banks arrive ready to review. Copy this, fill in the bracketed parts, and keep
+    it for when the tool lands.
   </p>
   <pre><code>{itemPrompt}</code></pre>
 
-  <h2>Per-tool conventions</h2>
-  <ul>
-    <li><a href="/conventions/outcomes">Outcomes convention</a> — the
-      <code>drawbridge-outcomes/1</code> format, its template, and an outcome-writer
-      prompt.</li>
-  </ul>
-
   <h2>Format specifications</h2>
   <p>
-    The authoritative specs live in the repository:
-    <code>docs/formats/items-format.md</code> and
-    <code>docs/formats/outcomes-format.md</code>.
+    The authoritative, versioned specs live in the repository:
+    <code>docs/formats/outcomes-format.md</code> (shipped) and
+    <code>docs/formats/items-format.md</code> (planned).
   </p>
 
   <style>
     h1 { font-size: 1.9rem; letter-spacing: -0.02em; margin: 0 0 0.75rem; }
     h2 { font-size: 1.15rem; margin: 2rem 0 0.5rem; }
     .lede { font-size: 1.1rem; color: var(--color-muted); max-width: 42rem; }
+    .tag {
+      font-size: 0.6em;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      vertical-align: middle;
+      color: var(--color-accent);
+      border: 1px solid var(--color-accent);
+      border-radius: 999px;
+      padding: 0.15em 0.55em;
+      margin-left: 0.4rem;
+    }
+    .tag-planned {
+      color: var(--color-muted);
+      border-color: var(--color-line);
+    }
     pre {
       background: var(--color-ink);
       color: #f4f2ec;

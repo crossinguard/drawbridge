@@ -89,29 +89,42 @@ into a usable draft model — invalid never means unopenable.
 - Vitest. Round-trip tests against `fixtures/` are release gates.
 - Netlify, static, no functions.
 
-## Current state (mid-Phase 1)
+## Current state (Phase 1 Outcome Builder — feature-complete)
 
-What actually exists in code today (docs describe much that isn't built yet):
+The Outcome Builder (`/outcomes`) is built, tested, and verified end-to-end in the
+browser. The Item Workbench has not been started.
 
-- **Built & tested:** the outcomes domain layer —
-  `src/lib/outcomes/{types,parse,validate}.ts` — plus `tests/outcomes.test.ts`
-  and `fixtures/`.
-- **Astro shell:** `src/layouts/Base.astro`, `src/styles/global.css`, and four
-  static pages (`index`, `outcomes/`, `items/`, `conventions/`). The `/outcomes`
-  and `/items` pages are placeholders — no editor yet.
-- **Not built (empty dirs / installed-but-unused deps):** every `.svelte` island
-  (there are zero `.svelte` files), nanostores stores, IndexedDB
-  (`src/lib/storage/`), the items domain layer (`src/lib/items/`), and all
-  remark/rehype markdown processing. Treat `docs/01-architecture.md` as the
-  target, not a description of what's there.
+- **Outcomes domain layer (framework-free, tested):**
+  `src/lib/outcomes/{types,parse,validate,ids,mutate,numbering,grouping}.ts`.
+  parse.ts preserves comments + unknown keys; mutate.ts edits the eemeli Document
+  in place; numbering/grouping derive display-only views. Suites in `tests/`
+  (outcomes, mutate, numbering, grouping, fixtures).
+- **Storage:** `src/lib/storage/recovery.ts` — best-effort IndexedDB crash
+  recovery (a per-tool working copy, with the dirty flag persisted so the
+  divergence indicator survives a reload). Files stay canonical.
+- **State:** `src/stores/outcomes.ts` (nanostores) — the session Document is the
+  working truth; model/flags/numbers are derived; auto-mirrored to IndexedDB.
+- **UI:** Svelte islands in `src/components/outcomes/` (OutcomeEditor, OutcomeList,
+  EditPanel, ReviewView, FlagList) on a shared kit in `src/components/ui/`
+  (Button/Badge/Card/TemplateActions), built on Starwind UI + Tailwind v4. Covers
+  import/new/export, add/edit/delete, reorder, LO→CO mapping, EO scope, sequential
+  display numbering, a relationship-first review mode, loose validation with
+  clickable flags, and the recovery indicator.
+- **Content & docs:** `fixtures/` holds the bio101 sample plus full CCSS math
+  courses (Algebra I, Geometry, Algebra II); `/conventions/outcomes` documents the
+  format with a downloadable template.
+
+Not built yet: the Item Workbench (`/items` is a static placeholder), its domain
+layer (`src/lib/items/`), and the remark/rehype markdown pipeline. Treat
+`docs/01-architecture.md` as the target for those.
 
 Sequence in `docs/02-roadmap.md`: Phase 1 = Outcome Builder UI (current work).
 
 ## Repo map
 
-- `src/lib/<tool>/` — framework-free domain logic (the only real code today is
-  `outcomes/`). Also `src/components/`, `src/pages/`, `src/layouts/`,
-  `src/styles/`.
+- `src/lib/<tool>/` — framework-free domain logic (`outcomes/` and `storage/` are
+  built; `items/` is not yet). Also `src/components/`, `src/stores/`,
+  `src/pages/`, `src/layouts/`, `src/styles/`.
 - Path aliases (`tsconfig.json`): `$lib/*` → `src/lib/*`, `$components/*` →
   `src/components/*`.
 - `fixtures/` — round-trip test inputs. `docs/` — decision record, architecture,
