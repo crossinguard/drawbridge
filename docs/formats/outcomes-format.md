@@ -62,6 +62,36 @@ objectives:
 - IDs are what the Item Workbench aligns against. Stability here is what makes the
   outcomes↔items join possible.
 
+## Display: prefixes and custom identifiers
+
+Two optional, additive fields tune how items are labeled on screen. Both are
+backward-compatible — a file that omits them renders with the defaults, so this
+stays within `drawbridge-outcomes/1`.
+
+- A top-level `prefixes` block sets the short code shown with the derived number,
+  per tier. Absent → `CO` / `EO` / `LO`. Renaming a tier's terminology is where
+  this earns its keep (a "Standard" tier reads better as `STD 1` than `LO 1`):
+
+  ```yaml
+  prefixes:
+    outcome: CO
+    evidence: EO
+    objective: STD
+  ```
+
+- Any outcome, evidence, or objective node may carry an optional `code` — a custom
+  identifier that overrides the auto-number in display. The underlying `id` still
+  never changes; `code` is a display label only:
+
+  ```yaml
+  outcomes:
+    - id: co_0a1
+      code: CORE-1        # shown instead of "CO 1"
+      text: ...
+  ```
+
+Custom codes should be unique; duplicates are flagged (`warn`) but never block.
+
 ## Round-trip fidelity
 
 Unknown keys and comments are preserved on parse → serialize. Data loss on
@@ -73,7 +103,8 @@ specifically for comment preservation and error quality.
 Loose by default; draft states always valid.
 
 - **warn:** an EO with no parent CO; an LO with an empty `maps_to`; a `scope`
-  reference to an LO that doesn't map to that EO's CO; a dangling ID reference.
+  reference to an LO that doesn't map to that EO's CO; a dangling ID reference; a
+  duplicate custom identifier (`code`).
 - **info:** an outcome with no text; a CO with no EOs.
 
 Nothing blocks saving or exporting.

@@ -85,5 +85,27 @@ export function validate(doc: OutcomeDoc): ValidationFlag[] {
     }
   }
 
+  // Custom identifiers (codes) should be unique — they stand in for the number.
+  const codeOwners = new Map<string, string[]>();
+  const noteCode = (code: string | undefined, id: string) => {
+    if (code) codeOwners.set(code, [...(codeOwners.get(code) ?? []), id]);
+  };
+  for (const co of doc.outcomes) {
+    noteCode(co.code, co.id);
+    for (const eo of co.evidence) noteCode(eo.code, eo.id);
+  }
+  for (const lo of doc.objectives) noteCode(lo.code, lo.id);
+  for (const [code, owners] of codeOwners) {
+    if (owners.length > 1) {
+      for (const id of owners) {
+        flags.push({
+          severity: "warn",
+          targetId: id,
+          message: `Duplicate identifier "${code}".`,
+        });
+      }
+    }
+  }
+
   return flags;
 }

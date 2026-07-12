@@ -41,15 +41,29 @@ export function numberFor(nums: DisplayNumbers, id: string): string | undefined 
 }
 
 /**
- * Human label for any id, prefixed by level: "CO 2", "EO 2.1", "LO 3". Falls
- * back to the raw id for a dangling reference (so broken links stay visible).
+ * The display identifier for every node id: its custom `code` if set, otherwise
+ * the tier prefix plus the derived number ("CO 2", "EO 2.1", "LO 3"). This is the
+ * single source of truth for what an item is called on screen — prefixes are
+ * configurable and per-item codes override the number.
  */
-export function displayLabel(nums: DisplayNumbers, id: string): string {
-  const co = nums.outcome.get(id);
-  if (co) return `CO ${co}`;
-  const eo = nums.evidence.get(id);
-  if (eo) return `EO ${eo}`;
-  const lo = nums.objective.get(id);
-  if (lo) return `LO ${lo}`;
-  return id;
+export function identifierMap(doc: OutcomeDoc): Map<string, string> {
+  const nums = displayNumbers(doc);
+  const p = doc.prefixes;
+  const map = new Map<string, string>();
+  for (const co of doc.outcomes) {
+    map.set(co.id, co.code || `${p.outcome} ${nums.outcome.get(co.id)}`);
+    for (const eo of co.evidence) {
+      map.set(eo.id, eo.code || `${p.evidence} ${nums.evidence.get(eo.id)}`);
+    }
+  }
+  for (const lo of doc.objectives) {
+    map.set(lo.id, lo.code || `${p.objective} ${nums.objective.get(lo.id)}`);
+  }
+  return map;
+}
+
+/** Look up a display identifier, falling back to the raw id for a dangling
+ * reference (so broken links stay visible). */
+export function labelFor(map: Map<string, string>, id: string): string {
+  return map.get(id) ?? id;
 }

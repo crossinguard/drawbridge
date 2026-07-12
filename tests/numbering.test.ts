@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { readDoc, writeDoc, parseOutcomes, toModel } from "../src/lib/outcomes/parse.js";
 import { losForOutcome } from "../src/lib/outcomes/validate.js";
-import { displayNumbers } from "../src/lib/outcomes/numbering.js";
+import { displayNumbers, identifierMap } from "../src/lib/outcomes/numbering.js";
 import { moveOutcome, moveEvidence, moveObjective } from "../src/lib/outcomes/mutate.js";
 
 const fixture = readFileSync(
@@ -21,6 +21,24 @@ describe("display numbering derives from order", () => {
     expect(nums.evidence.get("eo_0a1b")).toBe("1.2");
     expect(nums.evidence.get("eo_0b2a")).toBe("2.1");
     expect(nums.objective.get("lo_3")).toBe("3");
+  });
+});
+
+describe("identifierMap: prefix + number, or a custom code", () => {
+  it("uses the tier prefix and derived number by default", () => {
+    const map = identifierMap(parseOutcomes(fixture));
+    expect(map.get("co_0a1")).toBe("CO 1");
+    expect(map.get("eo_0a1a")).toBe("EO 1.1");
+    expect(map.get("lo_3")).toBe("LO 3");
+  });
+
+  it("honors a custom tier prefix and a per-item code", () => {
+    const model = parseOutcomes(fixture);
+    model.prefixes.objective = "STD";
+    model.outcomes[0].code = "CORE";
+    const map = identifierMap(model);
+    expect(map.get("co_0a1")).toBe("CORE"); // per-item code wins
+    expect(map.get("lo_1")).toBe("STD 1"); // custom prefix + number
   });
 });
 

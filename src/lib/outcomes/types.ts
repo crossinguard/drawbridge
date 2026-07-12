@@ -7,6 +7,14 @@ export interface Terminology {
   objective: string;
 }
 
+/** Short display prefix per tier (e.g. "CO", "EO", "LO"), used with the derived
+ * number to label an item. Configurable so a renamed tier gets a fitting code. */
+export interface Prefixes {
+  outcome: string;
+  evidence: string;
+  objective: string;
+}
+
 export interface CourseMeta {
   title?: string;
   code?: string;
@@ -17,12 +25,16 @@ export interface EvidenceOutcome {
   text: string;
   /** Advisory LO scope. Never enforced. */
   scope?: string[];
+  /** Optional custom identifier; overrides the auto-number in display. */
+  code?: string;
 }
 
 export interface CourseOutcome {
   id: string;
   text: string;
   evidence: EvidenceOutcome[];
+  /** Optional custom identifier; overrides the auto-number in display. */
+  code?: string;
 }
 
 export interface LearningObjective {
@@ -30,11 +42,14 @@ export interface LearningObjective {
   text: string;
   /** Many-to-many mapping to CO ids only. */
   maps_to: string[];
+  /** Optional custom identifier; overrides the auto-number in display. */
+  code?: string;
 }
 
 export interface OutcomeDoc {
   schema: "drawbridge-outcomes/1";
   terminology: Terminology;
+  prefixes: Prefixes;
   course: CourseMeta;
   outcomes: CourseOutcome[];
   objectives: LearningObjective[];
@@ -53,4 +68,10 @@ export const DEFAULT_TERMINOLOGY: Terminology = {
   outcome: "Course Outcome",
   evidence: "Evidence Outcome",
   objective: "Learning Objective",
+};
+
+export const DEFAULT_PREFIXES: Prefixes = {
+  outcome: "CO",
+  evidence: "EO",
+  objective: "LO",
 };

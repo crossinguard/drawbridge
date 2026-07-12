@@ -19,7 +19,7 @@ import { Document } from "yaml";
 import { readDoc, toModel } from "$lib/outcomes/parse";
 import { validate } from "$lib/outcomes/validate";
 import { DEFAULT_TERMINOLOGY } from "$lib/outcomes/types";
-import { displayNumbers } from "$lib/outcomes/numbering";
+import { displayNumbers, identifierMap } from "$lib/outcomes/numbering";
 import * as mut from "$lib/outcomes/mutate";
 import {
   saveWorkingCopy,
@@ -81,6 +81,12 @@ export const numbers = computed(outcomeModel, (m) =>
   m
     ? displayNumbers(m)
     : { outcome: new Map(), evidence: new Map(), objective: new Map() },
+);
+
+/** id → display identifier ("CO 1", "EO 2.1", or a custom code). Single source
+ * of truth for what an item is called on screen. */
+export const identifiers = computed(outcomeModel, (m) =>
+  m ? identifierMap(m) : new Map<string, string>(),
 );
 
 /** A fresh, empty document with default terminology — the "New" starting point. */
@@ -162,6 +168,18 @@ export const actions = {
   },
   setTerminology(field: "outcome" | "evidence" | "objective", value: string) {
     edit((doc) => doc.setIn(["terminology", field], value));
+  },
+  setPrefix(tier: "outcome" | "evidence" | "objective", value: string) {
+    edit((doc) => mut.setPrefix(doc, tier, value));
+  },
+
+  /** Set (or clear, when empty) a node's custom identifier. */
+  setCode(sel: NonNullable<Selection>, code: string) {
+    edit((doc) => {
+      if (sel.kind === "co") mut.setOutcomeCode(doc, sel.id, code);
+      else if (sel.kind === "eo") mut.setEvidenceCode(doc, sel.coId, sel.id, code);
+      else mut.setObjectiveCode(doc, sel.id, code);
+    });
   },
 
   addOutcome() {

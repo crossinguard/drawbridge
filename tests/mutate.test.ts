@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { readDoc, writeDoc, parseOutcomes } from "../src/lib/outcomes/parse.js";
-import { losForOutcome } from "../src/lib/outcomes/validate.js";
+import { losForOutcome, validate } from "../src/lib/outcomes/validate.js";
+import { identifierMap } from "../src/lib/outcomes/numbering.js";
 import {
   addOutcome,
   setOutcomeText,
@@ -15,6 +16,9 @@ import {
   setObjectiveText,
   removeObjective,
   setObjectiveMapping,
+  setPrefix,
+  setOutcomeCode,
+  setObjectiveCode,
   collectIds,
 } from "../src/lib/outcomes/mutate.js";
 import { newId } from "../src/lib/outcomes/ids.js";
@@ -106,6 +110,39 @@ describe("mutations preserve round-trip fidelity", () => {
     removeOutcome(doc, "co_0a1");
     const model = parseOutcomes(writeDoc(doc));
     expect(model.outcomes.map((c) => c.id)).toEqual(["co_0b2"]);
+  });
+});
+
+describe("prefixes and custom identifiers", () => {
+  it("sets a tier prefix, preserved through round-trip", () => {
+    const doc = readDoc(fixture);
+    setPrefix(doc, "objective", "STD");
+    const out = writeDoc(doc);
+    expect(out).toContain(CANARY); // untouched nodes keep their comments
+    expect(identifierMap(parseOutcomes(out)).get("lo_1")).toBe("STD 1");
+  });
+
+  it("sets and clears a per-item custom code", () => {
+    const doc = readDoc(fixture);
+    setOutcomeCode(doc, "co_0a1", "CORE-1");
+    let model = parseOutcomes(writeDoc(doc));
+    expect(model.outcomes.find((c) => c.id === "co_0a1")!.code).toBe("CORE-1");
+    expect(identifierMap(model).get("co_0a1")).toBe("CORE-1");
+    // Clearing reverts to the auto-number.
+    setOutcomeCode(doc, "co_0a1", "");
+    model = parseOutcomes(writeDoc(doc));
+    expect(model.outcomes.find((c) => c.id === "co_0a1")!.code).toBeUndefined();
+    expect(identifierMap(model).get("co_0a1")).toBe("CO 1");
+  });
+
+  it("warns on duplicate codes", () => {
+    const doc = readDoc(fixture);
+    setOutcomeCode(doc, "co_0a1", "X1");
+    setObjectiveCode(doc, "lo_1", "X1");
+    const warns = validate(parseOutcomes(writeDoc(doc))).filter((f) =>
+      f.message.includes("Duplicate identifier"),
+    );
+    expect(warns).toHaveLength(2);
   });
 });
 

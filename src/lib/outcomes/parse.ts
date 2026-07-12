@@ -15,6 +15,7 @@
 import { parseDocument, type Document } from "yaml";
 import {
   DEFAULT_TERMINOLOGY,
+  DEFAULT_PREFIXES,
   type OutcomeDoc,
   type CourseOutcome,
   type EvidenceOutcome,
@@ -44,29 +45,53 @@ export function toModel(doc: Document): OutcomeDoc {
     ...(raw.terminology ?? {}),
   };
 
-  const outcomes: CourseOutcome[] = (raw.outcomes ?? []).map((co: any) => ({
-    id: String(co.id),
-    text: String(co.text ?? ""),
-    evidence: (co.evidence ?? []).map(
-      (eo: any): EvidenceOutcome => ({
-        id: String(eo.id),
-        text: String(eo.text ?? ""),
-        ...(eo.scope ? { scope: eo.scope.map(String) } : {}),
-      }),
+  const prefixes = {
+    ...DEFAULT_PREFIXES,
+    ...(raw.prefixes ?? {}),
+  };
+
+  // Carry an optional custom identifier when present, else leave it off.
+  const withCode = <T extends object>(node: T, src: any): T =>
+    src.code != null && String(src.code) !== ""
+      ? { ...node, code: String(src.code) }
+      : node;
+
+  const outcomes: CourseOutcome[] = (raw.outcomes ?? []).map((co: any) =>
+    withCode(
+      {
+        id: String(co.id),
+        text: String(co.text ?? ""),
+        evidence: (co.evidence ?? []).map((eo: any): EvidenceOutcome =>
+          withCode(
+            {
+              id: String(eo.id),
+              text: String(eo.text ?? ""),
+              ...(eo.scope ? { scope: eo.scope.map(String) } : {}),
+            },
+            eo,
+          ),
+        ),
+      },
+      co,
     ),
-  }));
+  );
 
   const objectives: LearningObjective[] = (raw.objectives ?? []).map(
-    (lo: any): LearningObjective => ({
-      id: String(lo.id),
-      text: String(lo.text ?? ""),
-      maps_to: (lo.maps_to ?? []).map(String),
-    }),
+    (lo: any): LearningObjective =>
+      withCode(
+        {
+          id: String(lo.id),
+          text: String(lo.text ?? ""),
+          maps_to: (lo.maps_to ?? []).map(String),
+        },
+        lo,
+      ),
   );
 
   return {
     schema: "drawbridge-outcomes/1",
     terminology,
+    prefixes,
     course: raw.course ?? {},
     outcomes,
     objectives,

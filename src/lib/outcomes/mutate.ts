@@ -198,3 +198,40 @@ export function setObjectiveMapping(
     doc.createNode(coIds),
   );
 }
+
+// — Prefixes & custom identifiers ——————————————————————————————————————————————
+
+/** Set the display prefix for a tier (e.g. "CO"). Written under `prefixes`. */
+export function setPrefix(
+  doc: Document,
+  tier: "outcome" | "evidence" | "objective",
+  value: string,
+): void {
+  doc.setIn(["prefixes", tier], value);
+}
+
+/** Set (or, when empty, clear) a node's custom `code` identifier. */
+function setNodeCode(node: YAMLMap | undefined, code: string): void {
+  if (!node) return;
+  if (code.trim() === "") node.delete("code");
+  else node.set("code", code);
+}
+
+export function setOutcomeCode(doc: Document, coId: string, code: string): void {
+  setNodeCode(findById(ensureSeq(doc, "outcomes"), coId), code);
+}
+
+export function setEvidenceCode(
+  doc: Document,
+  coId: string,
+  eoId: string,
+  code: string,
+): void {
+  const co = findById(ensureSeq(doc, "outcomes"), coId);
+  const ev = co?.get("evidence");
+  if (isSeq(ev)) setNodeCode(findById(ev as YAMLSeq, eoId), code);
+}
+
+export function setObjectiveCode(doc: Document, loId: string, code: string): void {
+  setNodeCode(findById(ensureSeq(doc, "objectives"), loId), code);
+}
