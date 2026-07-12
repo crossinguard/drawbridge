@@ -1,20 +1,38 @@
 <script lang="ts">
-  // Read-only review rendering of the current document: display numbers, nested
-  // evidence with scope, and computed reverse mappings. No editing affordances —
-  // this is the "read it end to end" mode.
+  // Read-only review, relationship-first: each objective is shown under the
+  // outcome(s) it maps to — nested under a specific evidence outcome when that
+  // EO's scope pins it, otherwise at the course-outcome level. Objectives mapped
+  // to nothing appear in their own Unassigned group. Cross-mappings ("also CO 2")
+  // stay visible so nothing is hidden.
   import { outcomeModel, numbers } from "../../stores/outcomes";
-  import { losForOutcome } from "$lib/outcomes/validate";
+  import { groupByOutcome } from "$lib/outcomes/grouping";
   import { displayLabel } from "$lib/outcomes/numbering";
 
   const model = $derived($outcomeModel);
   const nums = $derived($numbers);
+  const grouped = $derived(model ? groupByOutcome(model) : null);
 </script>
 
 {#snippet num(text: string)}
   <span class="text-foreground shrink-0 text-sm font-semibold">{text}</span>
 {/snippet}
 
-{#if model}
+{#snippet loLine(lo: { id: string; text: string; maps_to: string[] }, coId: string)}
+  {@const others = lo.maps_to.filter((c) => c !== coId)}
+  <li class="flex items-baseline gap-2">
+    {@render num("LO " + nums.objective.get(lo.id))}
+    <span>
+      {lo.text || "(untitled)"}
+      {#if others.length}
+        <span class="text-muted-foreground text-xs"
+          >· also {others.map((c) => displayLabel(nums, c)).join(", ")}</span
+        >
+      {/if}
+    </span>
+  </li>
+{/snippet}
+
+{#if model && grouped}
   <section class="max-w-3xl">
     <header class="border-border mb-4 flex flex-wrap items-baseline gap-3 border-b pb-2">
       <h2 class="text-xl font-semibold">{model.course.title || "Untitled course"}</h2>
@@ -30,60 +48,59 @@
       </span>
     </header>
 
-    <h3 class="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-      {model.terminology.outcome}s
-    </h3>
-    {#each model.outcomes as co}
-      {@const mapped = losForOutcome(model, co.id)}
-      <article class="border-border bg-card mb-2.5 rounded-lg border px-4 py-3">
+    {#each grouped.outcomes as g}
+      <article class="border-border bg-card mb-3 rounded-lg border px-4 py-3">
         <div class="flex items-baseline gap-2.5">
-          {@render num("CO " + nums.outcome.get(co.id))}
-          <p class="m-0">{co.text || "(untitled)"}</p>
+          {@render num("CO " + nums.outcome.get(g.co.id))}
+          <p class="m-0 font-medium">{g.co.text || "(untitled)"}</p>
         </div>
-        {#if co.evidence.length}
-          <ul class="mt-2 flex flex-col gap-1 pl-4 text-[0.95rem]">
-            {#each co.evidence as eo}
-              <li class="flex items-baseline gap-2">
-                {@render num("EO " + nums.evidence.get(eo.id))}
-                <span>
-                  {eo.text || "(untitled)"}
-                  {#if eo.scope?.length}
-                    <span class="text-muted-foreground text-xs">
-                      · scope: {eo.scope.map((s) => displayLabel(nums, s)).join(", ")}
-                    </span>
-                  {/if}
-                </span>
+
+        {#if g.evidence.length}
+          <ul class="border-border mt-2 flex flex-col gap-2 border-l pl-3">
+            {#each g.evidence as ev}
+              <li>
+                <div class="flex items-baseline gap-2 text-[0.95rem]">
+                  {@render num("EO " + nums.evidence.get(ev.eo.id))}
+                  <span>{ev.eo.text || "(untitled)"}</span>
+                </div>
+                {#if ev.objectives.length}
+                  <ul class="mt-1 flex flex-col gap-0.5 pl-4 text-sm">
+                    {#each ev.objectives as lo}
+                      {@render loLine(lo, g.co.id)}
+                    {/each}
+                  </ul>
+                {/if}
               </li>
             {/each}
           </ul>
         {/if}
-        {#if mapped.length}
-          <p class="text-muted-foreground mt-2 text-xs">
-            Mapped {model.terminology.objective}s: {mapped
-              .map((l) => displayLabel(nums, l))
-              .join(", ")}
-          </p>
+
+        {#if g.objectives.length}
+          <div class="mt-3">
+            <p class="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
+              {model.terminology.objective}s
+            </p>
+            <ul class="flex flex-col gap-0.5 pl-1 text-sm">
+              {#each g.objectives as lo}
+                {@render loLine(lo, g.co.id)}
+              {/each}
+            </ul>
+          </div>
         {/if}
       </article>
     {/each}
 
-    <h3 class="text-muted-foreground mt-6 mb-2 text-xs font-medium tracking-wide uppercase">
-      {model.terminology.objective}s
-    </h3>
-    {#each model.objectives as lo}
-      <article class="border-border bg-card mb-2.5 rounded-lg border px-4 py-3">
-        <div class="flex items-baseline gap-2.5">
-          {@render num("LO " + nums.objective.get(lo.id))}
-          <p class="m-0">
-            {lo.text || "(untitled)"}
-            {#if lo.maps_to.length}
-              <span class="text-muted-foreground text-xs">
-                → {lo.maps_to.map((c) => displayLabel(nums, c)).join(", ")}
-              </span>
-            {/if}
-          </p>
-        </div>
+    {#if grouped.unassigned.length}
+      <article class="border-border mb-3 rounded-lg border border-dashed px-4 py-3">
+        <p class="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
+          Unassigned {model.terminology.objective}s
+        </p>
+        <ul class="flex flex-col gap-0.5 pl-1 text-sm">
+          {#each grouped.unassigned as lo}
+            {@render loLine(lo, "")}
+          {/each}
+        </ul>
       </article>
-    {/each}
+    {/if}
   </section>
 {/if}
