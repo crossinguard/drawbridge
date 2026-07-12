@@ -4,11 +4,11 @@
 # (/outcomes) or hand it to any tool that reads the format. Comments and any keys
 # you add are preserved on export — edit freely.
 #
-# The three levels:
-#   outcomes   — broad Course Outcomes (COs): what a learner can do by the end.
-#   evidence   — Evidence Outcomes (EOs) nested under a CO: how you'd see it.
-#   objectives — Learning Objectives (LOs): granular, teachable steps that map
-#                back up to one or more COs.
+# The three tiers (rename them under `terminology` to fit your program):
+#   outcomes   — broad content domains: the areas the course covers.
+#   evidence   — assessed outcomes nested under a domain: what you'd assess.
+#   objectives — learning objectives: granular, teachable steps that map back up
+#                to one or more domains.
 #
 # IDs are immutable once downstream work references them. Pick a short stable id
 # and never renumber it; display order is what changes, not the id.
@@ -17,8 +17,8 @@ schema: drawbridge-outcomes/1
 
 # Rename these to your program's vocabulary — the UI reads these labels.
 terminology:
-  outcome: Course Outcome
-  evidence: Evidence Outcome
+  outcome: Content Domain
+  evidence: Assessed Outcome
   objective: Learning Objective
 
 course:
@@ -27,15 +27,15 @@ course:
 
 outcomes:
   - id: co_1
-    text: State a broad, end-of-course capability here.
+    text: Name a broad content domain the course covers.
     evidence:
       - id: eo_1a
-        text: Describe one observable way a learner demonstrates the outcome.
+        text: Describe one observable way a learner demonstrates this domain.
         scope: [ lo_1 ] # advisory link to an objective; never enforced
       - id: eo_1b
-        text: Add another piece of evidence, or delete this line.
+        text: Add another assessed outcome, or delete this line.
 
 objectives:
   - id: lo_1
-    text: A specific, teachable objective supporting the outcome above.
-    maps_to: [ co_1 ] # every objective maps to one or more course outcomes
+    text: A specific, teachable objective supporting the domain above.
+    maps_to: [ co_1 ] # every objective maps to one or more domains

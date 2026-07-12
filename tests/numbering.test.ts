@@ -27,8 +27,8 @@ describe("display numbering derives from order", () => {
 describe("identifierMap: prefix + number, or a custom code", () => {
   it("uses the tier prefix and derived number by default", () => {
     const map = identifierMap(parseOutcomes(fixture));
-    expect(map.get("co_0a1")).toBe("CO 1");
-    expect(map.get("eo_0a1a")).toBe("EO 1.1");
+    expect(map.get("co_0a1")).toBe("CD 1");
+    expect(map.get("eo_0a1a")).toBe("AO 1.1");
     expect(map.get("lo_3")).toBe("LO 3");
   });
 

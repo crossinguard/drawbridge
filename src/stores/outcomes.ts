@@ -157,6 +157,12 @@ export const actions = {
 
   /** Drop the recovered session and its stored copy, back to empty. */
   async discardRecovered(): Promise<void> {
+    await this.close();
+  },
+
+  /** Close the current file: clear the working copy and return to the start
+   * screen. The UI confirms first when there are unsaved changes. */
+  async close(): Promise<void> {
     await clearWorkingCopy(TOOL);
     recoveredAt.set(null);
     session.set({ doc: null, fileName: null, dirty: false, rev: session.get().rev + 1 });
@@ -235,6 +241,15 @@ export const actions = {
   },
   moveObjective(loId: string, dir: number) {
     edit((doc) => mut.moveObjective(doc, loId, dir));
+  },
+  moveOutcomeTo(coId: string, toIndex: number) {
+    edit((doc) => mut.moveOutcomeTo(doc, coId, toIndex));
+  },
+  moveEvidenceTo(coId: string, eoId: string, toIndex: number) {
+    edit((doc) => mut.moveEvidenceTo(doc, coId, eoId, toIndex));
+  },
+  moveObjectiveTo(loId: string, toIndex: number) {
+    edit((doc) => mut.moveObjectiveTo(doc, loId, toIndex));
   },
 
   select(sel: Selection) {

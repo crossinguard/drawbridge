@@ -65,13 +65,13 @@ export interface ValidationFlag {
 }
 
 export const DEFAULT_TERMINOLOGY: Terminology = {
-  outcome: "Course Outcome",
-  evidence: "Evidence Outcome",
+  outcome: "Content Domain",
+  evidence: "Assessed Outcome",
   objective: "Learning Objective",
 };
 
 export const DEFAULT_PREFIXES: Prefixes = {
-  outcome: "CO",
-  evidence: "EO",
+  outcome: "CD",
+  evidence: "AO",
   objective: "LO",
 };

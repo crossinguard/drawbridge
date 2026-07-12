@@ -3,6 +3,10 @@ terminology:
   outcome: Course Outcome
   evidence: Evidence Outcome
   objective: Learning Objective
+prefixes:
+  outcome: CO
+  evidence: EO
+  objective: LO
 course:
   title: Algebra II
   code: MATH-ALG2

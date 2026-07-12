@@ -187,6 +187,38 @@ export function moveObjective(doc: Document, loId: string, dir: number): void {
   if (isSeq(seq)) swap(seq as YAMLSeq, loId, dir);
 }
 
+/** Move a node to an absolute index within its sequence (for drag-and-drop).
+ * Splices the whole node out and reinserts it, so comments/alignment travel. */
+function moveTo(seq: YAMLSeq, id: string, toIndex: number): void {
+  const from = indexById(seq, id);
+  if (from < 0) return;
+  const clamped = Math.max(0, Math.min(toIndex, seq.items.length - 1));
+  if (clamped === from) return;
+  const [node] = seq.items.splice(from, 1);
+  seq.items.splice(clamped, 0, node);
+}
+
+export function moveOutcomeTo(doc: Document, coId: string, toIndex: number): void {
+  const seq = doc.get("outcomes");
+  if (isSeq(seq)) moveTo(seq as YAMLSeq, coId, toIndex);
+}
+
+export function moveEvidenceTo(
+  doc: Document,
+  coId: string,
+  eoId: string,
+  toIndex: number,
+): void {
+  const co = findById(ensureSeq(doc, "outcomes"), coId);
+  const ev = co?.get("evidence");
+  if (isSeq(ev)) moveTo(ev as YAMLSeq, eoId, toIndex);
+}
+
+export function moveObjectiveTo(doc: Document, loId: string, toIndex: number): void {
+  const seq = doc.get("objectives");
+  if (isSeq(seq)) moveTo(seq as YAMLSeq, loId, toIndex);
+}
+
 /** Replace an objective's CO mappings wholesale. */
 export function setObjectiveMapping(
   doc: Document,

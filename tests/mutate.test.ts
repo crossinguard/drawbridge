@@ -19,6 +19,8 @@ import {
   setPrefix,
   setOutcomeCode,
   setObjectiveCode,
+  moveOutcomeTo,
+  moveObjectiveTo,
   collectIds,
 } from "../src/lib/outcomes/mutate.js";
 import { newId } from "../src/lib/outcomes/ids.js";
@@ -132,7 +134,7 @@ describe("prefixes and custom identifiers", () => {
     setOutcomeCode(doc, "co_0a1", "");
     model = parseOutcomes(writeDoc(doc));
     expect(model.outcomes.find((c) => c.id === "co_0a1")!.code).toBeUndefined();
-    expect(identifierMap(model).get("co_0a1")).toBe("CO 1");
+    expect(identifierMap(model).get("co_0a1")).toBe("CD 1");
   });
 
   it("warns on duplicate codes", () => {
@@ -143,6 +145,43 @@ describe("prefixes and custom identifiers", () => {
       f.message.includes("Duplicate identifier"),
     );
     expect(warns).toHaveLength(2);
+  });
+});
+
+describe("moveTo reorders to an absolute index (drag-and-drop)", () => {
+  it("moves an objective to the front and keeps comments", () => {
+    const doc = readDoc(fixture);
+    moveObjectiveTo(doc, "lo_3", 0);
+    const out = writeDoc(doc);
+    expect(out).toContain(CANARY);
+    expect(parseOutcomes(out).objectives.map((l) => l.id)).toEqual([
+      "lo_3",
+      "lo_1",
+      "lo_2",
+    ]);
+  });
+
+  it("moves an outcome to the end", () => {
+    const doc = readDoc(fixture);
+    moveOutcomeTo(doc, "co_0a1", 1);
+    expect(parseOutcomes(writeDoc(doc)).outcomes.map((c) => c.id)).toEqual([
+      "co_0b2",
+      "co_0a1",
+    ]);
+  });
+});
+
+describe("generic tier defaults", () => {
+  it("applies Content Domain / Assessed Outcome / Learning Objective when absent", () => {
+    const m = parseOutcomes(
+      "schema: drawbridge-outcomes/1\noutcomes: []\nobjectives: []\n",
+    );
+    expect(m.terminology).toEqual({
+      outcome: "Content Domain",
+      evidence: "Assessed Outcome",
+      objective: "Learning Objective",
+    });
+    expect(m.prefixes).toEqual({ outcome: "CD", evidence: "AO", objective: "LO" });
   });
 });
 
