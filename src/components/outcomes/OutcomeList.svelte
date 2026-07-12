@@ -3,6 +3,11 @@
   // and selectable; selecting one opens the EditPanel. Add/delete affordances
   // sit inline. All state flows through the store.
   import { outcomeModel, selection, actions } from "../../stores/outcomes";
+  import type {
+    CourseOutcome,
+    EvidenceOutcome,
+    LearningObjective,
+  } from "$lib/outcomes/types";
   import Button from "../ui/Button.svelte";
 
   const model = $derived($outcomeModel);
@@ -10,6 +15,24 @@
 
   function isSel(kind: string, id: string) {
     return sel?.kind === kind && sel.id === id;
+  }
+
+  // Confirm deletes only when there's content to lose; empty just-added rows go
+  // quietly (add-then-remove is common).
+  function delOutcome(co: CourseOutcome) {
+    const filled = co.text.trim() !== "" || co.evidence.length > 0;
+    const term = model?.terminology.evidence.toLowerCase() ?? "evidence";
+    if (!filled || confirm(`Delete "${co.text || co.id}" and its ${co.evidence.length} ${term} item(s)?`))
+      actions.removeOutcome(co.id);
+  }
+  function delEvidence(coId: string, eo: EvidenceOutcome) {
+    if (eo.text.trim() === "" || confirm(`Delete "${eo.text}"?`))
+      actions.removeEvidence(coId, eo.id);
+  }
+  function delObjective(lo: LearningObjective) {
+    const filled = lo.text.trim() !== "" || lo.maps_to.length > 0;
+    if (!filled || confirm(`Delete "${lo.text || lo.id}"?`))
+      actions.removeObjective(lo.id);
   }
 </script>
 
@@ -49,7 +72,7 @@
                 class="text-muted-foreground hover:text-error text-xs"
                 title="Delete"
                 aria-label="Delete outcome"
-                onclick={() => actions.removeOutcome(co.id)}>✕</button
+                onclick={() => delOutcome(co)}>✕</button
               >
             </div>
 
@@ -75,7 +98,7 @@
                     class="text-muted-foreground hover:text-error text-xs"
                     title="Delete"
                     aria-label="Delete evidence"
-                    onclick={() => actions.removeEvidence(co.id, eo.id)}>✕</button
+                    onclick={() => delEvidence(co.id, eo)}>✕</button
                   >
                 </div>
               {/each}
@@ -128,7 +151,7 @@
               class="text-muted-foreground hover:text-error text-xs"
               title="Delete"
               aria-label="Delete objective"
-              onclick={() => actions.removeObjective(lo.id)}>✕</button
+              onclick={() => delObjective(lo)}>✕</button
             >
           </li>
         {/each}

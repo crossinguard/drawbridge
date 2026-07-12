@@ -9,6 +9,7 @@ import {
   removeOutcome,
   addEvidence,
   setEvidenceText,
+  setEvidenceScope,
   removeEvidence,
   addObjective,
   setObjectiveText,
@@ -65,6 +66,18 @@ describe("mutations preserve round-trip fidelity", () => {
     const co = model.outcomes.find((c) => c.id === "co_0a1")!;
     expect(co.evidence.map((e) => e.id)).toEqual(["eo_0a1a"]);
     expect(co.evidence[0].text).toBe("Cellular respiration, reworded.");
+  });
+
+  it("sets and clears an evidence outcome's scope", () => {
+    const doc = readDoc(fixture);
+    // eo_0a1b starts with no scope.
+    setEvidenceScope(doc, "co_0a1", "eo_0a1b", ["lo_1"]);
+    let co = parseOutcomes(writeDoc(doc)).outcomes.find((c) => c.id === "co_0a1")!;
+    expect(co.evidence.find((e) => e.id === "eo_0a1b")!.scope).toEqual(["lo_1"]);
+    // Clearing removes the key entirely (scope is optional/advisory).
+    setEvidenceScope(doc, "co_0a1", "eo_0a1b", []);
+    co = parseOutcomes(writeDoc(doc)).outcomes.find((c) => c.id === "co_0a1")!;
+    expect(co.evidence.find((e) => e.id === "eo_0a1b")!.scope).toBeUndefined();
   });
 
   it("adds an objective with a mapping, then rewrites the mapping", () => {

@@ -141,6 +141,27 @@
     {/if}
   </div>
 
+  <details class="mb-4">
+    <summary class="text-muted-foreground cursor-pointer text-xs select-none">
+      Terminology
+    </summary>
+    <div class="mt-2 flex flex-wrap gap-3">
+      {#each [["outcome", "Outcome"], ["evidence", "Evidence"], ["objective", "Objective"]] as const as [key, name]}
+        <div>
+          <label class="text-muted-foreground mb-1 block text-xs font-medium" for={"term-" + key}
+            >{name} label</label
+          >
+          <input
+            id={"term-" + key}
+            class="border-border bg-background focus-visible:border-outline w-40 rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
+            value={model.terminology[key]}
+            onchange={(e) => actions.setTerminology(key, e.currentTarget.value)}
+          />
+        </div>
+      {/each}
+    </div>
+  </details>
+
   <div class="grid grid-cols-1 gap-5 md:grid-cols-[1fr_20rem]">
     <OutcomeList />
     <EditPanel />

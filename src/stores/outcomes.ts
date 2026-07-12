@@ -119,6 +119,9 @@ export const actions = {
   setEvidenceText(coId: string, eoId: string, text: string) {
     edit((doc) => mut.setEvidenceText(doc, coId, eoId, text));
   },
+  setEvidenceScope(coId: string, eoId: string, loIds: string[]) {
+    edit((doc) => mut.setEvidenceScope(doc, coId, eoId, loIds));
+  },
   removeEvidence(coId: string, eoId: string) {
     edit((doc) => mut.removeEvidence(doc, coId, eoId));
     clearSelectionIf((sel) => sel.id === eoId);

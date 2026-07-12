@@ -113,6 +113,22 @@ export function removeEvidence(doc: Document, coId: string, eoId: string): void 
   if (idx >= 0) (ev as YAMLSeq).items.splice(idx, 1);
 }
 
+/** Replace an evidence outcome's advisory `scope`. Empty removes the key entirely. */
+export function setEvidenceScope(
+  doc: Document,
+  coId: string,
+  eoId: string,
+  loIds: string[],
+): void {
+  const co = findById(ensureSeq(doc, "outcomes"), coId);
+  const ev = co?.get("evidence");
+  if (!isSeq(ev)) return;
+  const eo = findById(ev as YAMLSeq, eoId);
+  if (!eo) return;
+  if (loIds.length === 0) eo.delete("scope");
+  else eo.set("scope", doc.createNode(loIds));
+}
+
 // — Learning Objectives ————————————————————————————————————————————————————
 
 /** Append a Learning Objective. Returns the minted id. */

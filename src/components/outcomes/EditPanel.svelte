@@ -3,12 +3,10 @@
   // item opens this panel with labelled fields and Save/Cancel. Edits are
   // buffered locally and applied to the Document only on Save, so typing never
   // triggers a re-parse.
-  import {
-    selection,
-    outcomeModel,
-    actions,
-    type Selection,
-  } from "../../stores/outcomes";
+  //   CO / EO / LO → Text
+  //   EO           → advisory Scope (which objectives this evidence supports)
+  //   LO           → Maps to (which course outcomes this objective supports)
+  import { selection, outcomeModel, actions } from "../../stores/outcomes";
   import Button from "../ui/Button.svelte";
 
   const sel = $derived($selection);
@@ -29,7 +27,8 @@
   // untracked read of the store, so unrelated edits don't clobber in-progress
   // typing).
   let draftText = $state("");
-  let draftMaps = $state<string[]>([]);
+  let draftMaps = $state<string[]>([]); // LO → CO ids
+  let draftScope = $state<string[]>([]); // EO → LO ids
   let loadedKey = $state<string | null>(null);
 
   $effect(() => {
@@ -40,14 +39,17 @@
     const m = outcomeModel.get(); // untracked snapshot
     let text = "";
     let maps: string[] = [];
+    let scope: string[] = [];
     if (s && m) {
-      if (s.kind === "co") text = m.outcomes.find((c) => c.id === s.id)?.text ?? "";
-      else if (s.kind === "eo")
-        text =
-          m.outcomes
-            .find((c) => c.id === s.coId)
-            ?.evidence.find((e) => e.id === s.id)?.text ?? "";
-      else {
+      if (s.kind === "co") {
+        text = m.outcomes.find((c) => c.id === s.id)?.text ?? "";
+      } else if (s.kind === "eo") {
+        const eo = m.outcomes
+          .find((c) => c.id === s.coId)
+          ?.evidence.find((e) => e.id === s.id);
+        text = eo?.text ?? "";
+        scope = [...(eo?.scope ?? [])];
+      } else {
         const lo = m.objectives.find((l) => l.id === s.id);
         text = lo?.text ?? "";
         maps = [...(lo?.maps_to ?? [])];
@@ -55,6 +57,7 @@
     }
     draftText = text;
     draftMaps = maps;
+    draftScope = scope;
   });
 
   const label = $derived(
@@ -67,29 +70,33 @@
           : model.terminology.objective,
   );
 
+  function differs(draft: string[], current: string[] | undefined): boolean {
+    const cur = current ?? [];
+    if (draft.length !== cur.length) return true;
+    const set = new Set(cur);
+    return draft.some((id) => !set.has(id));
+  }
+
   const dirty = $derived.by(() => {
-    if (!entity) return false;
+    if (!entity || !sel) return false;
     if (draftText !== entity.text) return true;
-    if (sel?.kind === "lo") {
-      const cur = ("maps_to" in entity ? entity.maps_to : []) as string[];
-      if (draftMaps.length !== cur.length) return true;
-      const set = new Set(cur);
-      return draftMaps.some((id) => !set.has(id));
-    }
+    if (sel.kind === "lo") return differs(draftMaps, (entity as { maps_to?: string[] }).maps_to);
+    if (sel.kind === "eo") return differs(draftScope, (entity as { scope?: string[] }).scope);
     return false;
   });
 
-  function toggleMap(coId: string, on: boolean) {
-    draftMaps = on
-      ? [...draftMaps, coId]
-      : draftMaps.filter((id) => id !== coId);
+  function toggle(list: string[], id: string, on: boolean): string[] {
+    return on ? [...list, id] : list.filter((x) => x !== id);
   }
 
   function save() {
     if (!sel) return;
-    if (sel.kind === "co") actions.setOutcomeText(sel.id, draftText);
-    else if (sel.kind === "eo") actions.setEvidenceText(sel.coId, sel.id, draftText);
-    else {
+    if (sel.kind === "co") {
+      actions.setOutcomeText(sel.id, draftText);
+    } else if (sel.kind === "eo") {
+      actions.setEvidenceText(sel.coId, sel.id, draftText);
+      actions.setEvidenceScope(sel.coId, sel.id, draftScope);
+    } else {
       actions.setObjectiveText(sel.id, draftText);
       actions.setObjectiveMapping(sel.id, draftMaps);
     }
@@ -97,9 +104,8 @@
   }
 
   function cancel() {
+    const s = sel;
     loadedKey = null; // re-sync draft from the store, discarding edits
-    // re-trigger the effect by nudging selection to itself
-    const s = sel as Selection;
     actions.select(null);
     actions.select(s);
   }
@@ -130,6 +136,35 @@
       bind:value={draftText}
     ></textarea>
 
+    {#if sel.kind === "eo" && model}
+      <p class="mb-1 text-xs font-medium">
+        Scope <span class="text-muted-foreground font-normal">(advisory {model.terminology.objective.toLowerCase()}s)</span>
+      </p>
+      {#if model.objectives.length === 0}
+        <p class="text-muted-foreground mb-3 text-xs">
+          No {model.terminology.objective}s yet.
+        </p>
+      {:else}
+        <ul class="mb-3 flex flex-col gap-1">
+          {#each model.objectives as lo}
+            <li class="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                id={"scope-" + lo.id}
+                class="mt-1"
+                checked={draftScope.includes(lo.id)}
+                onchange={(e) => (draftScope = toggle(draftScope, lo.id, e.currentTarget.checked))}
+              />
+              <label for={"scope-" + lo.id} class="cursor-pointer">
+                <code class="font-mono text-xs">{lo.id}</code>
+                <span class="text-muted-foreground">{lo.text || "(untitled)"}</span>
+              </label>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    {/if}
+
     {#if sel.kind === "lo" && model}
       <p class="mb-1 text-xs font-medium">Maps to</p>
       {#if model.outcomes.length === 0}
@@ -145,7 +180,7 @@
                 id={"map-" + co.id}
                 class="mt-1"
                 checked={draftMaps.includes(co.id)}
-                onchange={(e) => toggleMap(co.id, e.currentTarget.checked)}
+                onchange={(e) => (draftMaps = toggle(draftMaps, co.id, e.currentTarget.checked))}
               />
               <label for={"map-" + co.id} class="cursor-pointer">
                 <code class="font-mono text-xs">{co.id}</code>
