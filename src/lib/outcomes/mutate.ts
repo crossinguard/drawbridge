@@ -154,6 +154,39 @@ export function removeObjective(doc: Document, loId: string): void {
   if (idx >= 0) (seq as YAMLSeq).items.splice(idx, 1);
 }
 
+// — Reordering ——————————————————————————————————————————————————————————————
+// Moving swaps whole nodes, so a node's comments, maps_to, and scope travel with
+// it. `dir` is -1 (up) or +1 (down); out-of-range moves are no-ops.
+
+function swap(seq: YAMLSeq, id: string, dir: number): void {
+  const i = indexById(seq, id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= seq.items.length) return;
+  const items = seq.items;
+  [items[i], items[j]] = [items[j], items[i]];
+}
+
+export function moveOutcome(doc: Document, coId: string, dir: number): void {
+  const seq = doc.get("outcomes");
+  if (isSeq(seq)) swap(seq as YAMLSeq, coId, dir);
+}
+
+export function moveEvidence(
+  doc: Document,
+  coId: string,
+  eoId: string,
+  dir: number,
+): void {
+  const co = findById(ensureSeq(doc, "outcomes"), coId);
+  const ev = co?.get("evidence");
+  if (isSeq(ev)) swap(ev as YAMLSeq, eoId, dir);
+}
+
+export function moveObjective(doc: Document, loId: string, dir: number): void {
+  const seq = doc.get("objectives");
+  if (isSeq(seq)) swap(seq as YAMLSeq, loId, dir);
+}
+
 /** Replace an objective's CO mappings wholesale. */
 export function setObjectiveMapping(
   doc: Document,
