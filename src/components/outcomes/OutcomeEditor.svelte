@@ -4,7 +4,8 @@
   // view. All document state lives in the store; this island wires the DOM to it.
   // Files remain canonical — the dirty indicator warns when edits haven't been
   // exported yet (hard rule #6).
-  import { session, outcomeModel, actions } from "../../stores/outcomes";
+  import { onMount } from "svelte";
+  import { session, outcomeModel, recoveredAt, actions } from "../../stores/outcomes";
   import OutcomeList from "./OutcomeList.svelte";
   import EditPanel from "./EditPanel.svelte";
   import ReviewView from "./ReviewView.svelte";
@@ -14,9 +15,21 @@
 
   const s = $derived($session);
   const model = $derived($outcomeModel);
+  const recovered = $derived($recoveredAt);
 
   let mode = $state<"edit" | "review">("edit");
   let loadError = $state<string | null>(null);
+
+  // On mount, recover any unsaved session left in IndexedDB (crash/reload safety).
+  onMount(() => {
+    void actions.restore();
+  });
+
+  const recoveredTime = $derived(
+    recovered
+      ? new Date(recovered).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "",
+  );
 
   function confirmDiscard(): boolean {
     return !s.dirty || confirm("Discard unsaved changes since your last export?");
@@ -98,6 +111,17 @@
     <span class="text-warning-foreground flex items-center gap-1 text-xs" title="Edits not yet exported">
       <span class="bg-warning inline-block size-2 rounded-full"></span>
       unsaved since export
+    </span>
+  {/if}
+  {#if recovered}
+    <span
+      class="text-muted-foreground flex items-center gap-1.5 text-xs"
+      title="This session was recovered from your browser's local storage; it was never uploaded"
+    >
+      ↻ restored from {recoveredTime}
+      <button type="button" class="hover:text-error underline" onclick={() => actions.discardRecovered()}>
+        discard
+      </button>
     </span>
   {/if}
 </div>

@@ -5,9 +5,11 @@
 // (nanostores compares by reference, so we hand out a fresh session object after
 // each edit). The typed model and validation flags are derived, never stored.
 //
-// `dirty` tracks edits made since the last import/export — a first, honest step
-// toward hard rule #6 (files are canonical; never let state silently diverge from
-// the last exported file). Full IndexedDB recovery is a later slice.
+// `dirty` tracks edits made since the last import/export (hard rule #6: files are
+// canonical; never let state silently diverge from the last exported file). The
+// working document is also mirrored to IndexedDB on every change, so a reload or
+// crash recovers in-progress edits — with `dirty` persisted, the divergence
+// indicator survives too. IndexedDB is a recovery copy only, never the record.
 //
 // Store exports are intentionally NOT $-prefixed so Svelte's `$store` auto-
 // subscription reads cleanly (e.g. `$session`, `$outcomeModel`).
@@ -19,6 +21,13 @@ import { validate } from "$lib/outcomes/validate";
 import { DEFAULT_TERMINOLOGY } from "$lib/outcomes/types";
 import { displayNumbers } from "$lib/outcomes/numbering";
 import * as mut from "$lib/outcomes/mutate";
+import {
+  saveWorkingCopy,
+  loadWorkingCopy,
+  clearWorkingCopy,
+} from "$lib/storage/recovery";
+
+const TOOL = "outcomes";
 
 export type Selection =
   | { kind: "co"; id: string }
@@ -43,6 +52,24 @@ export const session = atom<Session>({
 });
 
 export const selection = atom<Selection>(null);
+
+/** When set, the current session was restored from a recovery copy saved at this
+ * epoch-ms time. Cleared once the user imports, starts new, or exports. */
+export const recoveredAt = atom<number | null>(null);
+
+// Mirror the working document to IndexedDB on every change (best-effort). The
+// callback fires immediately with the initial empty session — doc is null, so it
+// no-ops until there's something to recover.
+session.subscribe((s) => {
+  if (!s.doc) return;
+  void saveWorkingCopy({
+    tool: TOOL,
+    text: s.doc.toString(),
+    fileName: s.fileName,
+    dirty: s.dirty,
+    savedAt: Date.now(),
+  });
+});
 
 export const outcomeModel = computed(session, (s) =>
   s.doc ? toModel(s.doc) : null,
@@ -70,6 +97,7 @@ function blankDoc(): Document {
 function setDoc(doc: Document, fileName: string | null) {
   session.set({ doc, fileName, dirty: false, rev: session.get().rev + 1 });
   selection.set(null);
+  recoveredAt.set(null); // a deliberate import/new is not a recovery
 }
 
 /** Run a mutation against the live Document, then bump reactivity + mark dirty. */
@@ -95,7 +123,38 @@ export const actions = {
     if (!s.doc) return null;
     const text = s.doc.toString();
     session.set({ ...s, dirty: false, fileName: fileName ?? s.fileName });
+    recoveredAt.set(null); // exported to a file — the recovery notice is resolved
     return text;
+  },
+
+  /** Restore an unsaved session from IndexedDB, if one exists and nothing is
+   * loaded yet. Returns true if a copy was restored. */
+  async restore(): Promise<boolean> {
+    if (session.get().doc) return false; // don't clobber an active session
+    const wc = await loadWorkingCopy(TOOL);
+    if (!wc) return false;
+    try {
+      const doc = readDoc(wc.text);
+      session.set({
+        doc,
+        fileName: wc.fileName,
+        dirty: wc.dirty,
+        rev: session.get().rev + 1,
+      });
+      selection.set(null);
+      recoveredAt.set(wc.savedAt);
+      return true;
+    } catch {
+      return false; // corrupt copy: leave the user at the empty state
+    }
+  },
+
+  /** Drop the recovered session and its stored copy, back to empty. */
+  async discardRecovered(): Promise<void> {
+    await clearWorkingCopy(TOOL);
+    recoveredAt.set(null);
+    session.set({ doc: null, fileName: null, dirty: false, rev: session.get().rev + 1 });
+    selection.set(null);
   },
 
   setCourse(field: "title" | "code", value: string) {
