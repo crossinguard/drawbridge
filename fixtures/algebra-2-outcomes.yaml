@@ -1,0 +1,284 @@
+schema: drawbridge-outcomes/1
+terminology:
+  outcome: Course Outcome
+  evidence: Evidence Outcome
+  objective: Learning Objective
+course:
+  title: Algebra II
+  code: MATH-ALG2
+outcomes:
+  - id: co_a2_num
+    text: Extend exponents to rational values and reason within the complex number
+      system.
+    evidence:
+      - id: eo_a2_rn
+        text: "The Real Number System (N-RN): rational exponents and radicals."
+        scope:
+          - lo_a2_rn1
+          - lo_a2_rn2
+      - id: eo_a2_cn
+        text: "The Complex Number System (N-CN): perform arithmetic and solve
+          equations."
+        scope:
+          - lo_a2_cn1
+          - lo_a2_cn2
+          - lo_a2_cn7
+  - id: co_a2_alg
+    text: Rewrite and analyze polynomial, rational, and radical expressions and
+      solve the equations that arise from them.
+    evidence:
+      - id: eo_a2_sse
+        text: "Seeing Structure in Expressions (A-SSE): structure and geometric series."
+        scope:
+          - lo_a2_sse2
+          - lo_a2_sse3
+          - lo_a2_sse4
+      - id: eo_a2_apr
+        text: Arithmetic with Polynomials and Rational Expressions (A-APR).
+        scope:
+          - lo_a2_apr1
+          - lo_a2_apr2
+          - lo_a2_apr3
+          - lo_a2_apr4
+          - lo_a2_apr6
+      - id: eo_a2_ced
+        text: "Creating Equations (A-CED): model with equations in context."
+        scope:
+          - lo_a2_ced1
+      - id: eo_a2_rei
+        text: Reasoning with Equations and Inequalities (A-REI).
+        scope:
+          - lo_a2_rei2
+          - lo_a2_rei11
+  - id: co_a2_fun
+    text: Analyze and build polynomial, exponential, logarithmic, and trigonometric
+      functions to model periodic and growth phenomena.
+    evidence:
+      - id: eo_a2_if
+        text: "Interpreting Functions (F-IF): advanced features and equivalent forms."
+        scope:
+          - lo_a2_if4
+          - lo_a2_if6
+          - lo_a2_if7
+          - lo_a2_if8
+          - lo_a2_if9
+      - id: eo_a2_bf
+        text: "Building Functions (F-BF): compose, transform, and invert functions."
+        scope:
+          - lo_a2_bf1
+          - lo_a2_bf3
+          - lo_a2_bf4
+      - id: eo_a2_le
+        text: "Linear, Quadratic, and Exponential Models (F-LE): logarithms as
+          solutions."
+        scope:
+          - lo_a2_le4
+      - id: eo_a2_tf
+        text: "Trigonometric Functions (F-TF): model periodic phenomena."
+        scope:
+          - lo_a2_tf1
+          - lo_a2_tf2
+          - lo_a2_tf5
+          - lo_a2_tf8
+  - id: co_a2_stat
+    text: Draw inferences and justify conclusions from samples, experiments, and
+      observational studies.
+    evidence:
+      - id: eo_a2_id
+        text: "Interpreting Data (S-ID): normal distributions."
+        scope:
+          - lo_a2_id4
+      - id: eo_a2_ic
+        text: Making Inferences and Justifying Conclusions (S-IC).
+        scope:
+          - lo_a2_ic1
+          - lo_a2_ic2
+          - lo_a2_ic3
+          - lo_a2_ic4
+          - lo_a2_ic5
+          - lo_a2_ic6
+objectives:
+  - id: lo_a2_rn1
+    text: N-RN.1 — Explain how the definition of rational exponents follows from
+      extending the properties of integer exponents.
+    maps_to:
+      - co_a2_num
+  - id: lo_a2_rn2
+    text: N-RN.2 — Rewrite expressions involving radicals and rational exponents
+      using the properties of exponents.
+    maps_to:
+      - co_a2_num
+  - id: lo_a2_cn1
+    text: N-CN.1 — Know there is a complex number i with i² = −1, and that every
+      complex number has the form a + bi.
+    maps_to:
+      - co_a2_num
+  - id: lo_a2_cn2
+    text: N-CN.2 — Use the relation i² = −1 and the commutative, associative, and
+      distributive properties to add, subtract, and multiply complex numbers.
+    maps_to:
+      - co_a2_num
+  - id: lo_a2_cn7
+    text: N-CN.7 — Solve quadratic equations with real coefficients that have
+      complex solutions.
+    maps_to:
+      - co_a2_num
+  - id: lo_a2_sse2
+    text: A-SSE.2 — Use the structure of an expression to identify ways to rewrite
+      it (e.g., recognizing a difference of squares or a quadratic in disguise).
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_sse3
+    text: A-SSE.3 — Produce equivalent forms of an expression to reveal properties,
+      including using properties of exponents to transform exponential
+      expressions.
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_sse4
+    text: A-SSE.4 — Derive and use the formula for the sum of a finite geometric
+      series to solve problems.
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_apr1
+    text: A-APR.1 — Add, subtract, and multiply polynomials, understanding closure
+      under these operations.
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_apr2
+    text: "A-APR.2 — Apply the Remainder Theorem: for a polynomial p(x) and number
+      a, p(a) is the remainder on division by (x − a)."
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_apr3
+    text: A-APR.3 — Identify zeros of polynomials when suitable factorizations are
+      available, and use the zeros to sketch the graph.
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_apr4
+    text: A-APR.4 — Prove polynomial identities and use them to describe numerical
+      relationships.
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_apr6
+    text: A-APR.6 — Rewrite simple rational expressions in different forms using
+      inspection, long division, or a computer algebra system.
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_ced1
+    text: A-CED.1 — Create equations and inequalities in one variable, including
+      those from polynomial, rational, and exponential functions, to solve
+      problems.
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_rei2
+    text: A-REI.2 — Solve simple rational and radical equations in one variable, and
+      give examples showing how extraneous solutions may arise.
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_rei11
+    text: A-REI.11 — Explain and find the solutions of f(x)=g(x) as the x-values
+      where the graphs intersect, including polynomial, rational, exponential,
+      and logarithmic functions.
+    maps_to:
+      - co_a2_alg
+  - id: lo_a2_if4
+    text: F-IF.4 — Interpret key features of graphs and tables for a wider range of
+      function types and sketch graphs from a verbal description.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_if6
+    text: F-IF.6 — Calculate and interpret the average rate of change of a function
+      over a specified interval.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_if7
+    text: F-IF.7 — Graph polynomial, rational, exponential, logarithmic, and
+      trigonometric functions, showing key features.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_if8
+    text: F-IF.8 — Write functions in equivalent forms to reveal properties,
+      including using the properties of exponents to interpret growth and decay.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_if9
+    text: F-IF.9 — Compare properties of two functions represented in different ways
+      (algebraically, graphically, numerically, verbally).
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_bf1
+    text: F-BF.1 — Write a function that describes a relationship, including
+      composing functions to model a situation.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_bf3
+    text: F-BF.3 — Identify the effect of the transformations f(x)+k, k·f(x), f(kx),
+      and f(x+k) on graphs, and find the value of k given graphs.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_bf4
+    text: F-BF.4 — Find inverse functions, including solving y=f(x) for x and
+      verifying that one function undoes another.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_le4
+    text: F-LE.4 — For exponential models, express as a logarithm the solution to
+      ab^(ct)=d, and evaluate the logarithm using technology.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_tf1
+    text: F-TF.1 — Understand radian measure of an angle as the length of the arc on
+      the unit circle subtended by the angle.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_tf2
+    text: F-TF.2 — Explain how the unit circle enables the extension of
+      trigonometric functions to all real numbers.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_tf5
+    text: F-TF.5 — Choose trigonometric functions to model periodic phenomena with
+      specified amplitude, frequency, and midline.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_tf8
+    text: F-TF.8 — Prove the Pythagorean identity sin²θ + cos²θ = 1 and use it to
+      find sin, cos, or tan given one value and the quadrant.
+    maps_to:
+      - co_a2_fun
+  - id: lo_a2_id4
+    text: S-ID.4 — Use the mean and standard deviation of a data set to fit a normal
+      distribution and estimate population percentages, including with
+      technology.
+    maps_to:
+      - co_a2_stat
+  - id: lo_a2_ic1
+    text: S-IC.1 — Understand statistics as a process for making inferences about
+      population parameters based on a random sample.
+    maps_to:
+      - co_a2_stat
+  - id: lo_a2_ic2
+    text: S-IC.2 — Decide if a specified model is consistent with results from a
+      data-generating process (e.g., via simulation).
+    maps_to:
+      - co_a2_stat
+  - id: lo_a2_ic3
+    text: S-IC.3 — Recognize the purposes of and differences among sample surveys,
+      experiments, and observational studies; explain how randomization relates
+      to each.
+    maps_to:
+      - co_a2_stat
+  - id: lo_a2_ic4
+    text: S-IC.4 — Use data from a sample survey to estimate a population mean or
+      proportion; develop a margin of error through simulation.
+    maps_to:
+      - co_a2_stat
+  - id: lo_a2_ic5
+    text: S-IC.5 — Use data from a randomized experiment to compare two treatments;
+      use simulation to decide if differences are significant.
+    maps_to:
+      - co_a2_stat
+  - id: lo_a2_ic6
+    text: S-IC.6 — Evaluate reports based on data.
+    maps_to:
+      - co_a2_stat

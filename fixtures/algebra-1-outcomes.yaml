@@ -1,0 +1,330 @@
+schema: drawbridge-outcomes/1
+terminology:
+  outcome: Course Outcome
+  evidence: Evidence Outcome
+  objective: Learning Objective
+course:
+  title: Algebra I
+  code: MATH-ALG1
+outcomes:
+  - id: co_a1_nq
+    text: Reason quantitatively, use units strategically, and work fluently with
+      rational and irrational numbers when modeling.
+    evidence:
+      - id: eo_a1_nq
+        text: "Quantities (N-Q): reason quantitatively and use units to solve problems."
+        scope:
+          - lo_a1_nq1
+          - lo_a1_nq2
+          - lo_a1_nq3
+      - id: eo_a1_rn
+        text: "The Real Number System (N-RN): use properties of rational and irrational
+          numbers."
+        scope:
+          - lo_a1_rn3
+  - id: co_a1_alg
+    text: Interpret, rewrite, and reason with algebraic expressions, equations, and
+      inequalities to model and solve problems.
+    evidence:
+      - id: eo_a1_sse
+        text: "Seeing Structure in Expressions (A-SSE): interpret and use the structure
+          of expressions."
+        scope:
+          - lo_a1_sse1
+          - lo_a1_sse2
+          - lo_a1_sse3
+      - id: eo_a1_apr
+        text: "Arithmetic with Polynomials (A-APR): perform operations on polynomials."
+        scope:
+          - lo_a1_apr1
+      - id: eo_a1_ced
+        text: "Creating Equations (A-CED): create equations that describe numbers or
+          relationships."
+        scope:
+          - lo_a1_ced1
+          - lo_a1_ced2
+          - lo_a1_ced3
+          - lo_a1_ced4
+      - id: eo_a1_rei
+        text: "Reasoning with Equations and Inequalities (A-REI): solve equations and
+          systems and justify the reasoning."
+        scope:
+          - lo_a1_rei1
+          - lo_a1_rei3
+          - lo_a1_rei4
+          - lo_a1_rei5
+          - lo_a1_rei6
+          - lo_a1_rei10
+          - lo_a1_rei11
+          - lo_a1_rei12
+  - id: co_a1_fun
+    text: Interpret, build, and compare linear, quadratic, and exponential functions
+      that arise from real-world situations.
+    evidence:
+      - id: eo_a1_if
+        text: "Interpreting Functions (F-IF): understand the concept of a function and
+          interpret functions in context."
+        scope:
+          - lo_a1_if1
+          - lo_a1_if2
+          - lo_a1_if3
+          - lo_a1_if4
+          - lo_a1_if5
+          - lo_a1_if6
+          - lo_a1_if7
+          - lo_a1_if8
+          - lo_a1_if9
+      - id: eo_a1_bf
+        text: "Building Functions (F-BF): build functions that model relationships."
+        scope:
+          - lo_a1_bf1
+          - lo_a1_bf2
+          - lo_a1_bf3
+      - id: eo_a1_le
+        text: "Linear, Quadratic, and Exponential Models (F-LE): construct and compare
+          models and interpret them."
+        scope:
+          - lo_a1_le1
+          - lo_a1_le2
+          - lo_a1_le3
+          - lo_a1_le5
+  - id: co_a1_stat
+    text: Summarize, represent, and interpret data on one and two variables, and
+      assess associations and trends.
+    evidence:
+      - id: eo_a1_id
+        text: "Interpreting Categorical and Quantitative Data (S-ID): analyze single-
+          and two-variable data."
+        scope:
+          - lo_a1_id1
+          - lo_a1_id2
+          - lo_a1_id3
+          - lo_a1_id5
+          - lo_a1_id6
+          - lo_a1_id7
+          - lo_a1_id8
+          - lo_a1_id9
+objectives:
+  - id: lo_a1_nq1
+    text: N-Q.1 — Use units to understand problems and guide solutions; choose and
+      interpret units consistently in formulas and the scale and origin in
+      graphs and data displays.
+    maps_to:
+      - co_a1_nq
+  - id: lo_a1_nq2
+    text: N-Q.2 — Define appropriate quantities for the purpose of descriptive
+      modeling.
+    maps_to:
+      - co_a1_nq
+  - id: lo_a1_nq3
+    text: N-Q.3 — Choose a level of accuracy appropriate to limitations on
+      measurement when reporting quantities.
+    maps_to:
+      - co_a1_nq
+  - id: lo_a1_rn3
+    text: N-RN.3 — Explain why sums/products of rational numbers are rational, a
+      rational plus an irrational is irrational, and a nonzero rational times an
+      irrational is irrational.
+    maps_to:
+      - co_a1_nq
+  - id: lo_a1_sse1
+    text: A-SSE.1 — Interpret expressions that represent a quantity in terms of its
+      context (parts, factors, coefficients).
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_sse2
+    text: A-SSE.2 — Use the structure of an expression to identify ways to rewrite
+      it.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_sse3
+    text: A-SSE.3 — Produce an equivalent form of an expression to reveal and
+      explain properties (factoring, completing the square, properties of
+      exponents).
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_apr1
+    text: A-APR.1 — Add, subtract, and multiply polynomials, understanding that
+      polynomials are closed under these operations.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_ced1
+    text: A-CED.1 — Create equations and inequalities in one variable and use them
+      to solve problems.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_ced2
+    text: A-CED.2 — Create equations in two or more variables to represent
+      relationships; graph on coordinate axes with labels and scales.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_ced3
+    text: A-CED.3 — Represent constraints by equations, inequalities, or systems,
+      and interpret solutions as viable or non-viable in a modeling context.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_ced4
+    text: A-CED.4 — Rearrange formulas to highlight a quantity of interest, using
+      the same reasoning as in solving equations.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_rei1
+    text: A-REI.1 — Explain each step in solving an equation and construct a viable
+      argument to justify a solution method.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_rei3
+    text: A-REI.3 — Solve linear equations and inequalities in one variable,
+      including those with letter coefficients.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_rei4
+    text: A-REI.4 — Solve quadratic equations by inspection, taking square roots,
+      completing the square, the quadratic formula, and factoring.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_rei5
+    text: A-REI.5 — Prove that replacing one equation in a system by a sum of that
+      equation and a multiple of the other yields a system with the same
+      solutions.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_rei6
+    text: A-REI.6 — Solve systems of linear equations exactly and approximately,
+      focusing on pairs in two variables.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_rei10
+    text: A-REI.10 — Understand that the graph of an equation is the set of all its
+      solutions plotted in the coordinate plane.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_rei11
+    text: A-REI.11 — Explain why the x-coordinates where y=f(x) meets y=g(x) are the
+      solutions of f(x)=g(x); find them approximately.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_rei12
+    text: A-REI.12 — Graph the solutions to a linear inequality and to systems of
+      linear inequalities as half-planes and their intersection.
+    maps_to:
+      - co_a1_alg
+  - id: lo_a1_if1
+    text: F-IF.1 — Understand a function as a rule assigning each input exactly one
+      output; use domain, range, and the notation y=f(x).
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_if2
+    text: F-IF.2 — Use function notation, evaluate functions, and interpret
+      statements that use function notation in context.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_if3
+    text: F-IF.3 — Recognize that sequences are functions, sometimes defined
+      recursively, whose domain is a subset of the integers.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_if4
+    text: F-IF.4 — Interpret key features of graphs and tables (intercepts,
+      intervals of increase/decrease, maxima/minima, symmetry, end behavior).
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_if5
+    text: F-IF.5 — Relate the domain of a function to its graph and to the
+      quantitative relationship it describes.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_if6
+    text: F-IF.6 — Calculate and interpret the average rate of change of a function
+      over an interval from a graph or table.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_if7
+    text: F-IF.7 — Graph linear, quadratic, and simple exponential functions,
+      showing key features by hand and with technology.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_if8
+    text: F-IF.8 — Write a function in different but equivalent forms to reveal and
+      explain properties (factored, vertex, standard).
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_if9
+    text: F-IF.9 — Compare properties of two functions represented in different ways
+      (algebraically, graphically, numerically, verbally).
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_bf1
+    text: F-BF.1 — Write a function that describes a relationship between two
+      quantities, combining standard function types.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_bf2
+    text: F-BF.2 — Write arithmetic and geometric sequences with both recursive and
+      explicit formulas and use them to model situations.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_bf3
+    text: F-BF.3 — Identify the effect on a graph of replacing f(x) by f(x)+k,
+      k·f(x), f(kx), and f(x+k) for specific values of k.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_le1
+    text: F-LE.1 — Distinguish situations that can be modeled with linear functions
+      (constant rate) from exponential (constant percent rate).
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_le2
+    text: F-LE.2 — Construct linear and exponential functions given a graph, a
+      description, a table, or input-output pairs.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_le3
+    text: F-LE.3 — Observe that a quantity growing exponentially eventually exceeds
+      one growing linearly, quadratically, or as a polynomial.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_le5
+    text: F-LE.5 — Interpret the parameters in a linear or exponential function in
+      terms of a context.
+    maps_to:
+      - co_a1_fun
+  - id: lo_a1_id1
+    text: S-ID.1 — Represent data with plots on the real number line (dot plots,
+      histograms, box plots).
+    maps_to:
+      - co_a1_stat
+  - id: lo_a1_id2
+    text: S-ID.2 — Compare center (median, mean) and spread (IQR, standard
+      deviation) of two or more data sets.
+    maps_to:
+      - co_a1_stat
+  - id: lo_a1_id3
+    text: S-ID.3 — Interpret differences in shape, center, and spread in context,
+      accounting for possible outliers.
+    maps_to:
+      - co_a1_stat
+  - id: lo_a1_id5
+    text: S-ID.5 — Summarize categorical data for two categories in two-way
+      frequency tables; interpret relative frequencies and associations.
+    maps_to:
+      - co_a1_stat
+  - id: lo_a1_id6
+    text: S-ID.6 — Represent two quantitative variables on a scatter plot and fit a
+      function (linear, quadratic, exponential) to the data.
+    maps_to:
+      - co_a1_stat
+  - id: lo_a1_id7
+    text: S-ID.7 — Interpret the slope and intercept of a linear model in the
+      context of the data.
+    maps_to:
+      - co_a1_stat
+  - id: lo_a1_id8
+    text: S-ID.8 — Compute (using technology) and interpret the correlation
+      coefficient of a linear fit.
+    maps_to:
+      - co_a1_stat
+  - id: lo_a1_id9
+    text: S-ID.9 — Distinguish between correlation and causation.
+    maps_to:
+      - co_a1_stat
