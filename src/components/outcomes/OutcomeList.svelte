@@ -4,8 +4,8 @@
   // affordances sit inline. Rows show the derived display number (CO 1, EO 2.1,
   // LO 3) prominently with the stable id muted beside it. All state flows
   // through the store.
-  import { outcomeModel, selection, numbers, actions } from "../../stores/outcomes";
-  import { displayLabel } from "$lib/outcomes/numbering";
+  import { outcomeModel, selection, identifiers, actions } from "../../stores/outcomes";
+  import { labelFor } from "$lib/outcomes/numbering";
   import type {
     CourseOutcome,
     EvidenceOutcome,
@@ -15,7 +15,7 @@
 
   const model = $derived($outcomeModel);
   const sel = $derived($selection);
-  const nums = $derived($numbers);
+  const ids = $derived($identifiers);
 
   function isSel(kind: string, id: string) {
     return sel?.kind === kind && sel.id === id;
@@ -99,7 +99,7 @@
                 class="flex flex-1 items-baseline gap-2 text-left text-sm"
                 onclick={() => actions.select({ kind: "co", id: co.id })}
               >
-                {@render numTag("CO " + nums.outcome.get(co.id), co.id)}
+                {@render numTag(labelFor(ids, co.id), co.id)}
                 <span>{co.text || "(untitled)"}</span>
               </button>
               <button
@@ -128,7 +128,7 @@
                     class="flex flex-1 items-baseline gap-2 text-left"
                     onclick={() => actions.select({ kind: "eo", id: eo.id, coId: co.id })}
                   >
-                    {@render numTag("EO " + nums.evidence.get(eo.id), eo.id)}
+                    {@render numTag(labelFor(ids, eo.id), eo.id)}
                     <span>{eo.text || "(untitled)"}</span>
                   </button>
                   <button
@@ -184,12 +184,12 @@
               class="flex flex-1 items-baseline gap-2 text-left text-sm"
               onclick={() => actions.select({ kind: "lo", id: lo.id })}
             >
-              {@render numTag("LO " + nums.objective.get(lo.id), lo.id)}
+              {@render numTag(labelFor(ids, lo.id), lo.id)}
               <span>
                 {lo.text || "(untitled)"}
                 {#if lo.maps_to.length}
                   <span class="text-muted-foreground text-xs">
-                    → {lo.maps_to.map((c) => displayLabel(nums, c)).join(", ")}
+                    → {lo.maps_to.map((c) => labelFor(ids, c)).join(", ")}
                   </span>
                 {/if}
               </span>

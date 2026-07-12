@@ -2,15 +2,15 @@
   // Validation flags with detail — severity, which item, and the message.
   // Clicking a flag selects its target so you can fix it. Collapsed to a count
   // summary by default. Flags never block; this is advisory.
-  import { flags, numbers, actions } from "../../stores/outcomes";
-  import { displayLabel } from "$lib/outcomes/numbering";
+  import { flags, identifiers, actions } from "../../stores/outcomes";
+  import { labelFor } from "$lib/outcomes/numbering";
   import Badge from "../ui/Badge.svelte";
 
   // When true, clicking a flag selects its target (edit mode only).
   let { selectable = true }: { selectable?: boolean } = $props();
 
   const all = $derived($flags);
-  const nums = $derived($numbers);
+  const ids = $derived($identifiers);
 
   const counts = $derived.by(() => {
     const c = { error: 0, warn: 0, info: 0 };
@@ -41,11 +41,11 @@
                 class="text-primary shrink-0 font-mono text-xs hover:underline"
                 onclick={() => actions.selectById(flag.targetId!)}
               >
-                {displayLabel(nums, flag.targetId)}
+                {labelFor(ids, flag.targetId)}
               </button>
             {:else}
               <span class="text-muted-foreground shrink-0 font-mono text-xs">
-                {displayLabel(nums, flag.targetId)}
+                {labelFor(ids, flag.targetId)}
               </span>
             {/if}
           {/if}

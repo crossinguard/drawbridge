@@ -1,39 +1,15 @@
 ---
 import Base from "../../layouts/Base.astro";
 import OutcomeEditor from "../../components/outcomes/OutcomeEditor.svelte";
-import TemplateActions from "../../components/ui/TemplateActions.svelte";
-// Inlined at build time (?raw) — no runtime network, CSP-safe.
-import templateText from "../../templates/drawbridge-outcomes-v1.yaml?raw";
 ---
 
 <Base title="Outcome Builder">
   <h1 class="mb-3 text-3xl font-semibold tracking-tight">Outcome Builder</h1>
-  <p class="text-muted-foreground mb-8 max-w-2xl text-lg">
+  <p class="text-muted-foreground mb-2 max-w-2xl text-lg">
     Manage course outcomes, evidence outcomes, and learning objectives in one
     portable YAML file. Import to review; export to keep the file canonical.
     Nothing leaves your browser.
   </p>
-
-  <section class="border-border bg-card mb-8 rounded-lg border p-5">
-    <h2 class="m-0 text-base font-medium">Start from a template</h2>
-    <p class="text-muted-foreground mt-1 mb-3 max-w-2xl text-sm">
-      A blank <code
-        class="bg-accent text-accent-foreground rounded px-1.5 py-0.5 font-mono text-[0.85em]"
-        >drawbridge-outcomes/1</code
-      > file with the structure and comments already in place. Download it, or copy
-      it into your editor.
-    </p>
-    <TemplateActions
-      client:load
-      text={templateText}
-      filename="outcomes.drawbridge.yaml"
-    />
-    <p class="text-muted-foreground mt-3 text-sm">
-      New to the format? <a class="text-primary underline" href="/conventions/outcomes"
-        >Read the outcomes convention →</a
-      >
-    </p>
-  </section>
 
   <OutcomeEditor client:load />
 </Base>

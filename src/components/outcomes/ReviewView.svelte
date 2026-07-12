@@ -8,12 +8,12 @@
   // Each level has a deliberately distinct treatment so the hierarchy scans at a
   // glance: CO = filled header strip, EO = soft badge on a teal rail, LO = a
   // muted, bulleted leaf.
-  import { outcomeModel, numbers } from "../../stores/outcomes";
+  import { outcomeModel, identifiers } from "../../stores/outcomes";
   import { groupByOutcome } from "$lib/outcomes/grouping";
-  import { displayLabel } from "$lib/outcomes/numbering";
+  import { labelFor } from "$lib/outcomes/numbering";
 
   const model = $derived($outcomeModel);
-  const nums = $derived($numbers);
+  const ids = $derived($identifiers);
   const grouped = $derived(model ? groupByOutcome(model) : null);
 </script>
 
@@ -22,13 +22,13 @@
   <li class="flex items-start gap-2 text-sm">
     <span class="bg-primary/40 mt-1.5 size-1.5 shrink-0 rounded-full"></span>
     <span class="text-muted-foreground shrink-0 text-[0.7rem] font-semibold tracking-wide">
-      LO {nums.objective.get(lo.id)}
+      {labelFor(ids, lo.id)}
     </span>
     <span class="text-muted-foreground">
       {lo.text || "(untitled)"}
       {#if others.length}
         <span class="text-xs italic"
-          >· also {others.map((c) => displayLabel(nums, c)).join(", ")}</span
+          >· also {others.map((c) => labelFor(ids, c)).join(", ")}</span
         >
       {/if}
     </span>
@@ -60,7 +60,7 @@
           <span
             class="bg-primary text-primary-foreground shrink-0 rounded px-2 py-0.5 text-xs font-semibold tracking-wide"
           >
-            CO {nums.outcome.get(g.co.id)}
+            {labelFor(ids, g.co.id)}
           </span>
           <h3 class="text-foreground m-0 text-base leading-snug font-semibold">
             {g.co.text || "(untitled)"}
@@ -77,7 +77,7 @@
                     <span
                       class="bg-accent text-accent-foreground shrink-0 rounded px-1.5 py-0.5 text-[0.7rem] font-semibold tracking-wide"
                     >
-                      EO {nums.evidence.get(ev.eo.id)}
+                      {labelFor(ids, ev.eo.id)}
                     </span>
                     <span class="text-foreground text-sm">{ev.eo.text || "(untitled)"}</span>
                   </div>

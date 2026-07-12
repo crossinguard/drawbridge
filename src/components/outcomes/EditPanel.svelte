@@ -6,13 +6,13 @@
   //   CO / EO / LO → Text
   //   EO           → advisory Scope (which objectives this evidence supports)
   //   LO           → Maps to (which course outcomes this objective supports)
-  import { selection, outcomeModel, numbers, actions } from "../../stores/outcomes";
-  import { displayLabel } from "$lib/outcomes/numbering";
+  import { selection, outcomeModel, identifiers, numbers, actions } from "../../stores/outcomes";
+  import { labelFor } from "$lib/outcomes/numbering";
   import Button from "../ui/Button.svelte";
 
   const sel = $derived($selection);
   const model = $derived($outcomeModel);
-  const nums = $derived($numbers);
+  const ids = $derived($identifiers);
 
   // Scope may only reference objectives mapped to the EO's parent CO (plus any
   // already selected, so stragglers from an import can be unchecked).
@@ -38,6 +38,7 @@
   // untracked read of the store, so unrelated edits don't clobber in-progress
   // typing).
   let draftText = $state("");
+  let draftCode = $state(""); // optional custom identifier
   let draftMaps = $state<string[]>([]); // LO → CO ids
   let draftScope = $state<string[]>([]); // EO → LO ids
   let loadedKey = $state<string | null>(null);
@@ -49,26 +50,41 @@
     loadedKey = key;
     const m = outcomeModel.get(); // untracked snapshot
     let text = "";
+    let code = "";
     let maps: string[] = [];
     let scope: string[] = [];
     if (s && m) {
       if (s.kind === "co") {
-        text = m.outcomes.find((c) => c.id === s.id)?.text ?? "";
+        const co = m.outcomes.find((c) => c.id === s.id);
+        text = co?.text ?? "";
+        code = co?.code ?? "";
       } else if (s.kind === "eo") {
         const eo = m.outcomes
           .find((c) => c.id === s.coId)
           ?.evidence.find((e) => e.id === s.id);
         text = eo?.text ?? "";
+        code = eo?.code ?? "";
         scope = [...(eo?.scope ?? [])];
       } else {
         const lo = m.objectives.find((l) => l.id === s.id);
         text = lo?.text ?? "";
+        code = lo?.code ?? "";
         maps = [...(lo?.maps_to ?? [])];
       }
     }
     draftText = text;
+    draftCode = code;
     draftMaps = maps;
     draftScope = scope;
+  });
+
+  // The identifier this item would show if no custom code were set.
+  const autoId = $derived.by(() => {
+    if (!sel || !model) return "";
+    const n = $numbers;
+    if (sel.kind === "co") return `${model.prefixes.outcome} ${n.outcome.get(sel.id) ?? ""}`.trim();
+    if (sel.kind === "eo") return `${model.prefixes.evidence} ${n.evidence.get(sel.id) ?? ""}`.trim();
+    return `${model.prefixes.objective} ${n.objective.get(sel.id) ?? ""}`.trim();
   });
 
   const label = $derived(
@@ -91,6 +107,7 @@
   const dirty = $derived.by(() => {
     if (!entity || !sel) return false;
     if (draftText !== entity.text) return true;
+    if (draftCode !== (entity.code ?? "")) return true;
     if (sel.kind === "lo") return differs(draftMaps, (entity as { maps_to?: string[] }).maps_to);
     if (sel.kind === "eo") return differs(draftScope, (entity as { scope?: string[] }).scope);
     return false;
@@ -111,6 +128,7 @@
       actions.setObjectiveText(sel.id, draftText);
       actions.setObjectiveMapping(sel.id, draftMaps);
     }
+    actions.setCode(sel, draftCode); // custom identifier (empty clears it)
     loadedKey = null; // force re-sync from the freshly saved model
   }
 
@@ -132,7 +150,7 @@
     </p>
   {:else}
     <div class="mb-3 flex items-baseline justify-between gap-2">
-      <h3 class="text-sm font-medium">Edit {label} {displayLabel(nums, sel.id)}</h3>
+      <h3 class="text-sm font-medium">Edit {label} {labelFor(ids, sel.id)}</h3>
       <code
         class="bg-accent text-accent-foreground rounded px-1.5 py-0.5 font-mono text-[0.75em]"
         >{sel.id}</code
@@ -146,6 +164,19 @@
       rows="3"
       bind:value={draftText}
     ></textarea>
+
+    <label class="mb-1 block text-xs font-medium" for="edit-code">
+      Identifier <span class="text-muted-foreground font-normal">(optional)</span>
+    </label>
+    <input
+      id="edit-code"
+      class="border-border bg-background focus-visible:border-outline mb-1 w-full rounded-md border px-2.5 py-1.5 font-mono text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
+      placeholder={autoId}
+      bind:value={draftCode}
+    />
+    <p class="text-muted-foreground mb-3 text-xs">
+      Blank auto-numbers as <span class="font-mono">{autoId}</span>.
+    </p>
 
     {#if sel.kind === "eo" && model}
       <p class="mb-1 text-xs font-medium">
@@ -168,7 +199,7 @@
                 onchange={(e) => (draftScope = toggle(draftScope, lo.id, e.currentTarget.checked))}
               />
               <label for={"scope-" + lo.id} class="cursor-pointer">
-                <span class="text-foreground font-medium">LO {nums.objective.get(lo.id)}</span>
+                <span class="text-foreground font-medium">{labelFor(ids, lo.id)}</span>
                 <span class="text-muted-foreground">{lo.text || "(untitled)"}</span>
               </label>
             </li>
@@ -195,7 +226,7 @@
                 onchange={(e) => (draftMaps = toggle(draftMaps, co.id, e.currentTarget.checked))}
               />
               <label for={"map-" + co.id} class="cursor-pointer">
-                <span class="text-foreground font-medium">CO {nums.outcome.get(co.id)}</span>
+                <span class="text-foreground font-medium">{labelFor(ids, co.id)}</span>
                 <span class="text-muted-foreground">{co.text || "(untitled)"}</span>
               </label>
             </li>

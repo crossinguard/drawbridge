@@ -11,7 +11,10 @@
   import ReviewView from "./ReviewView.svelte";
   import FlagList from "./FlagList.svelte";
   import Button from "../ui/Button.svelte";
+  import TemplateActions from "../ui/TemplateActions.svelte";
   import { button } from "../starwind/button/variants";
+  // Inlined at build time (?raw) — no runtime network, CSP-safe.
+  import templateText from "../../templates/drawbridge-outcomes-v1.yaml?raw";
 
   const s = $derived($session);
   const model = $derived($outcomeModel);
@@ -72,21 +75,11 @@
   }
 </script>
 
-<div class="my-6 flex flex-wrap items-center gap-3">
-  <label class={button({ variant: "outline", size: "sm" })}>
-    <input
-      class="sr-only"
-      type="file"
-      accept=".yaml,.yml,application/yaml,text/yaml"
-      onchange={onFile}
-    />
-    Import…
-  </label>
-  <Button variant="outline" size="sm" onclick={onNew}>New</Button>
-  <Button variant="primary" size="sm" onclick={onExport} disabled={!model}>Export</Button>
-
-  {#if model}
-    <div class="border-border ml-1 inline-flex rounded-md border p-0.5 text-sm">
+<!-- Toolbar appears once a file is loaded; the focus is edit / review / export.
+     New / Import are demoted to secondary controls for switching files. -->
+{#if model}
+  <div class="my-6 flex flex-wrap items-center gap-3">
+    <div class="border-border inline-flex rounded-md border p-0.5 text-sm">
       {#each ["edit", "review"] as const as m}
         <button
           type="button"
@@ -100,31 +93,44 @@
         </button>
       {/each}
     </div>
-  {/if}
+    <Button variant="primary" size="sm" onclick={onExport}>Export</Button>
 
-  {#if s.fileName}
-    <span class="text-muted-foreground truncate font-mono text-xs" title={s.fileName}>
-      {s.fileName}
-    </span>
-  {/if}
-  {#if s.dirty}
-    <span class="text-warning-foreground flex items-center gap-1 text-xs" title="Edits not yet exported">
-      <span class="bg-warning inline-block size-2 rounded-full"></span>
-      unsaved since export
-    </span>
-  {/if}
-  {#if recovered}
-    <span
-      class="text-muted-foreground flex items-center gap-1.5 text-xs"
-      title="This session was recovered from your browser's local storage; it was never uploaded"
-    >
-      ↻ restored from {recoveredTime}
-      <button type="button" class="hover:text-error underline" onclick={() => actions.discardRecovered()}>
-        discard
-      </button>
-    </span>
-  {/if}
-</div>
+    <span class="text-border" aria-hidden="true">|</span>
+    <label class={button({ variant: "ghost", size: "sm" })}>
+      <input
+        class="sr-only"
+        type="file"
+        accept=".yaml,.yml,application/yaml,text/yaml"
+        onchange={onFile}
+      />
+      Import…
+    </label>
+    <Button variant="ghost" size="sm" onclick={onNew}>New</Button>
+
+    {#if s.fileName}
+      <span class="text-muted-foreground truncate font-mono text-xs" title={s.fileName}>
+        {s.fileName}
+      </span>
+    {/if}
+    {#if s.dirty}
+      <span class="text-warning-foreground flex items-center gap-1 text-xs" title="Edits not yet exported">
+        <span class="bg-warning inline-block size-2 rounded-full"></span>
+        unsaved since export
+      </span>
+    {/if}
+    {#if recovered}
+      <span
+        class="text-muted-foreground flex items-center gap-1.5 text-xs"
+        title="This session was recovered from your browser's local storage; it was never uploaded"
+      >
+        ↻ restored from {recoveredTime}
+        <button type="button" class="hover:text-error underline" onclick={() => actions.discardRecovered()}>
+          discard
+        </button>
+      </span>
+    {/if}
+  </div>
+{/if}
 
 {#if loadError}
   <p
@@ -136,13 +142,58 @@
 {/if}
 
 {#if !model}
-  <p class="text-muted-foreground max-w-2xl">
-    <button type="button" class="text-primary underline" onclick={onNew}>Start a new file</button>
-    or Import an existing <code
-      class="bg-accent text-accent-foreground rounded px-1.5 py-0.5 font-mono text-[0.8em]"
-      >drawbridge-outcomes/1</code
-    > YAML. Nothing leaves your browser.
-  </p>
+  <section class="border-border bg-card mt-6 max-w-2xl rounded-lg border p-6">
+    <h2 class="text-lg font-semibold">Getting started</h2>
+    <p class="text-muted-foreground mt-1 mb-5 text-sm">
+      Build a course's outcomes in one portable YAML file. Pick a starting point —
+      nothing leaves your browser.
+    </p>
+    <div class="divide-border flex flex-col divide-y">
+      <div class="flex items-start justify-between gap-4 pb-4">
+        <div>
+          <p class="text-sm font-medium">Create a new file</p>
+          <p class="text-muted-foreground text-sm">
+            Start from an empty course and add outcomes as you go.
+          </p>
+        </div>
+        <Button variant="primary" size="sm" onclick={onNew}>New file</Button>
+      </div>
+
+      <div class="flex items-start justify-between gap-4 py-4">
+        <div>
+          <p class="text-sm font-medium">Import a file</p>
+          <p class="text-muted-foreground text-sm">
+            Open an existing <code
+              class="bg-accent text-accent-foreground rounded px-1 py-0.5 font-mono text-[0.8em]"
+              >drawbridge-outcomes/1</code
+            > YAML from your machine.
+          </p>
+        </div>
+        <label class={button({ variant: "outline", size: "sm" }) + " shrink-0"}>
+          <input
+            class="sr-only"
+            type="file"
+            accept=".yaml,.yml,application/yaml,text/yaml"
+            onchange={onFile}
+          />
+          Import…
+        </label>
+      </div>
+
+      <div class="flex items-start justify-between gap-4 pt-4">
+        <div>
+          <p class="text-sm font-medium">Start from a template</p>
+          <p class="text-muted-foreground text-sm">
+            Download or copy a commented starter file.
+            <a class="text-primary underline" href="/conventions/outcomes">Read the format →</a>
+          </p>
+        </div>
+        <div class="shrink-0">
+          <TemplateActions text={templateText} filename="outcomes.drawbridge.yaml" />
+        </div>
+      </div>
+    </div>
+  </section>
 {:else}
   <div class="mb-4">
     <FlagList selectable={mode === "edit"} />
@@ -177,24 +228,35 @@
     </div>
 
     <details class="mb-4">
-      <summary class="text-muted-foreground cursor-pointer text-xs select-none">
-        Terminology
-      </summary>
-      <div class="mt-2 flex flex-wrap gap-3">
+      <summary class="text-muted-foreground cursor-pointer text-xs select-none">Schema</summary>
+      <div class="border-border mt-2 max-w-xl overflow-hidden rounded-md border">
+        <div
+          class="bg-accent text-muted-foreground grid grid-cols-[5rem_1fr_5rem] gap-2 px-3 py-1.5 text-[0.7rem] font-medium tracking-wide uppercase"
+        >
+          <span>Tier</span><span>Label</span><span>Prefix</span>
+        </div>
         {#each [["outcome", "Outcome"], ["evidence", "Evidence"], ["objective", "Objective"]] as const as [key, name]}
-          <div>
-            <label class="text-muted-foreground mb-1 block text-xs font-medium" for={"term-" + key}
-              >{name} label</label
-            >
+          <div class="border-border grid grid-cols-[5rem_1fr_5rem] items-center gap-2 border-t px-3 py-2">
+            <span class="text-muted-foreground text-sm">{name}</span>
             <input
-              id={"term-" + key}
-              class="border-border bg-background focus-visible:border-outline w-40 rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
+              aria-label={name + " label"}
+              class="border-border bg-background focus-visible:border-outline rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
               value={model.terminology[key]}
               onchange={(e) => actions.setTerminology(key, e.currentTarget.value)}
+            />
+            <input
+              aria-label={name + " prefix"}
+              class="border-border bg-background focus-visible:border-outline rounded-md border px-2 py-1.5 font-mono text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
+              value={model.prefixes[key]}
+              onchange={(e) => actions.setPrefix(key, e.currentTarget.value)}
             />
           </div>
         {/each}
       </div>
+      <p class="text-muted-foreground mt-1.5 max-w-xl text-xs">
+        Labels name each tier; the prefix is the short code shown with the auto-number
+        (e.g. <span class="font-mono">CO 1</span>). Adding more tiers is coming later.
+      </p>
     </details>
 
     <div class="grid grid-cols-1 gap-5 md:grid-cols-[1fr_20rem]">
