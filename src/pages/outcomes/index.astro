@@ -1,6 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
-import OutcomeViewer from "../../components/outcomes/OutcomeViewer.svelte";
+import OutcomeEditor from "../../components/outcomes/OutcomeEditor.svelte";
 import TemplateActions from "../../components/ui/TemplateActions.svelte";
 // Inlined at build time (?raw) — no runtime network, CSP-safe.
 import templateText from "../../templates/drawbridge-outcomes-v1.yaml?raw";
@@ -35,5 +35,5 @@ import templateText from "../../templates/drawbridge-outcomes-v1.yaml?raw";
     </p>
   </section>
 
-  <OutcomeViewer client:load />
+  <OutcomeEditor client:load />
 </Base>
