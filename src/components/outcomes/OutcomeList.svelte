@@ -1,8 +1,11 @@
 <script lang="ts">
   // Left pane of the Outcome Builder: the document outline. Rows are read-only
-  // and selectable; selecting one opens the EditPanel. Add/delete affordances
-  // sit inline. All state flows through the store.
-  import { outcomeModel, selection, actions } from "../../stores/outcomes";
+  // and selectable; selecting one opens the EditPanel. Add / delete / reorder
+  // affordances sit inline. Rows show the derived display number (CO 1, EO 2.1,
+  // LO 3) prominently with the stable id muted beside it. All state flows
+  // through the store.
+  import { outcomeModel, selection, numbers, actions } from "../../stores/outcomes";
+  import { displayLabel } from "$lib/outcomes/numbering";
   import type {
     CourseOutcome,
     EvidenceOutcome,
@@ -12,6 +15,7 @@
 
   const model = $derived($outcomeModel);
   const sel = $derived($selection);
+  const nums = $derived($numbers);
 
   function isSel(kind: string, id: string) {
     return sel?.kind === kind && sel.id === id;
@@ -36,6 +40,34 @@
   }
 </script>
 
+{#snippet numTag(text: string, id: string)}
+  <span class="flex shrink-0 items-baseline gap-1">
+    <span class="text-foreground text-xs font-semibold">{text}</span>
+    <code class="text-muted-foreground font-mono text-[0.7em]">{id}</code>
+  </span>
+{/snippet}
+
+{#snippet reorder(up: () => void, down: () => void, first: boolean, last: boolean)}
+  <span class="flex flex-col leading-none">
+    <button
+      type="button"
+      class="text-muted-foreground hover:text-foreground text-[0.65rem] disabled:opacity-25"
+      title="Move up"
+      aria-label="Move up"
+      disabled={first}
+      onclick={up}>▲</button
+    >
+    <button
+      type="button"
+      class="text-muted-foreground hover:text-foreground text-[0.65rem] disabled:opacity-25"
+      title="Move down"
+      aria-label="Move down"
+      disabled={last}
+      onclick={down}>▼</button
+    >
+  </span>
+{/snippet}
+
 {#if model}
   <div class="flex flex-col gap-6">
     <section>
@@ -53,19 +85,22 @@
       {/if}
 
       <ul class="flex flex-col gap-2">
-        {#each model.outcomes as co}
+        {#each model.outcomes as co, i}
           <li class="border-border rounded-lg border">
-            <div
-              class="flex items-start gap-2 p-2.5"
-              class:bg-accent={isSel("co", co.id)}
-            >
+            <div class="flex items-start gap-2 p-2.5" class:bg-accent={isSel("co", co.id)}>
+              {@render reorder(
+                () => actions.moveOutcome(co.id, -1),
+                () => actions.moveOutcome(co.id, +1),
+                i === 0,
+                i === model.outcomes.length - 1,
+              )}
               <button
                 type="button"
-                class="flex-1 text-left text-sm"
+                class="flex flex-1 items-baseline gap-2 text-left text-sm"
                 onclick={() => actions.select({ kind: "co", id: co.id })}
               >
-                <code class="text-muted-foreground mr-1.5 font-mono text-xs">{co.id}</code>
-                {co.text || "(untitled)"}
+                {@render numTag("CO " + nums.outcome.get(co.id), co.id)}
+                <span>{co.text || "(untitled)"}</span>
               </button>
               <button
                 type="button"
@@ -77,21 +112,24 @@
             </div>
 
             <div class="border-border border-t px-2.5 py-2">
-              {#each co.evidence as eo}
+              {#each co.evidence as eo, j}
                 <div
-                  class="flex items-start gap-2 rounded py-1 pl-3 text-sm"
+                  class="flex items-start gap-2 rounded py-1 pl-1 text-sm"
                   class:bg-accent={isSel("eo", eo.id)}
                 >
+                  {@render reorder(
+                    () => actions.moveEvidence(co.id, eo.id, -1),
+                    () => actions.moveEvidence(co.id, eo.id, +1),
+                    j === 0,
+                    j === co.evidence.length - 1,
+                  )}
                   <button
                     type="button"
-                    class="flex-1 text-left"
-                    onclick={() =>
-                      actions.select({ kind: "eo", id: eo.id, coId: co.id })}
+                    class="flex flex-1 items-baseline gap-2 text-left"
+                    onclick={() => actions.select({ kind: "eo", id: eo.id, coId: co.id })}
                   >
-                    <code class="text-muted-foreground mr-1.5 font-mono text-xs"
-                      >{eo.id}</code
-                    >
-                    {eo.text || "(untitled)"}
+                    {@render numTag("EO " + nums.evidence.get(eo.id), eo.id)}
+                    <span>{eo.text || "(untitled)"}</span>
                   </button>
                   <button
                     type="button"
@@ -104,7 +142,7 @@
               {/each}
               <button
                 type="button"
-                class="text-primary mt-1 pl-3 text-xs hover:underline"
+                class="text-primary mt-1 pl-1 text-xs hover:underline"
                 onclick={() => actions.addEvidence(co.id)}
               >
                 + Add {model.terminology.evidence.toLowerCase()}
@@ -130,21 +168,31 @@
       {/if}
 
       <ul class="flex flex-col gap-2">
-        {#each model.objectives as lo}
+        {#each model.objectives as lo, i}
           <li
             class="border-border flex items-start gap-2 rounded-lg border p-2.5"
             class:bg-accent={isSel("lo", lo.id)}
           >
+            {@render reorder(
+              () => actions.moveObjective(lo.id, -1),
+              () => actions.moveObjective(lo.id, +1),
+              i === 0,
+              i === model.objectives.length - 1,
+            )}
             <button
               type="button"
-              class="flex-1 text-left text-sm"
+              class="flex flex-1 items-baseline gap-2 text-left text-sm"
               onclick={() => actions.select({ kind: "lo", id: lo.id })}
             >
-              <code class="text-muted-foreground mr-1.5 font-mono text-xs">{lo.id}</code>
-              {lo.text || "(untitled)"}
-              {#if lo.maps_to.length}
-                <span class="text-muted-foreground text-xs">→ {lo.maps_to.join(", ")}</span>
-              {/if}
+              {@render numTag("LO " + nums.objective.get(lo.id), lo.id)}
+              <span>
+                {lo.text || "(untitled)"}
+                {#if lo.maps_to.length}
+                  <span class="text-muted-foreground text-xs">
+                    → {lo.maps_to.map((c) => displayLabel(nums, c)).join(", ")}
+                  </span>
+                {/if}
+              </span>
             </button>
             <button
               type="button"

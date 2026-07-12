@@ -1,26 +1,22 @@
 <script lang="ts">
-  // Outcome Builder shell: toolbar (import / new / export), course fields, and the
-  // list + edit-panel layout. All document state lives in the store; this island
-  // only wires the DOM to it. Files remain canonical — the dirty indicator warns
-  // when edits haven't been exported yet (hard rule #6).
-  import { session, outcomeModel, flags, actions } from "../../stores/outcomes";
+  // Outcome Builder shell: toolbar (import / new / export / mode), validation
+  // detail, and either the editing layout (list + panel) or the read-only review
+  // view. All document state lives in the store; this island wires the DOM to it.
+  // Files remain canonical — the dirty indicator warns when edits haven't been
+  // exported yet (hard rule #6).
+  import { session, outcomeModel, actions } from "../../stores/outcomes";
   import OutcomeList from "./OutcomeList.svelte";
   import EditPanel from "./EditPanel.svelte";
+  import ReviewView from "./ReviewView.svelte";
+  import FlagList from "./FlagList.svelte";
   import Button from "../ui/Button.svelte";
-  import Badge from "../ui/Badge.svelte";
   import { button } from "../starwind/button/variants";
 
   const s = $derived($session);
   const model = $derived($outcomeModel);
-  const allFlags = $derived($flags);
 
+  let mode = $state<"edit" | "review">("edit");
   let loadError = $state<string | null>(null);
-
-  const flagCounts = $derived.by(() => {
-    const c = { error: 0, warn: 0, info: 0 };
-    for (const f of allFlags) c[f.severity]++;
-    return c;
-  });
 
   function confirmDiscard(): boolean {
     return !s.dirty || confirm("Discard unsaved changes since your last export?");
@@ -74,9 +70,25 @@
     Import…
   </label>
   <Button variant="outline" size="sm" onclick={onNew}>New</Button>
-  <Button variant="primary" size="sm" onclick={onExport} disabled={!model}>
-    Export
-  </Button>
+  <Button variant="primary" size="sm" onclick={onExport} disabled={!model}>Export</Button>
+
+  {#if model}
+    <div class="border-border ml-1 inline-flex rounded-md border p-0.5 text-sm">
+      {#each ["edit", "review"] as const as m}
+        <button
+          type="button"
+          class="rounded px-2.5 py-0.5 capitalize"
+          class:bg-primary={mode === m}
+          class:text-primary-foreground={mode === m}
+          class:text-muted-foreground={mode !== m}
+          onclick={() => (mode = m)}
+        >
+          {m}
+        </button>
+      {/each}
+    </div>
+  {/if}
+
   {#if s.fileName}
     <span class="text-muted-foreground truncate font-mono text-xs" title={s.fileName}>
       {s.fileName}
@@ -108,62 +120,62 @@
     > YAML. Nothing leaves your browser.
   </p>
 {:else}
-  <div class="mb-4 flex flex-wrap items-end gap-4">
-    <div>
-      <label class="text-muted-foreground mb-1 block text-xs font-medium" for="course-title"
-        >Course title</label
-      >
-      <input
-        id="course-title"
-        class="border-border bg-background focus-visible:border-outline rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
-        value={model.course.title ?? ""}
-        onchange={(e) => actions.setCourse("title", e.currentTarget.value)}
-      />
-    </div>
-    <div>
-      <label class="text-muted-foreground mb-1 block text-xs font-medium" for="course-code"
-        >Code</label
-      >
-      <input
-        id="course-code"
-        class="border-border bg-background focus-visible:border-outline w-32 rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
-        value={model.course.code ?? ""}
-        onchange={(e) => actions.setCourse("code", e.currentTarget.value)}
-      />
-    </div>
-    {#if allFlags.length}
-      <div class="flex items-center gap-1.5 text-xs">
-        {#if flagCounts.error}<Badge variant="error" size="sm">{flagCounts.error} error</Badge>{/if}
-        {#if flagCounts.warn}<Badge variant="warning" size="sm">{flagCounts.warn} warn</Badge>{/if}
-        {#if flagCounts.info}<Badge variant="info" size="sm">{flagCounts.info} info</Badge>{/if}
-        <span class="text-muted-foreground">flags never block</span>
+  <div class="mb-4">
+    <FlagList selectable={mode === "edit"} />
+  </div>
+
+  {#if mode === "review"}
+    <ReviewView />
+  {:else}
+    <div class="mb-4 flex flex-wrap items-end gap-4">
+      <div>
+        <label class="text-muted-foreground mb-1 block text-xs font-medium" for="course-title"
+          >Course title</label
+        >
+        <input
+          id="course-title"
+          class="border-border bg-background focus-visible:border-outline rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
+          value={model.course.title ?? ""}
+          onchange={(e) => actions.setCourse("title", e.currentTarget.value)}
+        />
       </div>
-    {/if}
-  </div>
-
-  <details class="mb-4">
-    <summary class="text-muted-foreground cursor-pointer text-xs select-none">
-      Terminology
-    </summary>
-    <div class="mt-2 flex flex-wrap gap-3">
-      {#each [["outcome", "Outcome"], ["evidence", "Evidence"], ["objective", "Objective"]] as const as [key, name]}
-        <div>
-          <label class="text-muted-foreground mb-1 block text-xs font-medium" for={"term-" + key}
-            >{name} label</label
-          >
-          <input
-            id={"term-" + key}
-            class="border-border bg-background focus-visible:border-outline w-40 rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
-            value={model.terminology[key]}
-            onchange={(e) => actions.setTerminology(key, e.currentTarget.value)}
-          />
-        </div>
-      {/each}
+      <div>
+        <label class="text-muted-foreground mb-1 block text-xs font-medium" for="course-code"
+          >Code</label
+        >
+        <input
+          id="course-code"
+          class="border-border bg-background focus-visible:border-outline w-32 rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
+          value={model.course.code ?? ""}
+          onchange={(e) => actions.setCourse("code", e.currentTarget.value)}
+        />
+      </div>
     </div>
-  </details>
 
-  <div class="grid grid-cols-1 gap-5 md:grid-cols-[1fr_20rem]">
-    <OutcomeList />
-    <EditPanel />
-  </div>
+    <details class="mb-4">
+      <summary class="text-muted-foreground cursor-pointer text-xs select-none">
+        Terminology
+      </summary>
+      <div class="mt-2 flex flex-wrap gap-3">
+        {#each [["outcome", "Outcome"], ["evidence", "Evidence"], ["objective", "Objective"]] as const as [key, name]}
+          <div>
+            <label class="text-muted-foreground mb-1 block text-xs font-medium" for={"term-" + key}
+              >{name} label</label
+            >
+            <input
+              id={"term-" + key}
+              class="border-border bg-background focus-visible:border-outline w-40 rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3 focus-visible:ring-[var(--outline)]/30"
+              value={model.terminology[key]}
+              onchange={(e) => actions.setTerminology(key, e.currentTarget.value)}
+            />
+          </div>
+        {/each}
+      </div>
+    </details>
+
+    <div class="grid grid-cols-1 gap-5 md:grid-cols-[1fr_20rem]">
+      <OutcomeList />
+      <EditPanel />
+    </div>
+  {/if}
 {/if}

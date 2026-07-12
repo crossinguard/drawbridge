@@ -39,3 +39,17 @@ export function displayNumbers(doc: OutcomeDoc): DisplayNumbers {
 export function numberFor(nums: DisplayNumbers, id: string): string | undefined {
   return nums.outcome.get(id) ?? nums.evidence.get(id) ?? nums.objective.get(id);
 }
+
+/**
+ * Human label for any id, prefixed by level: "CO 2", "EO 2.1", "LO 3". Falls
+ * back to the raw id for a dangling reference (so broken links stay visible).
+ */
+export function displayLabel(nums: DisplayNumbers, id: string): string {
+  const co = nums.outcome.get(id);
+  if (co) return `CO ${co}`;
+  const eo = nums.evidence.get(id);
+  if (eo) return `EO ${eo}`;
+  const lo = nums.objective.get(id);
+  if (lo) return `LO ${lo}`;
+  return id;
+}

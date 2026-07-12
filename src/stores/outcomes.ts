@@ -17,6 +17,7 @@ import { Document } from "yaml";
 import { readDoc, toModel } from "$lib/outcomes/parse";
 import { validate } from "$lib/outcomes/validate";
 import { DEFAULT_TERMINOLOGY } from "$lib/outcomes/types";
+import { displayNumbers } from "$lib/outcomes/numbering";
 import * as mut from "$lib/outcomes/mutate";
 
 export type Selection =
@@ -48,6 +49,12 @@ export const outcomeModel = computed(session, (s) =>
 );
 
 export const flags = computed(outcomeModel, (m) => (m ? validate(m) : []));
+
+export const numbers = computed(outcomeModel, (m) =>
+  m
+    ? displayNumbers(m)
+    : { outcome: new Map(), evidence: new Map(), objective: new Map() },
+);
 
 /** A fresh, empty document with default terminology — the "New" starting point. */
 function blankDoc(): Document {
@@ -143,8 +150,35 @@ export const actions = {
     clearSelectionIf((sel) => sel.id === loId);
   },
 
+  moveOutcome(coId: string, dir: number) {
+    edit((doc) => mut.moveOutcome(doc, coId, dir));
+  },
+  moveEvidence(coId: string, eoId: string, dir: number) {
+    edit((doc) => mut.moveEvidence(doc, coId, eoId, dir));
+  },
+  moveObjective(loId: string, dir: number) {
+    edit((doc) => mut.moveObjective(doc, loId, dir));
+  },
+
   select(sel: Selection) {
     selection.set(sel);
+  },
+
+  /** Resolve an id to its Selection (kind + parent) and select it. */
+  selectById(id: string) {
+    const m = outcomeModel.get();
+    if (!m) return;
+    if (m.outcomes.some((c) => c.id === id)) {
+      selection.set({ kind: "co", id });
+      return;
+    }
+    for (const co of m.outcomes) {
+      if (co.evidence.some((e) => e.id === id)) {
+        selection.set({ kind: "eo", id, coId: co.id });
+        return;
+      }
+    }
+    if (m.objectives.some((l) => l.id === id)) selection.set({ kind: "lo", id });
   },
 };
 

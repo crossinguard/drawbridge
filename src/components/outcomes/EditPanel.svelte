@@ -6,11 +6,22 @@
   //   CO / EO / LO → Text
   //   EO           → advisory Scope (which objectives this evidence supports)
   //   LO           → Maps to (which course outcomes this objective supports)
-  import { selection, outcomeModel, actions } from "../../stores/outcomes";
+  import { selection, outcomeModel, numbers, actions } from "../../stores/outcomes";
+  import { displayLabel } from "$lib/outcomes/numbering";
   import Button from "../ui/Button.svelte";
 
   const sel = $derived($selection);
   const model = $derived($outcomeModel);
+  const nums = $derived($numbers);
+
+  // Scope may only reference objectives mapped to the EO's parent CO (plus any
+  // already selected, so stragglers from an import can be unchecked).
+  const scopeOptions = $derived.by(() => {
+    if (!model || sel?.kind !== "eo") return [];
+    return model.objectives.filter(
+      (lo) => lo.maps_to.includes(sel.coId) || draftScope.includes(lo.id),
+    );
+  });
 
   // The selected entity, resolved from the current model (null if it was deleted).
   const entity = $derived.by(() => {
@@ -121,7 +132,7 @@
     </p>
   {:else}
     <div class="mb-3 flex items-baseline justify-between gap-2">
-      <h3 class="text-sm font-medium">Edit {label}</h3>
+      <h3 class="text-sm font-medium">Edit {label} {displayLabel(nums, sel.id)}</h3>
       <code
         class="bg-accent text-accent-foreground rounded px-1.5 py-0.5 font-mono text-[0.75em]"
         >{sel.id}</code
@@ -140,13 +151,14 @@
       <p class="mb-1 text-xs font-medium">
         Scope <span class="text-muted-foreground font-normal">(advisory {model.terminology.objective.toLowerCase()}s)</span>
       </p>
-      {#if model.objectives.length === 0}
+      {#if scopeOptions.length === 0}
         <p class="text-muted-foreground mb-3 text-xs">
-          No {model.terminology.objective}s yet.
+          Map a {model.terminology.objective.toLowerCase()} to this {model.terminology.outcome.toLowerCase()}
+          first — only then can it scope this {model.terminology.evidence.toLowerCase()}.
         </p>
       {:else}
         <ul class="mb-3 flex flex-col gap-1">
-          {#each model.objectives as lo}
+          {#each scopeOptions as lo}
             <li class="flex items-start gap-2 text-sm">
               <input
                 type="checkbox"
@@ -156,7 +168,7 @@
                 onchange={(e) => (draftScope = toggle(draftScope, lo.id, e.currentTarget.checked))}
               />
               <label for={"scope-" + lo.id} class="cursor-pointer">
-                <code class="font-mono text-xs">{lo.id}</code>
+                <span class="text-foreground font-medium">LO {nums.objective.get(lo.id)}</span>
                 <span class="text-muted-foreground">{lo.text || "(untitled)"}</span>
               </label>
             </li>
@@ -183,7 +195,7 @@
                 onchange={(e) => (draftMaps = toggle(draftMaps, co.id, e.currentTarget.checked))}
               />
               <label for={"map-" + co.id} class="cursor-pointer">
-                <code class="font-mono text-xs">{co.id}</code>
+                <span class="text-foreground font-medium">CO {nums.outcome.get(co.id)}</span>
                 <span class="text-muted-foreground">{co.text || "(untitled)"}</span>
               </label>
             </li>
