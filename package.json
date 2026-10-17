@@ -9,9 +9,24 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "verify": "bun ./scripts/verify-serializer.ts",
+    "test": "bun ./scripts/integration-test.ts"
   },
   "dependencies": {
-    "astro": "^7.4.0"
+    "@starwind-ui/astro": "^1.3.0",
+    "@tabler/icons": "^3.49.0",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.4.0",
+    "mammoth": "^1.13.0",
+    "tailwind-merge": "^3.7.0",
+    "tailwind-variants": "^3.3.1",
+    "tailwindcss": "^4.3.3",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@vite-pwa/astro": "^1.2.0",
+    "jsdom": "^30.1.3"
   }
 }
