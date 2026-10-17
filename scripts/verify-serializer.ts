@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 
 import { formatPoints, toCanvasCsv } from "../src/lib/rubric/canvas-csv";
-import { computePoints, presetPercentages } from "../src/lib/rubric/points";
+import { computePoints, presetPercentages, recomputeAll } from "../src/lib/rubric/points";
 import { DEFAULT_SETTINGS, type Rubric } from "../src/lib/rubric/types";
 import { parseTextTable } from "../src/lib/parse/text";
 import { tableToRubric } from "../src/lib/parse/table-to-rubric";
@@ -122,6 +122,50 @@ check("trailing empty ratings trimmed", raggedDraft.rubric.criteria[0]?.ratings.
 const tsv = "Criterion Name\tPoints\tRating A\tRating B\nEvidence\t3\tStrong\tWeak";
 const tsvRows = parseTextTable(tsv);
 check("tsv rows parsed", tsvRows[1], ["Evidence", "3", "Strong", "Weak"]);
+
+// 7) Recompute points after removing a rating level (regression guard for the UI bug).
+const levelRemovalRubric: Rubric = {
+  name: "Level removal test",
+  criteria: [
+    {
+      name: "C",
+      description: "",
+      maxPoints: 5,
+      ratings: [
+        { name: "A", description: "", points: 0, manual: false },
+        { name: "B", description: "", points: 0, manual: false },
+        { name: "C", description: "", points: 0, manual: false },
+        { name: "D", description: "", points: 0, manual: false },
+      ],
+    },
+  ],
+};
+recomputeAll(levelRemovalRubric, { preset: "even", rounding: "up", customPercentages: [] });
+check("even points before level removal", levelRemovalRubric.criteria[0]?.ratings.map((r) => r.points), [5, 4, 2, 0]);
+levelRemovalRubric.criteria[0]?.ratings.pop();
+recomputeAll(levelRemovalRubric, { preset: "even", rounding: "up", customPercentages: [] });
+check("even points after level removal", levelRemovalRubric.criteria[0]?.ratings.map((r) => r.points), [5, 3, 0]);
+
+// 8) Custom percentages grow/shrink with rating levels.
+const customRubric: Rubric = {
+  name: "Custom pct test",
+  criteria: [
+    {
+      name: "C",
+      description: "",
+      maxPoints: 10,
+      ratings: [
+        { name: "A", description: "", points: 0, manual: false },
+        { name: "B", description: "", points: 0, manual: false },
+      ],
+    },
+  ],
+};
+recomputeAll(customRubric, { preset: "custom", rounding: "exact", customPercentages: [100, 50] });
+check("custom percentages initial", customRubric.criteria[0]?.ratings.map((r) => r.points), [10, 5]);
+customRubric.criteria[0]?.ratings.push({ name: "C", description: "", points: 0, manual: false });
+recomputeAll(customRubric, { preset: "custom", rounding: "exact", customPercentages: [100, 50, 25] });
+check("custom percentages after adding level", customRubric.criteria[0]?.ratings.map((r) => r.points), [10, 5, 2.5]);
 
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed.`);

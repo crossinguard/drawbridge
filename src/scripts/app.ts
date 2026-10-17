@@ -91,6 +91,18 @@ function parseNumber(value: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Copy a field's value into the other responsive layout's matching input/textarea. */
+function mirrorValue(source: HTMLInputElement | HTMLTextAreaElement, selector: string): void {
+  document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(selector).forEach((el) => {
+    if (el !== source && el.value !== source.value) el.value = source.value;
+  });
+}
+
+/** True when the user has work in progress that would be lost on refresh. */
+function hasUnsavedWork(): boolean {
+  return state.rubric.criteria.length > 0 || state.rubric.name !== "Untitled Rubric";
+}
+
 // ---------------------------------------------------------------------------
 // Step navigation
 // ---------------------------------------------------------------------------
@@ -306,6 +318,9 @@ function onPresetChange(value: string): void {
 function addLevel(): void {
   const name = `Rating ${state.ratingNames.length + 1}`;
   state.ratingNames.push(name);
+  if (state.settings.preset === "custom") {
+    state.settings.customPercentages.push(0);
+  }
   for (const criterion of state.rubric.criteria) {
     criterion.ratings.push({ name, description: "", points: 0, manual: false });
     applyPoints(criterion, state.settings);
@@ -322,6 +337,7 @@ function removeLevel(index: number): void {
   state.ratingNames.splice(index, 1);
   for (const criterion of state.rubric.criteria) criterion.ratings.splice(index, 1);
   if (state.settings.preset === "custom") state.settings.customPercentages.splice(index, 1);
+  recomputeAll(state.rubric, state.settings);
   renderSettings();
   renderGrid();
   updateTotals();
@@ -528,9 +544,11 @@ function onGridInput(event: Event): void {
   switch (field) {
     case "criterion-name":
       criterion.name = target.value;
+      mirrorValue(target, `[data-criterion="${i}"] input[data-field="criterion-name"]`);
       break;
     case "criterion-description":
       criterion.description = target.value;
+      mirrorValue(target, `[data-criterion="${i}"] textarea[data-field="criterion-description"]`);
       break;
     case "criterion-max": {
       const v = parseNumber(target.value);
@@ -539,11 +557,16 @@ function onGridInput(event: Event): void {
       applyPoints(criterion, state.settings);
       updateRowPoints(i, criterion);
       updateTotals();
+      mirrorValue(target, `[data-criterion="${i}"] input[data-field="criterion-max"]`);
       break;
     }
     case "rating-description": {
       const rating = criterion.ratings[Number(target.dataset.rating)];
       if (rating) rating.description = target.value;
+      mirrorValue(
+        target,
+        `[data-criterion="${i}"] textarea[data-field="rating-description"][data-rating="${target.dataset.rating}"]`,
+      );
       break;
     }
     case "rating-points": {
@@ -561,6 +584,10 @@ function onGridInput(event: Event): void {
         });
       const v = parseNumber(target.value);
       if (v !== null) rating.points = v;
+      mirrorValue(
+        target,
+        `[data-criterion="${i}"] input[data-field="rating-points"][data-rating="${target.dataset.rating}"]`,
+      );
       break;
     }
   }
@@ -784,6 +811,13 @@ export function initApp(): void {
   // Export
   $("download-csv").addEventListener("click", downloadCsv);
   $("copy-csv").addEventListener("click", () => void copyCsv());
+
+  // Warn before closing a tab with unsaved work.
+  window.addEventListener("beforeunload", (event) => {
+    if (!hasUnsavedWork()) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
 }
 
 initApp();
