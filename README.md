@@ -1,43 +1,57 @@
-# Astro Starter Kit: Minimal
+# Rubric → Canvas CSV
 
-```sh
-bun create astro@latest -- --template minimal
-```
+A private, fully client-side tool that converts a Word rubric table into a [Canvas](https://www.instructure.com/canvas) rubric import CSV. Hosted as a static site (Netlify), installable as a PWA, and works completely offline — **nothing you import ever leaves your browser**.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## How it works
 
-## 🚀 Project Structure
+1. **Import** — upload a `.docx` (drag & drop works) or paste table content:
+   - Rich paste straight from Word is detected automatically
+   - Markdown pipe tables and tab-separated text also work
+2. **Review & edit** — fix any parsing mistakes, name the rubric, and tune points:
+   - Rating names come from the table's column headers
+   - Points distribution presets: Full/Half/Zero/Zero (default), evenly spaced, custom percentages, or manual
+   - Any rating's points can be overridden by editing the cell (highlighted until reset)
+   - Add/remove/reorder criteria and rating levels
+3. **Export** — preview the generated CSV, then download or copy it
+   - Import in Canvas: course → **Rubrics** → **+Rubric** → **import**
 
-Inside of your Astro project, you'll see the following folders and files:
+Expected table shape (one row per criterion, one column per rating level):
+
+| Criterion Name | Points | Rating A | Rating B | … |
+| ------------- | ----- | -------- | -------- | - |
+
+Output format follows `src/assets/reference/import_rubric_template.csv`: one CSV row per criterion, ratings flattened into repeating `Rating Name, Rating Description, Rating Points` triplets, with ragged rows when criteria have different rating counts.
+
+## Privacy
+
+- No server, no API, no analytics, no persistence — state lives only in memory
+- A production CSP (`default-src 'self'`) makes external requests impossible
+- Once loaded, the service worker serves everything locally — install it as an app and use it offline
+
+## Commands
+
+| Command                            | Action                                    |
+| :--------------------------------- | :---------------------------------------- |
+| `bun install`                      | Installs dependencies                     |
+| `bun dev`                          | Starts local dev server                   |
+| `bun build`                        | Builds the production site to `./dist/`   |
+| `bun preview`                      | Previews the build locally                |
+| `bun ./scripts/verify-serializer.ts` | Serializer/parser unit checks           |
+| `bun ./scripts/integration-test.ts` | .docx import pipeline integration test |
+
+## Deployment (Netlify)
+
+`netlify.toml` is preconfigured (`npm run build`, publish `dist/`). Connect the repo in Netlify and deploy — no environment variables needed. The Starwind Pro license key in `.env.local` is only used locally by the Starwind CLI; components are vendored source and never ship to the browser.
+
+## Structure
 
 ```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+src/
+├── lib/
+│   ├── rubric/       # types, points engine, Canvas CSV serializer
+│   └── parse/        # docx (mammoth), HTML, markdown/TSV, table→rubric
+├── scripts/          # client-side controller
+├── components/       # Starwind UI components
+└── pages/index.astro # single-page app
+scripts/              # verification + integration tests
 ```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
