@@ -1,14 +1,20 @@
 /**
- * Generates scripts/fixtures/sample-rubric.docx — a Word document containing a
+ * Generates public/sample-rubric.docx — a Word document containing a
  * realistic rubric table (plus a small second table to exercise the multi-table
  * picker). Run with: bun run sample
  *
- * The same builder feeds the automated integration test, so the fixture and
- * the tests never drift apart.
+ * The file is served from the site as the "Download the sample .docx" starting
+ * point for users, and the same builder feeds the automated integration test,
+ * so the sample and the tests never drift apart.
+ *
+ * The rubric content doubles as documentation: descriptions are written the
+ * way good rubric descriptions read (short student-facing guides), and two
+ * criteria deliberately skip rating levels to show that blank trailing cells
+ * are allowed.
  */
 import JSZip from "jszip";
 
-export const FIXTURE_PATH = new URL("./fixtures/sample-rubric.docx", import.meta.url);
+export const SAMPLE_PATH = new URL("../public/sample-rubric.docx", import.meta.url);
 
 function escXml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -49,25 +55,37 @@ function table(rows: string[][], opts: { boldFirstRow?: boolean } = {}): string 
 export async function buildSampleDocx(): Promise<Uint8Array> {
   const rubricTable = table(
     [
-      ["Criterion Name", "Points", "Rating A", "Rating B", "Rating C", "Rating D"],
+      ["Criterion", "Points", "Exemplary", "Proficient", "Developing", "Beginning"],
       [
         "Thesis",
         "5",
-        "Clear, focused thesis",
-        "Vague thesis",
-        "Missing",
-        "Missing",
+        "States a clear, debatable claim that names what the essay will prove and why it matters. The claim stays in scope for the assigned length.",
+        "States a workable claim, though parts of the essay drift away from proving it.",
+        "The claim is present but vague or factual — it summarizes the topic rather than taking a position.",
+        "No discernible claim; the essay's purpose is unclear to the reader.",
       ],
       [
         "Evidence",
         "4",
-        'Strong evidence; uses "show, don\'t tell"',
-        "Some evidence",
-        "Little evidence",
-        "None",
+        'Integrates relevant quotes and examples that "show, don\'t tell", and each one is tied back to the claim.',
+        "Includes supporting evidence, but some quotes are dropped in without explanation.",
+        "Evidence is thin, repetitive, or only loosely related to the claim.",
+        "Nearly every statement is unsupported opinion.",
       ],
-      ["Organization & clarity", "3", "Logical flow throughout", "Mostly clear", "Disorganized", "Disorganized"],
-      ["Style", "2", "Polished prose", "Minor issues", "", ""],
+      [
+        "Organization & clarity",
+        "3",
+        "Paragraphs follow a logical order and each one advances the argument; transitions do real work.",
+        "The order mostly holds, though a section or two feels out of place.",
+        "Ideas appear in a hard-to-follow order, or paragraphs blend several topics.",
+        "",
+      ],
+      [
+        "Style & tone",
+        "2",
+        "Prose is polished and precise — varied sentence lengths, strong verbs, no distracting errors.",
+        "Reads cleanly with a few minor issues in word choice or mechanics.",
+      ],
     ],
     { boldFirstRow: true },
   );
@@ -82,9 +100,14 @@ export async function buildSampleDocx(): Promise<Uint8Array> {
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:body>
     ${paragraph("Essay Rubric", { bold: true, sizeHalfPt: 32 })}
-    ${paragraph("Score each criterion with the level that best fits the essay.")}
+    ${paragraph(
+      "Score each essay by choosing the level that best fits, one row per criterion. This sample shows the expected layout: criterion name in the first column, max points in the second, then one column per rating level. Leaving a level's cell blank is fine — blank trailing cells are simply dropped, as in the last two criteria.",
+    )}
     ${rubricTable}
     ${paragraph("")}
+    ${paragraph(
+      "The small table below the rubric is unrelated sample content — the app will ask you which table to use.",
+    )}
     ${courseTable}
   </w:body>
 </w:document>`;
@@ -114,7 +137,7 @@ export async function buildSampleDocx(): Promise<Uint8Array> {
 if (import.meta.main) {
   const { writeFileSync, mkdirSync } = await import("node:fs");
   const { dirname } = await import("node:path");
-  mkdirSync(dirname(FIXTURE_PATH.pathname), { recursive: true });
-  writeFileSync(FIXTURE_PATH, await buildSampleDocx());
-  console.log(`Wrote ${FIXTURE_PATH.pathname}`);
+  mkdirSync(dirname(SAMPLE_PATH.pathname), { recursive: true });
+  writeFileSync(SAMPLE_PATH, await buildSampleDocx());
+  console.log(`Wrote ${SAMPLE_PATH.pathname}`);
 }

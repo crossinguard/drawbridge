@@ -338,24 +338,57 @@ function resetPoints(): void {
 // Review step: criteria grid
 // ---------------------------------------------------------------------------
 
-function renderGrid(): void {
-  const container = $("criteria-grid");
+/** Description textareas start sized for 1–2 sentences and grow as you type (field-sizing: content). */
+const RATING_DESC_CLASSES = "min-w-0 field-sizing-content min-h-24";
+const CRITERION_DESC_CLASSES = "min-w-0 field-sizing-content min-h-16";
 
-  if (state.rubric.criteria.length === 0) {
-    container.innerHTML =
-      '<p class="text-muted-foreground text-sm">No criteria yet — add one below, or go back and import a table.</p>';
-    return;
-  }
+/** Points input for one rating — identical markup in the table and card layouts. */
+function pointsInput(index: number, j: number): string {
+  const rating = state.rubric.criteria[index].ratings[j];
+  const manual = rating.manual ? 'data-manual="true" title="Manually set"' : 'title="Auto-computed"';
+  return `<input type="number" step="any" inputmode="decimal"
+    class="${inputClasses({ size: "sm" })} data-manual:border-primary data-manual:text-primary data-manual:font-medium w-20"
+    data-field="rating-points" data-rating="${j}" value="${formatPoints(rating.points)}" ${manual}
+    aria-label="Rating ${j + 1} points for criterion ${index + 1}" />`;
+}
 
+/** Description textarea for one rating. Cards use the larger default size for comfortable editing. */
+function ratingTextarea(index: number, j: number, size: "sm" | "md" = "sm"): string {
+  const rating = state.rubric.criteria[index].ratings[j];
+  return `<textarea class="${textareaClasses({ size })} ${RATING_DESC_CLASSES}" rows="4" data-field="rating-description" data-rating="${j}"
+    placeholder="Description" aria-label="Rating ${j + 1} description for criterion ${index + 1}">${esc(rating.description)}</textarea>`;
+}
+
+function criterionTextarea(index: number, size: "sm" | "md" = "sm"): string {
+  const criterion = state.rubric.criteria[index];
+  return `<textarea class="${textareaClasses({ size })} ${CRITERION_DESC_CLASSES}" rows="3" data-field="criterion-description"
+    placeholder="Description (optional)" aria-label="Criterion ${index + 1} description">${esc(criterion.description)}</textarea>`;
+}
+
+function rowActions(index: number): string {
+  const last = state.rubric.criteria.length - 1;
+  return `
+    <div class="inline-flex shrink-0 gap-1">
+      <button type="button" class="${buttonClasses({ variant: "ghost", size: "icon-sm" })}" data-action="criterion-up"
+        aria-label="Move criterion ${index + 1} up" ${index === 0 ? "disabled" : ""}>${icon(arrowUp)}</button>
+      <button type="button" class="${buttonClasses({ variant: "ghost", size: "icon-sm" })}" data-action="criterion-down"
+        aria-label="Move criterion ${index + 1} down" ${index === last ? "disabled" : ""}>${icon(arrowDown)}</button>
+      <button type="button" class="${buttonClasses({ variant: "ghost", size: "icon-sm" })} hover:text-error" data-action="criterion-delete"
+        aria-label="Delete criterion ${index + 1}">${icon(trash)}</button>
+    </div>`;
+}
+
+/** Side-by-side matrix — the wide-screen layout (lg and up). */
+function renderGridTable(): string {
   const head = `
     <thead class="${tableHeader()}">
       <tr class="${tableRow()}">
-        <th class="${tableHead()} w-52">Criterion</th>
+        <th class="${tableHead()} w-48">Criterion</th>
         <th class="${tableHead()}">Max pts</th>
         ${state.ratingNames
           .map(
             (name, i) =>
-              `<th class="${tableHead()} min-w-56" data-rating-col="${i}">${esc(name || `Rating ${i + 1}`)}</th>`,
+              `<th class="${tableHead()} min-w-44" data-rating-col="${i}">${esc(name || `Rating ${i + 1}`)}</th>`,
           )
           .join("")}
         <th class="${tableHead()} text-right">Row</th>
@@ -367,11 +400,10 @@ function renderGrid(): void {
       (criterion, i) => `
       <tr class="${tableRow()}" data-criterion="${i}">
         <td class="${tableCell()} align-top">
-          <div class="grid w-52 gap-1">
+          <div class="grid w-48 gap-1">
             <input class="${inputClasses({ size: "sm" })}" data-field="criterion-name"
               value="${escAttr(criterion.name)}" aria-label="Criterion ${i + 1} name" />
-            <textarea class="${textareaClasses({ size: "sm" })}" rows="2" data-field="criterion-description"
-              placeholder="Description (optional)" aria-label="Criterion ${i + 1} description">${esc(criterion.description)}</textarea>
+            ${criterionTextarea(i)}
           </div>
         </td>
         <td class="${tableCell()} align-top">
@@ -380,44 +412,85 @@ function renderGrid(): void {
             aria-label="Criterion ${i + 1} max points" />
         </td>
         ${criterion.ratings
-          .map((rating, j) => {
-            const manual = rating.manual ? 'data-manual="true" title="Manually set"' : 'title="Auto-computed"';
-            return `
+          .map(
+            (_, j) => `
           <td class="${tableCell()} align-top">
-            <div class="grid w-56 gap-1">
-              <textarea class="${textareaClasses({ size: "sm" })}" rows="3" data-field="rating-description" data-rating="${j}"
-                placeholder="Description" aria-label="Rating ${j + 1} description for criterion ${i + 1}">${esc(rating.description)}</textarea>
-              <input type="number" step="any" inputmode="decimal"
-                class="${inputClasses({ size: "sm" })} data-manual:border-primary data-manual:text-primary data-manual:font-medium w-20"
-                data-field="rating-points" data-rating="${j}" value="${formatPoints(rating.points)}" ${manual}
-                aria-label="Rating ${j + 1} points for criterion ${i + 1}" />
+            <div class="grid w-full min-w-44 gap-1">
+              ${ratingTextarea(i, j)}
+              ${pointsInput(i, j)}
             </div>
-          </td>`;
-          })
+          </td>`,
+          )
           .join("")}
-        <td class="${tableCell()} align-top text-right">
-          <div class="inline-flex gap-1">
-            <button type="button" class="${buttonClasses({ variant: "ghost", size: "icon-sm" })}" data-action="criterion-up"
-              aria-label="Move criterion ${i + 1} up" ${i === 0 ? "disabled" : ""}>${icon(arrowUp)}</button>
-            <button type="button" class="${buttonClasses({ variant: "ghost", size: "icon-sm" })}" data-action="criterion-down"
-              aria-label="Move criterion ${i + 1} down" ${i === state.rubric.criteria.length - 1 ? "disabled" : ""}>${icon(arrowDown)}</button>
-            <button type="button" class="${buttonClasses({ variant: "ghost", size: "icon-sm" })} hover:text-error" data-action="criterion-delete"
-              aria-label="Delete criterion ${i + 1}">${icon(trash)}</button>
-          </div>
-        </td>
+        <td class="${tableCell()} align-top text-right">${rowActions(i)}</td>
       </tr>`
     )
     .join("");
 
-  container.innerHTML = `
-    <div class="relative w-full overflow-x-auto">
-      <table class="${tableClasses()}">${head}<tbody class="${tableBody()}">${body}</tbody></table>
-    </div>`;
+  return `<table class="${tableClasses()}">${head}<tbody class="${tableBody()}">${body}</tbody></table>`;
 }
 
-/** Update a row's auto-computed points inputs without re-rendering (keeps focus). */
-function updateRowPoints(tr: HTMLElement, criterion: Rubric["criteria"][number]): void {
-  tr.querySelectorAll<HTMLInputElement>('input[data-field="rating-points"]').forEach((input) => {
+/** Stacked criterion cards — the narrow layout (below lg), with no horizontal scrolling. */
+function renderGridCards(): string {
+  return state.rubric.criteria
+    .map((criterion, i) => {
+      const ratings = criterion.ratings
+        .map((_, j) => {
+          const name = state.ratingNames[j] || `Rating ${j + 1}`;
+          return `
+          <div class="grid gap-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="${badgeClasses({ variant: "secondary", size: "sm" })} max-w-full truncate">${esc(name)}</span>
+              <span class="flex shrink-0 items-center gap-1">
+                ${pointsInput(i, j)}
+                <span class="text-muted-foreground text-xs">pts</span>
+              </span>
+            </div>
+            ${ratingTextarea(i, j, "md")}
+          </div>`;
+        })
+        .join("");
+      return `
+      <div class="grid gap-3 rounded-lg border p-4" data-criterion="${i}">
+        <div class="flex items-center gap-2">
+          <input class="${inputClasses({ size: "sm" })} min-w-0 flex-1" data-field="criterion-name"
+            value="${escAttr(criterion.name)}" aria-label="Criterion ${i + 1} name" />
+          <span class="flex shrink-0 items-center gap-1">
+            <input type="number" min="0" step="any" inputmode="decimal" class="${inputClasses({ size: "sm" })} w-20"
+              data-field="criterion-max" value="${formatPoints(criterion.maxPoints)}"
+              aria-label="Criterion ${i + 1} max points" />
+            <span class="text-muted-foreground text-xs">max</span>
+          </span>
+          ${rowActions(i)}
+        </div>
+        ${criterionTextarea(i, "md")}
+        <div class="grid gap-3">${ratings}</div>
+      </div>`;
+    })
+    .join("");
+}
+
+function renderGrid(): void {
+  const container = $("criteria-grid");
+
+  if (state.rubric.criteria.length === 0) {
+    container.innerHTML =
+      '<p class="text-muted-foreground text-sm">No criteria yet — add one below, or go back and import a table.</p>';
+    return;
+  }
+
+  // Both layouts are rendered from the same state; CSS picks one per breakpoint.
+  container.innerHTML = `
+    <div class="hidden lg:block">
+      <div class="relative w-full overflow-x-auto">${renderGridTable()}</div>
+    </div>
+    <div class="grid gap-3 lg:hidden">${renderGridCards()}</div>`;
+}
+
+/** Update a criterion's auto-computed points inputs without re-rendering (keeps focus).
+ *  Refreshes both layouts so a resize never shows stale values. */
+function updateRowPoints(index: number, criterion: Rubric["criteria"][number]): void {
+  document.querySelectorAll<HTMLInputElement>(`[data-criterion="${index}"] input[data-field="rating-points"]`).forEach((input) => {
     const j = Number(input.dataset.rating);
     const rating = criterion.ratings[j];
     if (rating && !rating.manual) {
@@ -446,9 +519,9 @@ function onGridInput(event: Event): void {
   const target = event.target as HTMLInputElement | HTMLTextAreaElement;
   const field = target.dataset.field;
   if (!field) return;
-  const tr = target.closest<HTMLElement>("tr[data-criterion]");
-  if (!tr) return;
-  const i = Number(tr.dataset.criterion);
+  const block = target.closest<HTMLElement>("[data-criterion]");
+  if (!block) return;
+  const i = Number(block.dataset.criterion);
   const criterion = state.rubric.criteria[i];
   if (!criterion) return;
 
@@ -464,7 +537,7 @@ function onGridInput(event: Event): void {
       if (v === null) return; // keep last valid value while typing
       criterion.maxPoints = Math.max(0, v);
       applyPoints(criterion, state.settings);
-      updateRowPoints(tr, criterion);
+      updateRowPoints(i, criterion);
       updateTotals();
       break;
     }
@@ -477,8 +550,15 @@ function onGridInput(event: Event): void {
       const rating = criterion.ratings[Number(target.dataset.rating)];
       if (!rating) return;
       rating.manual = true;
-      target.setAttribute("data-manual", "true");
-      target.title = "Manually set";
+      // Flag every copy of this input (table and card layouts share the DOM).
+      document
+        .querySelectorAll<HTMLInputElement>(
+          `[data-criterion="${i}"] input[data-field="rating-points"][data-rating="${target.dataset.rating}"]`,
+        )
+        .forEach((el) => {
+          el.setAttribute("data-manual", "true");
+          el.title = "Manually set";
+        });
       const v = parseNumber(target.value);
       if (v !== null) rating.points = v;
       break;
@@ -490,9 +570,10 @@ function onGridChange(event: Event): void {
   const target = event.target as HTMLInputElement;
   const field = target.dataset.field;
   if (field !== "criterion-max" && field !== "rating-points") return;
-  const tr = target.closest<HTMLElement>("tr[data-criterion]");
-  if (!tr) return;
-  const criterion = state.rubric.criteria[Number(tr.dataset.criterion)];
+  const block = target.closest<HTMLElement>("[data-criterion]");
+  if (!block) return;
+  const i = Number(block.dataset.criterion);
+  const criterion = state.rubric.criteria[i];
   if (!criterion) return;
 
   if (field === "criterion-max") {
@@ -504,14 +585,23 @@ function onGridChange(event: Event): void {
     if (target.value.trim() === "") rating.points = 0;
     target.value = formatPoints(rating.points);
   }
+
+  // Mirror the normalized value into the other layout's copy of the same input
+  // (table and cards both live in the DOM; only one is visible per breakpoint).
+  const ratingSel = field === "rating-points" ? `[data-rating="${target.dataset.rating}"]` : "";
+  document
+    .querySelectorAll<HTMLInputElement>(`[data-criterion="${i}"] input[data-field="${field}"]${ratingSel}`)
+    .forEach((el) => {
+      if (el !== target) el.value = target.value;
+    });
 }
 
 function onGridClick(event: Event): void {
   const btn = (event.target as HTMLElement).closest<HTMLButtonElement>("button[data-action]");
   if (!btn) return;
-  const tr = btn.closest<HTMLElement>("tr[data-criterion]");
-  if (!tr) return;
-  const i = Number(tr.dataset.criterion);
+  const block = btn.closest<HTMLElement>("[data-criterion]");
+  if (!block) return;
+  const i = Number(block.dataset.criterion);
 
   switch (btn.dataset.action) {
     case "criterion-up":

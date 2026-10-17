@@ -7,6 +7,7 @@ A private, fully client-side tool that converts a Word rubric table into a [Canv
 1. **Import** — upload a `.docx` (drag & drop works) or paste table content:
    - Rich paste straight from Word is detected automatically
    - Markdown pipe tables and tab-separated text also work
+   - Not sure what your file should look like? [Download the sample .docx](/sample-rubric.docx) — it shows the expected layout, including criteria that skip rating levels
 2. **Review & edit** — fix any parsing mistakes, name the rubric, and tune points:
    - Rating names come from the table's column headers
    - Points distribution presets: Full/Half/Zero/Zero (default), evenly spaced, custom percentages, or manual
@@ -34,15 +35,15 @@ Output format follows `src/assets/reference/import_rubric_template.csv`: one CSV
 | :--------------------------------- | :---------------------------------------- |
 | `bun install`                      | Installs dependencies                     |
 | `bun dev`                          | Starts local dev server                   |
-| `bun build`                        | Builds the production site to `./dist/`   |
+| `bun run build`                    | Builds the production site to `./dist/`   |
 | `bun preview`                      | Previews the build locally                |
 | `bun ./scripts/verify-serializer.ts` | Serializer/parser unit checks           |
 | `bun ./scripts/integration-test.ts` | .docx import pipeline integration test |
-| `bun run sample`                    | Regenerates `scripts/fixtures/sample-rubric.docx` for manual testing |
+| `bun run sample`                    | Regenerates `public/sample-rubric.docx` — the in-app sample download and the shared test fixture |
 
 ## Deployment (Netlify)
 
-`netlify.toml` is preconfigured (`npm run build`, publish `dist/`). Connect the repo in Netlify and deploy — no environment variables needed. The Starwind Pro license key in `.env.local` is only used locally by the Starwind CLI; components are vendored source and never ship to the browser.
+`netlify.toml` is preconfigured (`bun run build`, publish `dist/`). Connect the repo in Netlify and deploy — no environment variables needed. The Starwind Pro license key in `.env.local` is only used locally by the Starwind CLI; components are vendored source and never ship to the browser.
 
 ## Structure
 
@@ -54,5 +55,6 @@ src/
 ├── scripts/          # client-side controller
 ├── components/       # Starwind UI components
 └── pages/index.astro # single-page app
-scripts/              # verification + integration tests
+scripts/              # sample .docx builder, verification + integration tests
+public/               # static assets, incl. sample-rubric.docx (in-app sample download)
 ```

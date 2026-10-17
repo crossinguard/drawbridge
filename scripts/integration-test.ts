@@ -1,6 +1,6 @@
 /**
  * Integration test for the .docx import path (run with: bun run test).
- * Builds the shared sample document (scripts/fixtures/sample-rubric.docx, via
+ * Builds the shared sample document (public/sample-rubric.docx, via
  * scripts/make-sample-docx.ts), then runs it through mammoth →
  * extractHtmlTables → tableToRubric, using a jsdom DOMParser to mimic the
  * browser environment.
@@ -53,18 +53,26 @@ check("criterion names", draft.rubric.criteria.map((c) => c.name), [
   "Thesis",
   "Evidence",
   "Organization & clarity",
-  "Style",
+  "Style & tone",
 ]);
 check("max points parsed", draft.rubric.criteria.map((c) => c.maxPoints), [5, 4, 3, 2]);
 check("rating names from header", draft.rubric.criteria[0]?.ratings.map((r) => r.name), [
-  "Rating A",
-  "Rating B",
-  "Rating C",
-  "Rating D",
+  "Exemplary",
+  "Proficient",
+  "Developing",
+  "Beginning",
+]);
+check("ragged rating counts (blank trailing cells dropped)", draft.rubric.criteria.map((c) => c.ratings.length), [
+  4,
+  4,
+  3,
+  2,
 ]);
 check("points distribution (5 pts, half up)", draft.rubric.criteria[0]?.ratings.map((r) => r.points), [5, 3, 0, 0]);
-check("points distribution (3 pts, half up)", draft.rubric.criteria[2]?.ratings.map((r) => r.points), [3, 2, 0, 0]);
-check("comma/quote description preserved", draft.rubric.criteria[1]?.ratings[0]?.description, "Strong evidence; uses \"show, don't tell\"");
+check("points distribution (ragged 3 pts)", draft.rubric.criteria[2]?.ratings.map((r) => r.points), [3, 2, 0]);
+check("points distribution (ragged 2 pts)", draft.rubric.criteria[3]?.ratings.map((r) => r.points), [2, 1]);
+check("comma/quote description preserved", draft.rubric.criteria[1]?.ratings[0]?.description, 'Integrates relevant quotes and examples that "show, don\'t tell", and each one is tied back to the claim.');
+check("descriptions are full sentences", draft.rubric.criteria[0]?.ratings[1]?.description, "States a workable claim, though parts of the essay drift away from proving it.");
 check("no parse warnings for the sample", draft.warnings.length, 0);
 
 // ---------------------------------------------------------------------------
