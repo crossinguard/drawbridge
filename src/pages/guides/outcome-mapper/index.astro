@@ -1,64 +1,34 @@
 ---
 import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
-import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import Book from "@tabler/icons/outline/book.svg";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/starwind/card";
+import GuideContent from "@/components/drawbridge/GuideContent.astro";
+import GuideHeader from "@/components/drawbridge/GuideHeader.astro";
+import { Button } from "@/components/starwind/button";
+
+import ReferenceContent from "@/content/guides/outcome-mapper.mdx";
 ---
 
 <DrawbridgeLayout
-  title="Outcome Mapper guide"
-  description="Guides for the Outcome Mapper tool."
+  title="Outcome Mapper reference"
+  description="Detailed reference for the Outcome Mapper tool."
 >
-  <div class="grid gap-6">
-    <div class="grid gap-2">
-      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Outcome Mapper</h1>
-      <p class="text-muted-foreground">Map program, course, and assessment outcomes and export the alignment table.</p>
-    </div>
+  <article class="mx-auto grid max-w-3xl gap-8">
+    <GuideHeader
+      toolName="Outcome Mapper"
+      toolSlug="outcome-mapper"
+      description="Input format, mapping rules, and export options."
+    />
 
-    <section class="grid gap-4 sm:grid-cols-2">
-      <Card class="flex flex-col">
-        <CardHeader>
-          <CardTitle>Quick-start</CardTitle>
-          <CardDescription>Load outcomes, create mappings, and export an alignment table.</CardDescription>
-        </CardHeader>
-        <CardContent class="mt-auto">
-          <a
-            href="/guides/outcome-mapper/quick-start"
-            class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4"
-          >
-            Read quick-start
-            <ArrowRight class="size-4" aria-hidden="true" />
-          </a>
-        </CardContent>
-      </Card>
-
-      <Card class="flex flex-col">
-        <CardHeader>
-          <CardTitle>Reference</CardTitle>
-          <CardDescription>Input format, mapping rules, and export options.</CardDescription>
-        </CardHeader>
-        <CardContent class="mt-auto">
-          <a
-            href="/guides/outcome-mapper/reference"
-            class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4"
-          >
-            Read reference
-            <ArrowRight class="size-4" aria-hidden="true" />
-          </a>
-        </CardContent>
-      </Card>
-    </section>
+    <GuideContent>
+      <ReferenceContent />
+    </GuideContent>
 
     <div>
-      <a href="/tools/outcome-mapper" class="text-primary font-medium underline underline-offset-4 hover:text-primary-accent">
-        Open the tool
-      </a>
+      <Button as="a" href="/tools/outcome-mapper" variant="outline" class="inline-flex items-center gap-2">
+        <Book class="size-4" aria-hidden="true" />
+        Back to tool
+      </Button>
     </div>
-  </div>
+  </article>
 </DrawbridgeLayout>

@@ -1,64 +1,34 @@
 ---
 import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
-import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import Book from "@tabler/icons/outline/book.svg";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/starwind/card";
+import GuideContent from "@/components/drawbridge/GuideContent.astro";
+import GuideHeader from "@/components/drawbridge/GuideHeader.astro";
+import { Button } from "@/components/starwind/button";
+
+import ReferenceContent from "@/content/guides/rubric-csv.mdx";
 ---
 
 <DrawbridgeLayout
-  title="Rubric → Canvas CSV guide"
-  description="Guides for the Rubric → Canvas CSV tool."
+  title="Rubric → Canvas CSV reference"
+  description="Detailed reference for the Rubric → Canvas CSV tool."
 >
-  <div class="grid gap-6">
-    <div class="grid gap-2">
-      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Rubric → Canvas CSV</h1>
-      <p class="text-muted-foreground">Convert a Word rubric table into a Canvas import CSV.</p>
-    </div>
+  <article class="mx-auto grid max-w-3xl gap-8">
+    <GuideHeader
+      toolName="Rubric → Canvas CSV"
+      toolSlug="rubric-csv"
+      description="Input formats, points presets, edge cases, and CSV output details."
+    />
 
-    <section class="grid gap-4 sm:grid-cols-2">
-      <Card class="flex flex-col">
-        <CardHeader>
-          <CardTitle>Quick-start</CardTitle>
-          <CardDescription>Get from a Word table to a Canvas CSV in a few steps.</CardDescription>
-        </CardHeader>
-        <CardContent class="mt-auto">
-          <a
-            href="/guides/rubric-csv/quick-start"
-            class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4"
-          >
-            Read quick-start
-            <ArrowRight class="size-4" aria-hidden="true" />
-          </a>
-        </CardContent>
-      </Card>
-
-      <Card class="flex flex-col">
-        <CardHeader>
-          <CardTitle>Reference</CardTitle>
-          <CardDescription>Table formats, points presets, edge cases, and CSV output details.</CardDescription>
-        </CardHeader>
-        <CardContent class="mt-auto">
-          <a
-            href="/guides/rubric-csv/reference"
-            class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4"
-          >
-            Read reference
-            <ArrowRight class="size-4" aria-hidden="true" />
-          </a>
-        </CardContent>
-      </Card>
-    </section>
+    <GuideContent>
+      <ReferenceContent />
+    </GuideContent>
 
     <div>
-      <a href="/tools/rubric-csv" class="text-primary font-medium underline underline-offset-4 hover:text-primary-accent">
-        Open the tool
-      </a>
+      <Button as="a" href="/tools/rubric-csv" variant="outline" class="inline-flex items-center gap-2">
+        <Book class="size-4" aria-hidden="true" />
+        Back to tool
+      </Button>
     </div>
-  </div>
+  </article>
 </DrawbridgeLayout>
