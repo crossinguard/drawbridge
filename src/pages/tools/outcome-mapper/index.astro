@@ -5,6 +5,7 @@ import ClipboardText from "@tabler/icons/outline/clipboard-text.svg";
 import Download from "@tabler/icons/outline/download.svg";
 import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
 import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import Book from "@tabler/icons/outline/book.svg";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
 import { Badge } from "@/components/starwind/badge";
@@ -19,6 +20,8 @@ import {
 } from "@/components/starwind/card";
 import { Label } from "@/components/starwind/label";
 import { Textarea } from "@/components/starwind/textarea";
+import QuickStartCollapsible from "@/components/drawbridge/QuickStartCollapsible.astro";
+import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
 ---
 
 <DrawbridgeLayout
@@ -38,13 +41,21 @@ import { Textarea } from "@/components/starwind/textarea";
           Map program, course, and assessment outcomes. Private by design — everything stays on your device.
         </p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <Button as="a" href="/guides/outcome-mapper" variant="outline" size="sm" class="inline-flex items-center gap-2">
+          <Book class="size-4" aria-hidden="true" />
+          Reference
+        </Button>
         <Badge variant="secondary">
           <ShieldLock class="size-4" aria-hidden="true" />
           100% local
         </Badge>
       </div>
     </header>
+
+    <QuickStartCollapsible toolSlug="outcome-mapper" description="Load outcomes, create mappings, and export an alignment table.">
+      <QuickStartContent />
+    </QuickStartCollapsible>
 
     <ol class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" aria-label="Progress">
       <li id="step-1" class="flex items-center gap-2">
@@ -72,7 +83,7 @@ import { Textarea } from "@/components/starwind/textarea";
             Paste a CSV or TSV list of outcomes. Each row needs a level (program, course, or assessment), an id, and the
             outcome text. Optionally include a mapsTo column with comma-separated parent ids.
             <a
-              href="/guides/outcome-mapper/reference"
+              href="/guides/outcome-mapper"
               class="text-primary font-medium underline underline-offset-4 hover:text-primary-accent"
             >
               See the reference

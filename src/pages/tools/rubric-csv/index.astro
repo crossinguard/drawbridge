@@ -7,6 +7,7 @@ import ShieldLock from "@tabler/icons/outline/shield-lock.svg";
 import Download from "@tabler/icons/outline/download.svg";
 import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
 import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import Book from "@tabler/icons/outline/book.svg";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
 import { Badge } from "@/components/starwind/badge";
@@ -27,6 +28,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/
 import { Textarea } from "@/components/starwind/textarea";
 
 import { PRESET_LABELS, ROUNDING_LABELS } from "@/lib/rubric/points";
+import QuickStartCollapsible from "@/components/drawbridge/QuickStartCollapsible.astro";
+import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
 ---
 
 <DrawbridgeLayout
@@ -46,13 +49,21 @@ import { PRESET_LABELS, ROUNDING_LABELS } from "@/lib/rubric/points";
           Convert a Word rubric table into a Canvas import CSV. Private by design — everything stays on your device.
         </p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <Button as="a" href="/guides/rubric-csv" variant="outline" size="sm" class="inline-flex items-center gap-2">
+          <Book class="size-4" aria-hidden="true" />
+          Reference
+        </Button>
         <Badge variant="secondary">
           <ShieldLock class="size-4" aria-hidden="true" />
           100% local
         </Badge>
       </div>
     </header>
+
+    <QuickStartCollapsible toolSlug="rubric-csv" description="Get from a Word table to a Canvas CSV in a few steps.">
+      <QuickStartContent />
+    </QuickStartCollapsible>
 
     <ol class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" aria-label="Progress">
       <li id="step-1" class="flex items-center gap-2">

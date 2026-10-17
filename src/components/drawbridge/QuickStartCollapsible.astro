@@ -1,0 +1,56 @@
+---
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
+
+import GuideContent from "./GuideContent.astro";
+
+interface Props {
+  toolSlug: string;
+  description?: string;
+}
+
+const { toolSlug, description } = Astro.props;
+---
+
+<details
+  class="group rounded-xl border border-border bg-card text-card-foreground shadow-xs"
+  data-quick-start={toolSlug}
+>
+  <summary class="flex cursor-pointer list-none items-center justify-between gap-4 p-5">
+    <div class="grid gap-1">
+      <h2 class="text-xl font-medium leading-snug">Quick-start</h2>
+      {description && <p class="text-sm text-muted-foreground">{description}</p>}
+    </div>
+    <ChevronDown
+      class="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180"
+      aria-hidden="true"
+    />
+  </summary>
+
+  <div class="border-t border-border p-5">
+    <GuideContent>
+      <slot />
+    </GuideContent>
+  </div>
+</details>
+
+<script>
+  document.querySelectorAll<HTMLDetailsElement>("[data-quick-start]").forEach((details) => {
+    const slug = details.getAttribute("data-quick-start");
+    if (!slug) return;
+
+    const key = `drawbridge:quick-start-open:${slug}`;
+
+    try {
+      const saved = localStorage.getItem(key);
+      details.open = saved === "true";
+    } catch {
+      details.open = false;
+    }
+
+    details.addEventListener("toggle", () => {
+      try {
+        localStorage.setItem(key, String(details.open));
+      } catch {}
+    });
+  });
+</script>
