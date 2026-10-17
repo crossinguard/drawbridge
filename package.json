@@ -11,7 +11,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "verify": "bun ./scripts/verify-serializer.ts",
-    "test": "bun ./scripts/integration-test.ts"
+    "test": "bun ./scripts/integration-test.ts",
+    "sample": "bun ./scripts/make-sample-docx.ts"
   },
   "dependencies": {
     "@starwind-ui/astro": "^1.3.0",

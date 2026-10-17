@@ -1,10 +1,11 @@
 /**
- * Integration test for the .docx import path (run with: bun ./scripts/integration-test.ts).
- * Builds a real .docx with JSZip, then runs it through mammoth → extractHtmlTables →
- * tableToRubric, using a jsdom DOMParser to mimic the browser environment.
+ * Integration test for the .docx import path (run with: bun run test).
+ * Builds the shared sample document (scripts/fixtures/sample-rubric.docx, via
+ * scripts/make-sample-docx.ts), then runs it through mammoth →
+ * extractHtmlTables → tableToRubric, using a jsdom DOMParser to mimic the
+ * browser environment.
  */
 import { JSDOM } from "jsdom";
-import JSZip from "jszip";
 
 // Provide a browser-like global before importing the parse pipeline.
 const dom = new JSDOM("<!doctype html><html><body></body></html>");
@@ -15,6 +16,7 @@ const mammoth = (await import("mammoth")).default;
 import { DEFAULT_SETTINGS, type ExtractedTable } from "../src/lib/rubric/types";
 import { extractHtmlTables } from "../src/lib/parse/html";
 import { tableToRubric } from "../src/lib/parse/table-to-rubric";
+import { buildSampleDocx } from "./make-sample-docx";
 
 let failures = 0;
 function check(name: string, actual: unknown, expected: unknown): void {
@@ -29,81 +31,41 @@ function check(name: string, actual: unknown, expected: unknown): void {
 }
 
 // ---------------------------------------------------------------------------
-// Build a .docx containing one rubric table
-// ---------------------------------------------------------------------------
-
-const tableXml = (rows: string[][]): string => {
-  const trs = rows
-    .map(
-      (cells) =>
-        `<w:tr>${cells
-          .map((text) => `<w:tc><w:tcPr/><w:p><w:r><w:t xml:space="preserve">${text}</w:t></w:r></w:p></w:tc>`)
-          .join("")}</w:tr>`,
-    )
-    .join("");
-  return `<w:tbl><w:tblPr/><w:tblGrid>${rows[0].map(() => "<w:gridCol/>").join("")}</w:tblGrid>${trs}</w:tbl>`;
-};
-
-const rubricRows = [
-  ["Criterion Name", "Points", "Rating A", "Rating B", "Rating C", "Rating D"],
-  ["Thesis", "5", "Clear, focused thesis", "Vague thesis", "Missing", "Missing"],
-  ["Evidence", "4", "Strong evidence", "Some evidence", "Little evidence", "None"],
-];
-
-const zip = new JSZip();
-zip.file(
-  "[Content_Types].xml",
-  `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-</Types>`,
-);
-zip.file(
-  "_rels/.rels",
-  `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-</Relationships>`,
-);
-zip.file(
-  "word/document.xml",
-  `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-  <w:body>${tableXml(rubricRows)}</w:body>
-</w:document>`,
-);
-
-const arrayBuffer = await zip.generateAsync({ type: "arraybuffer" });
-
-// ---------------------------------------------------------------------------
-// mammoth → HTML → tables → rubric
+// mammoth → HTML → tables → rubric (sample docx: rubric table + course table)
 // ---------------------------------------------------------------------------
 
 // Node/bun builds of mammoth take `buffer`; the browser build (verified in the
 // production bundle) takes `arrayBuffer`, which is what src/lib/parse/docx.ts uses.
-const { value: html, messages } = await mammoth.convertToHtml({ buffer: Buffer.from(arrayBuffer) });
+const docxBytes = await buildSampleDocx();
+const { value: html, messages } = await mammoth.convertToHtml({ buffer: Buffer.from(docxBytes) });
 check("mammoth converts without errors", messages.filter((m) => m.type === "error").length, 0);
 check("mammoth output contains a table", /<table[\s>]/.test(html), true);
 
-const tables: ExtractedTable[] = extractHtmlTables(html, "test.docx");
-check("one table extracted", tables.length, 1);
-check("table rows extracted", tables[0]?.rows.length, 3);
+const tables: ExtractedTable[] = extractHtmlTables(html, "sample-rubric.docx");
+check("both tables extracted", tables.length, 2);
+check("rubric table rows extracted", tables[0]?.rows.length, 5);
+check("course info table rows", tables[1]?.rows[1], ["Semester", "Fall 2026"]);
 
-const draft = tableToRubric(tables[0], { defaultName: "test", settings: DEFAULT_SETTINGS });
+const draft = tableToRubric(tables[0], { defaultName: "sample-rubric", settings: DEFAULT_SETTINGS });
 check("header detected", draft.usedHeader, true);
-check("rubric name from file name", draft.rubric.name, "test");
-check("criterion names", draft.rubric.criteria.map((c) => c.name), ["Thesis", "Evidence"]);
+check("rubric name from file name", draft.rubric.name, "sample-rubric");
+check("criterion names", draft.rubric.criteria.map((c) => c.name), [
+  "Thesis",
+  "Evidence",
+  "Organization & clarity",
+  "Style",
+]);
+check("max points parsed", draft.rubric.criteria.map((c) => c.maxPoints), [5, 4, 3, 2]);
 check("rating names from header", draft.rubric.criteria[0]?.ratings.map((r) => r.name), [
   "Rating A",
   "Rating B",
   "Rating C",
   "Rating D",
 ]);
-check("max points parsed", draft.rubric.criteria.map((c) => c.maxPoints), [5, 4]);
-check("points distribution (5 pts)", draft.rubric.criteria[0]?.ratings.map((r) => r.points), [5, 3, 0, 0]);
-check("points distribution (4 pts)", draft.rubric.criteria[1]?.ratings.map((r) => r.points), [4, 2, 0, 0]);
+check("points distribution (5 pts, half up)", draft.rubric.criteria[0]?.ratings.map((r) => r.points), [5, 3, 0, 0]);
+check("points distribution (3 pts, half up)", draft.rubric.criteria[2]?.ratings.map((r) => r.points), [3, 2, 0, 0]);
+check("comma/quote description preserved", draft.rubric.criteria[1]?.ratings[0]?.description, "Strong evidence; uses \"show, don't tell\"");
+check("no parse warnings for the sample", draft.warnings.length, 0);
 
 // ---------------------------------------------------------------------------
 // Rich-paste table with merged cells (rowspan on points, colspan in header)

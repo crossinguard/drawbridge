@@ -38,6 +38,7 @@ Output format follows `src/assets/reference/import_rubric_template.csv`: one CSV
 | `bun preview`                      | Previews the build locally                |
 | `bun ./scripts/verify-serializer.ts` | Serializer/parser unit checks           |
 | `bun ./scripts/integration-test.ts` | .docx import pipeline integration test |
+| `bun run sample`                    | Regenerates `scripts/fixtures/sample-rubric.docx` for manual testing |
 
 ## Deployment (Netlify)
 
