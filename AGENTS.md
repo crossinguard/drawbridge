@@ -34,8 +34,8 @@ src/
 ├── scripts/
 │   └── tools/                     # client-side controllers
 └── components/
-    ├── drawbridge/                # site-wide components
-    └── starwind/                  # UI components
+    ├── drawbridge/                # site-wide components (Header, Footer)
+    └── starwind/                  # Starwind UI components
 ```
 
 ## Tool conventions

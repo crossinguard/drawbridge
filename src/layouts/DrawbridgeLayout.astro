@@ -1,9 +1,9 @@
 ---
 import "@/styles/starwind.css";
 import { ThemeInitScript } from "@starwind-ui/astro/theme";
-import ShieldLock from "@tabler/icons/outline/shield-lock.svg";
 
-import { ThemeToggle } from "@/components/starwind/theme-toggle";
+import Header from "@/components/drawbridge/Header.astro";
+import Footer from "@/components/drawbridge/Footer.astro";
 import { Toaster } from "@/components/starwind/toast";
 
 interface Props {
@@ -37,38 +37,13 @@ const pageTitle = title === "Drawbridge" ? title : `${title} · Drawbridge`;
   </head>
 
   <body class="min-h-svh flex flex-col">
-    <header class="border-b bg-background">
-      <div class="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-        <a href="/" class="inline-flex items-center gap-2 text-xl font-bold tracking-tight hover:opacity-80">
-          <span class="text-primary">Drawbridge</span>
-        </a>
-        <nav class="flex flex-wrap items-center gap-4 text-sm">
-          <a href="/tools" class="text-muted-foreground hover:text-foreground">Tools</a>
-          <a href="/guides" class="text-muted-foreground hover:text-foreground">Guides</a>
-          <a href="/about" class="text-muted-foreground hover:text-foreground">About</a>
-          <a href="/privacy" class="text-muted-foreground hover:text-foreground">Privacy</a>
-          <ThemeToggle />
-        </nav>
-      </div>
-    </header>
+    <Header />
 
     <main class={fullWidth ? "flex-1" : "mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:py-12"}>
       <slot />
     </main>
 
-    <footer class="border-t bg-background">
-      <div class="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-        <div class="inline-flex items-center gap-2">
-          <ShieldLock class="size-4" aria-hidden="true" />
-          <span>Nothing leaves your device.</span>
-        </div>
-        <div class="flex flex-wrap gap-4">
-          <a href="/about" class="hover:text-foreground">About</a>
-          <a href="/privacy" class="hover:text-foreground">Privacy</a>
-          <a href="/tools" class="hover:text-foreground">Tools</a>
-        </div>
-      </div>
-    </footer>
+    <Footer />
 
     <Toaster position="bottom-right" />
   </body>

@@ -1,0 +1,72 @@
+---
+import Menu from "@tabler/icons/outline/menu.svg";
+
+import { Button } from "@/components/starwind/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/starwind/sheet";
+import { ThemeToggle } from "@/components/starwind/theme-toggle";
+
+const links = [
+  { href: "/tools", label: "Tools" },
+  { href: "/guides", label: "Guides" },
+  { href: "/about", label: "About" },
+  { href: "/privacy", label: "Privacy" },
+];
+---
+
+<header class="border-b border-border bg-background">
+  <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4">
+    <a href="/" class="text-xl font-bold tracking-tight text-foreground hover:opacity-80">
+      Drawbridge
+    </a>
+
+    <div class="flex items-center gap-2">
+      <nav class="hidden items-center gap-1 text-sm md:flex">
+        {
+          links.map((link) => (
+            <a
+              href={link.href}
+              class="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
+
+      <ThemeToggle />
+
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon" class="md:hidden" aria-label="Open navigation menu">
+            <Menu class="size-5" aria-hidden="true" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right">
+          <SheetHeader>
+            <SheetTitle>Menu</SheetTitle>
+            <SheetDescription class="sr-only">Site navigation links</SheetDescription>
+          </SheetHeader>
+          <nav class="grid gap-1 py-6">
+            {
+              links.map((link) => (
+                <a
+                  href={link.href}
+                  class="rounded-md px-3 py-3 text-base font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  {link.label}
+                </a>
+              ))
+            }
+          </nav>
+        </SheetContent>
+      </Sheet>
+    </div>
+  </div>
+</header>
