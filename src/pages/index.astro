@@ -2,6 +2,7 @@
 import "@/styles/starwind.css";
 import { ThemeInitScript } from "@starwind-ui/astro/theme";
 import FileUpload from "@tabler/icons/outline/file-upload.svg";
+import FileTypeCsv from "@tabler/icons/outline/file-type-csv.svg";
 import ClipboardText from "@tabler/icons/outline/clipboard-text.svg";
 import ShieldLock from "@tabler/icons/outline/shield-lock.svg";
 import Download from "@tabler/icons/outline/download.svg";
@@ -99,8 +100,8 @@ import { PRESET_LABELS, ROUNDING_LABELS } from "@/lib/rubric/points";
           <CardHeader>
             <CardTitle id="import-title">Import rubric</CardTitle>
             <CardDescription>
-              Upload a Word document or paste a table. Rubric columns are expected as: criterion, points, then one
-              column per rating level. Not sure what that looks like?
+              Upload a Word document, paste a table, or import a Canvas CSV you previously exported. Rubric columns are
+              expected as: criterion, points, then one column per rating level. Not sure what that looks like?
               <a
                 href="/sample-rubric.docx"
                 download
@@ -121,6 +122,10 @@ import { PRESET_LABELS, ROUNDING_LABELS } from "@/lib/rubric/points";
                 <TabsTrigger value="paste">
                   <ClipboardText class="size-4" aria-hidden="true" />
                   Paste
+                </TabsTrigger>
+                <TabsTrigger value="csv">
+                  <FileTypeCsv class="size-4" aria-hidden="true" />
+                  Canvas CSV
                 </TabsTrigger>
               </TabsList>
 
@@ -160,6 +165,37 @@ import { PRESET_LABELS, ROUNDING_LABELS } from "@/lib/rubric/points";
                     <Button id="parse-paste" variant="outline">
                       Parse pasted content
                     </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="csv" class="mt-4">
+                <div class="grid gap-4">
+                  <div
+                    id="csv-dropzone"
+                    class="hover:bg-muted/50 focus-visible:ring-outline/50 grid cursor-pointer place-items-center gap-3 rounded-lg border-2 border-dashed border-input p-6 text-center transition-colors outline-none focus-visible:ring-3 sm:p-10"
+                    role="button"
+                    tabindex="0"
+                    aria-label="Upload a Canvas CSV file"
+                  >
+                    <FileTypeCsv class="text-muted-foreground size-10" aria-hidden="true" />
+                    <p class="font-medium">Drop a Canvas CSV here</p>
+                    <p class="text-muted-foreground text-sm">or click to browse — .csv files only</p>
+                  </div>
+                  <input id="csv-file-input" type="file" accept=".csv,text/csv" hidden />
+
+                  <div class="grid gap-2">
+                    <Label for="csv-paste-input">Or paste CSV content</Label>
+                    <Textarea
+                      id="csv-paste-input"
+                      rows="6"
+                      placeholder={"Paste a Canvas rubric import CSV here…"}
+                    />
+                    <div>
+                      <Button id="parse-csv-paste" variant="outline">
+                        Parse pasted CSV
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </TabsContent>

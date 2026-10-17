@@ -4,9 +4,10 @@ A private, fully client-side tool that converts a Word rubric table into a [Canv
 
 ## How it works
 
-1. **Import** — upload a `.docx` (drag & drop works) or paste table content:
+1. **Import** — upload a `.docx` (drag & drop works), paste a table, or import a Canvas CSV you previously exported:
    - Rich paste straight from Word is detected automatically
    - Markdown pipe tables and tab-separated text also work
+   - Canvas CSV import is useful for editing a rubric you previously exported
    - Not sure what your file should look like? [Download the sample .docx](/sample-rubric.docx) — it shows the expected layout, including criteria that skip rating levels
 2. **Review & edit** — fix any parsing mistakes, name the rubric, and tune points:
    - Rating names come from the table's column headers

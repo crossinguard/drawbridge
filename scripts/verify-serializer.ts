@@ -4,9 +4,10 @@
  */
 import { readFileSync } from "node:fs";
 
-import { formatPoints, toCanvasCsv } from "../src/lib/rubric/canvas-csv";
+import { escapeCsv, formatPoints, toCanvasCsv } from "../src/lib/rubric/canvas-csv";
 import { computePoints, presetPercentages, recomputeAll } from "../src/lib/rubric/points";
 import { DEFAULT_SETTINGS, type Rubric } from "../src/lib/rubric/types";
+import { HEADER_BASE, parseCanvasCsv, parseCsv } from "../src/lib/parse/csv";
 import { parseTextTable } from "../src/lib/parse/text";
 import { tableToRubric } from "../src/lib/parse/table-to-rubric";
 
@@ -166,6 +167,47 @@ check("custom percentages initial", customRubric.criteria[0]?.ratings.map((r) =>
 customRubric.criteria[0]?.ratings.push({ name: "C", description: "", points: 0, manual: false });
 recomputeAll(customRubric, { preset: "custom", rounding: "exact", customPercentages: [100, 50, 25] });
 check("custom percentages after adding level", customRubric.criteria[0]?.ratings.map((r) => r.points), [10, 5, 2.5]);
+
+// 9) Canvas CSV round-trip.
+const csvRubric: Rubric = {
+  name: 'Essay "Rubric", v2',
+  criteria: [
+    {
+      name: "Thesis",
+      description: "Claim quality",
+      maxPoints: 5,
+      ratings: [
+        { name: "Excellent", description: "Clear, debatable claim", points: 5, manual: true },
+        { name: "Fair", description: "Vague claim", points: 3, manual: true },
+        { name: "Poor", description: "No claim", points: 0, manual: true },
+      ],
+    },
+    {
+      name: "Evidence",
+      description: "Use of sources",
+      maxPoints: 4,
+      ratings: [
+        { name: "Strong", description: "Relevant quotes", points: 4, manual: true },
+        { name: "Weak", description: "Thin evidence", points: 1, manual: true },
+      ],
+    },
+  ],
+};
+const csvText = toCanvasCsv(csvRubric);
+const imported = parseCanvasCsv(csvText);
+check("CSV round-trip preserves rubric name", imported.name, csvRubric.name);
+check("CSV round-trip preserves criterion count", imported.criteria.length, 2);
+check("CSV round-trip preserves first criterion", imported.criteria[0]?.name, "Thesis");
+check("CSV round-trip preserves rating names", imported.criteria[0]?.ratings.map((r) => r.name), ["Excellent", "Fair", "Poor"]);
+check("CSV round-trip preserves rating points", imported.criteria[0]?.ratings.map((r) => r.points), [5, 3, 0]);
+check("CSV round-trip preserves ragged row lengths", imported.criteria.map((c) => c.ratings.length), [3, 2]);
+
+// 10) CSV parser escaping.
+const ratingHeader = ["Rating Name", "Rating Description", "Rating Points"];
+const csvHeader = [...HEADER_BASE, ...ratingHeader, ...ratingHeader, ...ratingHeader].join(",");
+const escapedCsv = `${csvHeader}\n${escapeCsv(csvRubric.name)},Thesis,Claim quality,false,Excellent,"Clear, debatable claim",5,Fair,"Vague claim",1,Poor,"No claim",0`;
+const escapedImported = parseCanvasCsv(escapedCsv);
+check("CSV parser handles commas and quotes", escapedImported.criteria[0]?.ratings[0]?.description, "Clear, debatable claim");
 
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed.`);

@@ -21,6 +21,7 @@ import { textarea as textareaClasses } from "@/components/starwind/textarea/vari
 import { formatPoints, toCanvasCsv } from "@/lib/rubric/canvas-csv";
 import { PRESET_DESCRIPTIONS, applyPoints, presetPercentages, recomputeAll, totalPoints } from "@/lib/rubric/points";
 import { DEFAULT_SETTINGS, type ExtractedTable, type Rubric, type RubricSettings } from "@/lib/rubric/types";
+import { parseCanvasCsv } from "@/lib/parse/csv";
 import { extractTablesFromDocx } from "@/lib/parse/docx";
 import { extractHtmlTables } from "@/lib/parse/html";
 import { parseTextTable } from "@/lib/parse/text";
@@ -216,15 +217,32 @@ function parsePastedText(): void {
   handleTables([{ rows, source: "pasted" }]);
 }
 
+async function handleCsvFile(file: File): Promise<void> {
+  if (!/\.csv$/i.test(file.name)) {
+    toast.error("Not a CSV file", { description: "Please choose a .csv file." });
+    return;
+  }
+  try {
+    const text = await file.text();
+    buildDraftFromCsv(text);
+  } catch (err) {
+    toast.error("Could not read the CSV file", { description: String(err) });
+  }
+}
+
+function parsePastedCsv(): void {
+  const text = ($("csv-paste-input") as HTMLTextAreaElement).value;
+  buildDraftFromCsv(text);
+}
+
 // ---------------------------------------------------------------------------
 // Draft building
 // ---------------------------------------------------------------------------
 
-function buildDraft(table: ExtractedTable, defaultName?: string): void {
-  const draft = tableToRubric(table, { defaultName, settings: state.settings });
-  state.rubric = draft.rubric;
-  state.warnings = draft.warnings;
-  state.usedHeader = draft.usedHeader;
+function loadRubric(rubric: Rubric, warnings: string[] = []): void {
+  state.rubric = rubric;
+  state.warnings = warnings;
+  state.usedHeader = false;
   const first = state.rubric.criteria[0];
   state.ratingNames = first ? first.ratings.map((r) => r.name) : [];
 
@@ -238,9 +256,27 @@ function buildDraft(table: ExtractedTable, defaultName?: string): void {
 
   $("table-picker").innerHTML = "";
   goToStep(2);
+}
+
+function buildDraft(table: ExtractedTable, defaultName?: string): void {
+  const draft = tableToRubric(table, { defaultName, settings: state.settings });
+  loadRubric(draft.rubric, draft.warnings);
+  state.usedHeader = draft.usedHeader;
   toast.success(`Parsed ${state.rubric.criteria.length} criteria`, {
     description: "Review the rubric below and fix anything that looks off.",
   });
+}
+
+function buildDraftFromCsv(csvText: string): void {
+  try {
+    const rubric = parseCanvasCsv(csvText);
+    loadRubric(rubric);
+    toast.success(`Imported ${rubric.criteria.length} criteria from CSV`, {
+      description: "Review the rubric below and fix anything that looks off.",
+    });
+  } catch (err) {
+    toast.error("Could not import CSV", { description: String(err) });
+  }
 }
 
 function renderWarnings(): void {
@@ -762,6 +798,38 @@ export function initApp(): void {
   // Import: paste
   $("paste-input").addEventListener("paste", onRichPaste);
   $("parse-paste").addEventListener("click", parsePastedText);
+
+  // Import: Canvas CSV file
+  const csvDropzone = $("csv-dropzone");
+  const csvFileInput = $("csv-file-input") as HTMLInputElement;
+  csvDropzone.addEventListener("click", () => csvFileInput.click());
+  csvDropzone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      csvFileInput.click();
+    }
+  });
+  csvDropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    csvDropzone.classList.add("border-primary", "bg-muted/50");
+  });
+  csvDropzone.addEventListener("dragleave", () => {
+    csvDropzone.classList.remove("border-primary", "bg-muted/50");
+  });
+  csvDropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    csvDropzone.classList.remove("border-primary", "bg-muted/50");
+    const file = e.dataTransfer?.files?.[0];
+    if (file) void handleCsvFile(file);
+  });
+  csvFileInput.addEventListener("change", () => {
+    const file = csvFileInput.files?.[0];
+    if (file) void handleCsvFile(file);
+    csvFileInput.value = "";
+  });
+
+  // Import: Canvas CSV paste
+  $("parse-csv-paste").addEventListener("click", parsePastedCsv);
 
   // Import: table picker (delegated)
   $("table-picker").addEventListener("click", (e) => {
