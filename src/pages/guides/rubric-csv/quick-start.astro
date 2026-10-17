@@ -1,0 +1,56 @@
+---
+import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
+---
+
+<DrawbridgeLayout
+  title="Rubric → Canvas CSV quick-start"
+  description="Get started with the Rubric → Canvas CSV tool."
+>
+  <article class="grid gap-8">
+    <div class="grid gap-2">
+      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Rubric → Canvas CSV: Quick-start</h1>
+      <p class="text-muted-foreground">Convert a Word rubric table into a Canvas import CSV in a few steps.</p>
+    </div>
+
+    <ol class="grid gap-6 list-decimal pl-5">
+      <li class="pl-2">
+        <strong>Open the tool.</strong> Go to
+        <a href="/tools/rubric-csv" class="text-primary underline underline-offset-4 hover:text-primary-accent">Rubric → Canvas CSV</a>.
+      </li>
+      <li class="pl-2">
+        <strong>Import the rubric.</strong> Upload a .docx file, paste a table, or paste a previously exported Canvas CSV.
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
+          <li>Drag and drop a Word document onto the dropzone.</li>
+          <li>Paste a table copied directly from Word, or as a markdown / tab-separated table.</li>
+          <li>If the document has multiple tables, select the correct one from the list.</li>
+        </ul>
+      </li>
+      <li class="pl-2">
+        <strong>Review and edit.</strong> Check that criteria and rating levels are correct. Name the rubric, choose a
+        points preset, and adjust any individual rating points.
+      </li>
+      <li class="pl-2">
+        <strong>Export.</strong> Copy the CSV or download it, then import it into Canvas:
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
+          <li>Open a Canvas course.</li>
+          <li>Go to <strong>Rubrics</strong> and click <strong>+Rubric</strong>.</li>
+          <li>Click <strong>import</strong> and choose the downloaded file.</li>
+        </ul>
+      </li>
+    </ol>
+
+    <div class="rounded-lg border bg-muted/30 p-4">
+      <p class="text-sm">
+        Not sure what the Word table should look like?
+        <a
+          href="/sample-rubric.docx"
+          download
+          class="text-primary font-medium underline underline-offset-4 hover:text-primary-accent"
+        >
+          Download the sample .docx
+        </a>
+        — it includes examples of criteria that skip rating levels.
+      </p>
+    </div>
+  </article>
+</DrawbridgeLayout>

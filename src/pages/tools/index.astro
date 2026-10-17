@@ -1,0 +1,80 @@
+---
+import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
+import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import FileTypeCsv from "@tabler/icons/outline/file-type-csv.svg";
+import GitCompare from "@tabler/icons/outline/git-compare.svg";
+import Book from "@tabler/icons/outline/book.svg";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/starwind/card";
+
+const tools = [
+  {
+    href: "/tools/rubric-csv",
+    icon: FileTypeCsv,
+    title: "Rubric → Canvas CSV",
+    description: "Convert a Word rubric table into a Canvas import CSV.",
+    guideHref: "/guides/rubric-csv",
+  },
+  {
+    href: "/tools/outcome-mapper",
+    icon: GitCompare,
+    title: "Outcome Mapper",
+    description: "Map program, course, and assessment outcomes and export the alignment table.",
+    guideHref: "/guides/outcome-mapper",
+  },
+];
+---
+
+<DrawbridgeLayout
+  title="Tools"
+  description="Browse the Drawbridge tools."
+>
+  <div class="grid gap-6">
+    <div class="grid gap-2">
+      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Tools</h1>
+      <p class="text-muted-foreground">Each tool runs in your browser. No data leaves your device.</p>
+    </div>
+
+    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        tools.map((tool) => (
+          <Card class="flex flex-col">
+            <CardHeader>
+              <div class="text-primary mb-2">
+                <tool.icon class="size-8" aria-hidden="true" />
+              </div>
+              <CardTitle>
+                <a href={tool.href} class="hover:underline underline-offset-4">
+                  {tool.title}
+                </a>
+              </CardTitle>
+              <CardDescription>{tool.description}</CardDescription>
+            </CardHeader>
+            <CardContent class="mt-auto grid gap-3">
+              <a
+                href={tool.href}
+                class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Open tool
+                <ArrowRight class="size-4" aria-hidden="true" />
+              </a>
+              <a
+                href={tool.guideHref}
+                class="text-muted-foreground inline-flex items-center justify-center gap-2 text-sm hover:text-foreground"
+              >
+                <Book class="size-4" aria-hidden="true" />
+                Guide
+              </a>
+            </CardContent>
+          </Card>
+        ))
+      }
+    </section>
+  </div>
+</DrawbridgeLayout>

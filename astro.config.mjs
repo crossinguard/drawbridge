@@ -11,10 +11,10 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "favicon.ico"],
       manifest: {
-        name: "Rubric CSV — Canvas rubric importer",
-        short_name: "Rubric CSV",
+        name: "Drawbridge — Private assessment tools",
+        short_name: "Drawbridge",
         description:
-          "Convert a Word rubric table into a Canvas import CSV. Private by design — everything stays on your device.",
+          "Free, private tools for assessment work. No login, no tracking — everything stays on your device.",
         theme_color: "#ffffff",
         background_color: "#ffffff",
         display: "standalone",

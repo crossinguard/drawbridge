@@ -1,0 +1,64 @@
+---
+import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
+import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/starwind/card";
+---
+
+<DrawbridgeLayout
+  title="Outcome Mapper guide"
+  description="Guides for the Outcome Mapper tool."
+>
+  <div class="grid gap-6">
+    <div class="grid gap-2">
+      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Outcome Mapper</h1>
+      <p class="text-muted-foreground">Map program, course, and assessment outcomes and export the alignment table.</p>
+    </div>
+
+    <section class="grid gap-4 sm:grid-cols-2">
+      <Card class="flex flex-col">
+        <CardHeader>
+          <CardTitle>Quick-start</CardTitle>
+          <CardDescription>Load outcomes, create mappings, and export an alignment table.</CardDescription>
+        </CardHeader>
+        <CardContent class="mt-auto">
+          <a
+            href="/guides/outcome-mapper/quick-start"
+            class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4"
+          >
+            Read quick-start
+            <ArrowRight class="size-4" aria-hidden="true" />
+          </a>
+        </CardContent>
+      </Card>
+
+      <Card class="flex flex-col">
+        <CardHeader>
+          <CardTitle>Reference</CardTitle>
+          <CardDescription>Input format, mapping rules, and export options.</CardDescription>
+        </CardHeader>
+        <CardContent class="mt-auto">
+          <a
+            href="/guides/outcome-mapper/reference"
+            class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4"
+          >
+            Read reference
+            <ArrowRight class="size-4" aria-hidden="true" />
+          </a>
+        </CardContent>
+      </Card>
+    </section>
+
+    <div>
+      <a href="/tools/outcome-mapper" class="text-primary font-medium underline underline-offset-4 hover:text-primary-accent">
+        Open the tool
+      </a>
+    </div>
+  </div>
+</DrawbridgeLayout>

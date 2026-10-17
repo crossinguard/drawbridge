@@ -1,0 +1,174 @@
+---
+import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
+import ShieldLock from "@tabler/icons/outline/shield-lock.svg";
+import ClipboardText from "@tabler/icons/outline/clipboard-text.svg";
+import Download from "@tabler/icons/outline/download.svg";
+import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/starwind/card";
+import { Label } from "@/components/starwind/label";
+import { Textarea } from "@/components/starwind/textarea";
+---
+
+<DrawbridgeLayout
+  title="Outcome Mapper"
+  description="Map program, course, and assessment outcomes. Private by design — everything stays on your device."
+  fullWidth
+>
+  <main class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:gap-6 sm:py-12">
+    <header class="flex flex-wrap items-start justify-between gap-4">
+      <div class="grid gap-1">
+        <h1 class="inline-flex flex-wrap items-center gap-x-2.5 text-2xl font-bold tracking-tight sm:text-3xl">
+          <span>Outcome</span>
+          <ArrowRight class="text-primary size-6 sm:size-7" aria-hidden="true" />
+          <span>Mapper</span>
+        </h1>
+        <p class="text-muted-foreground text-sm sm:text-base">
+          Map program, course, and assessment outcomes. Private by design — everything stays on your device.
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <Badge variant="secondary">
+          <ShieldLock class="size-4" aria-hidden="true" />
+          100% local
+        </Badge>
+      </div>
+    </header>
+
+    <ol class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" aria-label="Progress">
+      <li id="step-1" class="flex items-center gap-2">
+        <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">1</span>
+        <span data-step-label>Import</span>
+        <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
+      </li>
+      <li id="step-2" class="flex items-center gap-2">
+        <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">2</span>
+        <span data-step-label>Map</span>
+        <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
+      </li>
+      <li id="step-3" class="flex items-center gap-2">
+        <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">3</span>
+        <span data-step-label>Export</span>
+      </li>
+    </ol>
+
+    <!-- Step 1: Import -->
+    <section id="step-import" class="grid gap-6" aria-labelledby="import-title">
+      <Card>
+        <CardHeader>
+          <CardTitle id="import-title">Import outcomes</CardTitle>
+          <CardDescription>
+            Paste a CSV or TSV list of outcomes. Each row needs a level (program, course, or assessment), an id, and the
+            outcome text. Optionally include a mapsTo column with comma-separated parent ids.
+            <a
+              href="/guides/outcome-mapper/reference"
+              class="text-primary font-medium underline underline-offset-4 hover:text-primary-accent"
+            >
+              See the reference
+            </a>
+            for details.
+          </CardDescription>
+        </CardHeader>
+        <CardContent class="grid gap-4">
+          <div class="grid gap-2">
+            <Label for="outcome-input">Paste outcome data</Label>
+            <Textarea
+              id="outcome-input"
+              rows="10"
+              placeholder={`level,id,text,mapsTo\nprogram,po1,Students communicate effectively,\ncourse,co1,Write clear arguments,po1\nassessment,ao1,Thesis statement is clear,co1`}
+            />
+            <p class="text-muted-foreground text-xs">
+              Comma-separated or tab-separated values are detected automatically.
+            </p>
+          </div>
+          <div id="import-warnings" class="grid gap-2"></div>
+          <div>
+            <Button id="parse-outcomes">Load outcomes</Button>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Alert variant="info">
+            <AlertTitle>Nothing leaves your browser</AlertTitle>
+            <AlertDescription>
+              Pasted content is processed locally — there is no server, no upload, and no tracking.
+            </AlertDescription>
+          </Alert>
+        </CardFooter>
+      </Card>
+    </section>
+
+    <!-- Step 2: Map -->
+    <section id="step-map" hidden class="grid gap-4 sm:gap-6" aria-labelledby="map-title">
+      <Card>
+        <CardHeader>
+          <CardTitle id="map-title">Map outcomes</CardTitle>
+          <CardDescription>
+            For each lower-level outcome, select the higher-level outcomes it supports.
+          </CardDescription>
+        </CardHeader>
+        <CardContent class="grid gap-6">
+          <div id="outcome-summary" class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm"></div>
+          <div id="outcome-editor" class="grid gap-6"></div>
+        </CardContent>
+        <CardFooter class="justify-between">
+          <Button id="back-to-import" variant="ghost">Back</Button>
+          <Button id="to-export">Continue to export</Button>
+        </CardFooter>
+      </Card>
+    </section>
+
+    <!-- Step 3: Export -->
+    <section id="step-export" hidden aria-labelledby="export-title">
+      <Card>
+        <CardHeader>
+          <CardTitle id="export-title">Export</CardTitle>
+          <CardDescription>
+            Download the alignment table or the updated outcome list.
+          </CardDescription>
+        </CardHeader>
+        <CardContent class="grid gap-4">
+          <div class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+            <span>Alignments:</span>
+            <Badge id="alignment-count" variant="secondary">0</Badge>
+          </div>
+          <pre
+            id="export-preview"
+            class="bg-muted/50 max-h-96 overflow-auto rounded-lg border p-4 text-xs break-all whitespace-pre-wrap"
+          ></pre>
+        </CardContent>
+        <CardFooter class="justify-between">
+          <Button id="back-to-map" variant="ghost">Back</Button>
+          <div class="flex flex-wrap gap-2">
+            <Button id="copy-export" variant="outline">
+              <ClipboardText class="size-4" aria-hidden="true" />
+              Copy
+            </Button>
+            <Button id="download-alignments">
+              <Download class="size-4" aria-hidden="true" />
+              Download alignments
+            </Button>
+            <Button id="download-outcomes" variant="outline">
+              <Download class="size-4" aria-hidden="true" />
+              Download outcomes
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
+    </section>
+  </main>
+
+  <script>
+    import "@/scripts/tools/outcome-mapper/app";
+  </script>
+</DrawbridgeLayout>
