@@ -2,12 +2,9 @@
 import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
 ---
 
-<DrawbridgeLayout
-  title="Privacy"
-  description="Drawbridge privacy details: nothing leaves your device."
->
-  <div class="grid gap-8">
-    <div class="grid gap-2">
+<DrawbridgeLayout title="Privacy" description="Drawbridge privacy details: nothing leaves your device.">
+  <div class="mx-auto grid max-w-3xl gap-8">
+    <div class="grid gap-2 text-center">
       <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Privacy</h1>
       <p class="text-muted-foreground">Drawbridge is built so that nothing leaves your device.</p>
     </div>
@@ -15,7 +12,7 @@ import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
     <div class="grid gap-6 text-foreground">
       <section class="grid gap-3">
         <h2 class="text-lg font-semibold">What we do not do</h2>
-        <ul class="list-disc space-y-1 pl-5">
+        <ul class="list-disc space-y-2 pl-5 leading-relaxed text-muted-foreground">
           <li>No server-side processing.</li>
           <li>No analytics or tracking.</li>
           <li>No cookies or localStorage.</li>
@@ -26,11 +23,11 @@ import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
 
       <section class="grid gap-3">
         <h2 class="text-lg font-semibold">How it works</h2>
-        <p>
+        <p class="leading-relaxed text-muted-foreground">
           Drawbridge is a static site. When you open a tool, the page and its code are served to your browser. Any file
           you import or text you paste is processed in memory by JavaScript running on your own device.
         </p>
-        <p>
+        <p class="leading-relaxed text-muted-foreground">
           The production site sends a Content Security Policy header that blocks external requests
           (<code>default-src 'self'</code>). This means even if malicious code were somehow introduced, it could not
           send your data to another server.
@@ -39,7 +36,7 @@ import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
 
       <section class="grid gap-3">
         <h2 class="text-lg font-semibold">Offline use</h2>
-        <p>
+        <p class="leading-relaxed text-muted-foreground">
           Drawbridge is an installable progressive web app. After the first load, a service worker caches the site so it
           works without a network connection. You can verify this by turning off Wi-Fi after the initial load.
         </p>
@@ -47,7 +44,7 @@ import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
 
       <section class="grid gap-3">
         <h2 class="text-lg font-semibold">Recommendations for sensitive data</h2>
-        <ul class="list-disc space-y-1 pl-5">
+        <ul class="list-disc space-y-2 pl-5 leading-relaxed text-muted-foreground">
           <li>Use a private or incognito browser window.</li>
           <li>Disable browser extensions you do not trust.</li>
           <li>Turn off your network connection after loading the site.</li>
