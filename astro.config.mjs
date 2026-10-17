@@ -1,11 +1,13 @@
 import tailwindcss from "@tailwindcss/vite";
 // @ts-check
 import { defineConfig } from "astro/config";
+import mdx from "@astrojs/mdx";
 import vitePWA from "@vite-pwa/astro";
 
 // https://docs.astro.build/config
 export default defineConfig({
   integrations: [
+    mdx(),
     // Static site + service worker: installable and fully offline after first load.
     vitePWA({
       registerType: "autoUpdate",

@@ -1,0 +1,30 @@
+## Input format
+
+The input is a table with a header row. Columns are case-insensitive and whitespace is trimmed.
+
+<div class="table-wrapper">
+
+| Column | Required | Description |
+| ------ | -------- | ----------- |
+| `level` | Yes | `program`, `course`, or `assessment` |
+| `id` | Yes | A short unique identifier |
+| `text` | Yes | The outcome statement |
+| `mapsTo` | No | Comma-separated parent outcome ids |
+
+</div>
+
+## Mapping rules
+
+- Assessment outcomes can map to course outcomes.
+- Course outcomes can map to program outcomes.
+- Program outcomes are the top level and cannot map to anything.
+- A lower-level outcome can map to multiple higher-level outcomes.
+
+## Export formats
+
+- **Alignments CSV** — one row per mapping with columns: `Child Level, Child ID, Child Text, Parent Level, Parent ID, Parent Text`.
+- **Outcomes CSV** — the original `level,id,text,mapsTo` format, including any new mappings created in the tool.
+
+## Delimiter detection
+
+The parser detects commas or tabs automatically based on the first row. If your text contains commas, wrap the field in double quotes. Use two double quotes to escape a literal quote.
