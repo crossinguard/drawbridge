@@ -6,6 +6,8 @@ import FileTypeCsv from "@tabler/icons/outline/file-type-csv.svg";
 import GitCompare from "@tabler/icons/outline/git-compare.svg";
 import Book from "@tabler/icons/outline/book.svg";
 
+import drawbridgeLogo from "@/assets/branding/drawbridge-logo.svg";
+
 import {
   Card,
   CardContent,
@@ -39,7 +41,9 @@ const tools = [
 >
   <div class="mx-auto grid max-w-3xl gap-8 text-center">
     <section class="grid gap-4">
-      <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Drawbridge</h1>
+      <h1>
+        <img src={drawbridgeLogo.src} alt="Drawbridge" class="mx-auto h-24 w-auto sm:h-32" />
+      </h1>
       <p class="text-muted-foreground mx-auto max-w-2xl text-lg">
         Free, private tools for assessment work. No login, no fee, no tracking — everything stays on your device.
       </p>

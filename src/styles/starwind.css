@@ -27,6 +27,10 @@
 }
 
 @theme inline {
+  --font-sans: var(--font-hyperlegible-next);
+  --font-mono: var(--font-hyperlegible-mono);
+  --font-heading: var(--font-paintfactory);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -157,6 +161,14 @@
 @layer base {
   * {
     @apply border-border outline-outline/50;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
   }
   body {
     @apply bg-background text-foreground scheme-light dark:scheme-dark;
