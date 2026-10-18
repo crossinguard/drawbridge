@@ -7,6 +7,7 @@ import { toast } from "@starwind-ui/runtime/toast";
 import arrowDown from "@tabler/icons/outline/arrow-down.svg?raw";
 import arrowUp from "@tabler/icons/outline/arrow-up.svg?raw";
 import alertTriangle from "@tabler/icons/outline/alert-triangle.svg?raw";
+import check from "@tabler/icons/outline/check.svg?raw";
 import plus from "@tabler/icons/outline/plus.svg?raw";
 import trash from "@tabler/icons/outline/trash.svg?raw";
 import x from "@tabler/icons/outline/x.svg?raw";
@@ -109,6 +110,10 @@ function hasUnsavedWork(): boolean {
 // ---------------------------------------------------------------------------
 
 function goToStep(step: 1 | 2 | 3): void {
+  // Prevent jumping forward to steps that haven't been reached yet.
+  if (step > 1 && state.rubric.criteria.length === 0) return;
+  if (step === 3 && state.rubric.criteria.length === 0) return;
+
   state.step = step;
   const sections: Record<number, string> = { 1: "step-import", 2: "step-review", 3: "step-export" };
   for (const [n, id] of Object.entries(sections)) {
@@ -121,18 +126,25 @@ function goToStep(step: 1 | 2 | 3): void {
 function renderStepper(): void {
   for (let n = 1; n <= 3; n++) {
     const li = $(`step-${n}`);
+    const btn = li.querySelector("[data-step-action]") as HTMLButtonElement;
     const badge = li.querySelector("[data-step-badge]") as HTMLElement;
     const label = li.querySelector("[data-step-label]") as HTMLElement;
     const active = state.step === n;
     const done = state.step > n;
+    const reachable = n === 1 || state.rubric.criteria.length > 0;
+
     badge.className =
       "flex size-6 items-center justify-center rounded-full text-xs font-medium " +
       (active
-        ? "bg-foreground text-background"
+        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
         : done
-          ? "bg-success text-success-foreground"
+          ? "bg-primary text-primary-foreground"
           : "border border-input text-muted-foreground");
-    label.className = active ? "font-medium text-foreground" : "text-muted-foreground";
+    badge.innerHTML = done ? icon(check, "size-4") : String(n);
+
+    label.className = active ? "font-medium text-foreground" : done ? "font-medium text-foreground" : "text-muted-foreground";
+
+    btn.disabled = !reachable;
     if (active) li.setAttribute("aria-current", "step");
     else li.removeAttribute("aria-current");
   }
@@ -141,6 +153,22 @@ function renderStepper(): void {
 // ---------------------------------------------------------------------------
 // Import step
 // ---------------------------------------------------------------------------
+
+const SAMPLE_RUBRIC_TEXT = `Criterion\tPoints\tExcellent\tGood\tFair\tPoor
+Thesis\t5\tClear, arguable, and well-scoped thesis\tThesis is present but overly broad or vague\tThesis is weak or only descriptive\tNo clear thesis
+Evidence\t5\tSpecific, relevant evidence supports every claim\tMost claims are supported; some evidence is thin\tLimited or generic evidence\tLittle to no evidence
+Organization\t5\tLogical flow with clear transitions\tMostly logical; a few transitions missing\tReader must work to follow the argument\tNo discernible structure
+Conventions\t5\tFew or no grammar/spelling errors\tSome errors that do not impede reading\tFrequent errors that impede reading\tErrors prevent understanding`;
+
+function loadSampleRubric(): void {
+  const rows = parseTextTable(SAMPLE_RUBRIC_TEXT);
+  if (rows.length === 0) {
+    toast.error("Could not load starter rubric");
+    return;
+  }
+  handleTables([{ rows, source: "sample" }], "Starter Rubric");
+  toast.success("Starter rubric loaded", { description: "Edit or replace it, then continue to export." });
+}
 
 async function handleDocxFile(file: File): Promise<void> {
   if (!/\.docx$/i.test(file.name)) {
@@ -875,6 +903,17 @@ export function initApp(): void {
   $("back-to-import").addEventListener("click", () => goToStep(1));
   $("to-export").addEventListener("click", toExport);
   $("back-to-review").addEventListener("click", () => goToStep(2));
+
+  // Stepper navigation
+  document.querySelectorAll<HTMLButtonElement>("[data-step-action]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const step = Number(btn.dataset.stepAction) as 1 | 2 | 3;
+      goToStep(step);
+    });
+  });
+
+  // Starter template
+  $("load-sample").addEventListener("click", loadSampleRubric);
 
   // Export
   $("download-csv").addEventListener("click", downloadCsv);

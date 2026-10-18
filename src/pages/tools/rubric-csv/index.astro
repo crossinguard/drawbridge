@@ -52,7 +52,7 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
       <div class="flex flex-wrap items-center gap-2">
         <Button as="a" href="/guides/rubric-csv" variant="outline" size="sm" class="inline-flex items-center gap-2">
           <Book class="size-4" aria-hidden="true" />
-          Reference
+          Guide
         </Button>
         <Badge variant="secondary">
           <ShieldLock class="size-4" aria-hidden="true" />
@@ -65,20 +65,40 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
       <QuickStartContent />
     </QuickStartCollapsible>
 
-    <ol class="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" aria-label="Progress">
-      <li id="step-1" class="flex items-center gap-2">
-        <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">1</span>
-        <span data-step-label>Import</span>
+    <ol class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" aria-label="Progress">
+      <li id="step-1" class="group flex items-center gap-2" data-step="1">
+        <button
+          type="button"
+          data-step-action="1"
+          class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted"
+        >
+          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">1</span>
+          <span data-step-label>Import</span>
+        </button>
         <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
       </li>
-      <li id="step-2" class="flex items-center gap-2">
-        <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">2</span>
-        <span data-step-label>Review & edit</span>
+      <li id="step-2" class="group flex items-center gap-2" data-step="2">
+        <button
+          type="button"
+          data-step-action="2"
+          class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted disabled:pointer-events-none"
+          disabled
+        >
+          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">2</span>
+          <span data-step-label>Review & edit</span>
+        </button>
         <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
       </li>
-      <li id="step-3" class="flex items-center gap-2">
-        <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">3</span>
-        <span data-step-label>Export CSV</span>
+      <li id="step-3" class="group flex items-center gap-2" data-step="3">
+        <button
+          type="button"
+          data-step-action="3"
+          class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted disabled:pointer-events-none"
+          disabled
+        >
+          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">3</span>
+          <span data-step-label>Export CSV</span>
+        </button>
       </li>
     </ol>
 
@@ -190,6 +210,16 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
           </Tabs>
 
           <div id="table-picker" class="grid gap-2"></div>
+
+          <div class="rounded-lg border border-dashed border-border bg-muted/30 p-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="grid gap-0.5">
+                <p class="text-sm font-medium text-foreground">No file to hand?</p>
+                <p class="text-xs text-muted-foreground">Load a simple starter rubric and edit it in place.</p>
+              </div>
+              <Button id="load-sample" variant="outline" size="sm">Load starter rubric</Button>
+            </div>
+          </div>
         </CardContent>
         <CardFooter>
           <Alert variant="info">

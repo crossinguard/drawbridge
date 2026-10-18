@@ -6,6 +6,7 @@ import { toast } from "@starwind-ui/runtime/toast";
 
 import { badge as badgeClasses } from "@/components/starwind/badge/variants";
 import { alert as alertClasses, alertDescription, alertTitle } from "@/components/starwind/alert/variants";
+import check from "@tabler/icons/outline/check.svg?raw";
 
 import { parseOutcomes } from "@/lib/tools/outcome-mapper/parse";
 import { exportAlignments, exportOutcomes, groupByLevel, parentLevel } from "@/lib/tools/outcome-mapper/export";
@@ -40,6 +41,11 @@ function esc(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/** Inline an SVG icon with a size class. */
+function icon(raw: string, cls = "size-4"): string {
+  return raw.replace("<svg", `<svg class="${cls}" aria-hidden="true"`);
+}
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -47,7 +53,14 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function canReachStep(step: number): boolean {
+  if (step <= 1) return true;
+  if (step === 2) return state.outcomes.length > 0;
+  return state.outcomes.length > 0;
+}
+
 function setStep(step: 1 | 2 | 3): void {
+  if (!canReachStep(step)) return;
   state.step = step;
   const sections = ["step-import", "step-map", "step-export"];
   sections.forEach((id, idx) => {
@@ -55,29 +68,53 @@ function setStep(step: 1 | 2 | 3): void {
   });
 
   for (let i = 1; i <= 3; i++) {
+    const li = document.querySelector<HTMLElement>(`#step-${i}`);
+    const btn = li?.querySelector<HTMLButtonElement>("[data-step-action]");
     const badge = document.querySelector<HTMLElement>(`#step-${i} [data-step-badge]`);
     const label = document.querySelector<HTMLElement>(`#step-${i} [data-step-label]`);
-    if (!badge || !label) continue;
+    if (!badge || !label || !btn || !li) continue;
 
-    if (i < step) {
-      badge.className = "flex size-6 items-center justify-center rounded-full text-xs font-medium bg-primary text-primary-foreground";
-      label.classList.remove("text-muted-foreground");
-      label.classList.add("text-foreground", "font-medium");
-    } else if (i === step) {
-      badge.className = "flex size-6 items-center justify-center rounded-full text-xs font-medium bg-primary text-primary-foreground";
-      label.classList.remove("text-muted-foreground");
-      label.classList.add("text-foreground", "font-medium");
-    } else {
-      badge.className = "flex size-6 items-center justify-center rounded-full text-xs font-medium bg-muted text-muted-foreground";
-      label.classList.remove("text-foreground", "font-medium");
-      label.classList.add("text-muted-foreground");
-    }
+    const done = i < step;
+    const active = i === step;
+    const reachable = canReachStep(i);
+
+    badge.className =
+      "flex size-6 items-center justify-center rounded-full text-xs font-medium " +
+      (active
+        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+        : done
+          ? "bg-primary text-primary-foreground"
+          : "border border-input text-muted-foreground");
+    badge.innerHTML = done ? icon(check, "size-4") : String(i);
+
+    label.className = active || done ? "font-medium text-foreground" : "text-muted-foreground";
+    btn.disabled = !reachable;
+
+    if (active) li.setAttribute("aria-current", "step");
+    else li.removeAttribute("aria-current");
   }
 }
 
 // ---------------------------------------------------------------------------
 // Import
 // ---------------------------------------------------------------------------
+
+const SAMPLE_OUTCOMES = `level,id,text,mapsTo
+program,po1,Students communicate effectively and appropriately for varied audiences and purposes,
+program,po2,Students use evidence to support reasoned conclusions and recommendations,
+course,co1,Produce written work organized around a clear central claim,po1
+course,co2,Support claims with credible and relevant evidence,po2
+course,co3,Adapt tone and style for the intended audience,po1
+assessment,ao1,Thesis or main claim is clear and arguable,co1
+assessment,ao2,Body paragraphs include evidence that supports the claim,co2
+assessment,ao3,Writing uses discipline-appropriate vocabulary and tone,co3`;
+
+function loadSampleOutcomes(): void {
+  const input = $("#outcome-input" as "textarea");
+  input.value = SAMPLE_OUTCOMES;
+  handleParse();
+  toast.success("Sample outcomes loaded", { description: "Adjust the mappings or replace them with your own." });
+}
 
 function handleParse(): void {
   const input = $("#outcome-input" as "textarea").value;
@@ -249,6 +286,7 @@ function copyToClipboard(text: string): void {
 // ---------------------------------------------------------------------------
 
 $("#parse-outcomes").addEventListener("click", handleParse);
+$("#load-sample-outcomes").addEventListener("click", loadSampleOutcomes);
 $("#back-to-import").addEventListener("click", () => setStep(1));
 $("#to-export").addEventListener("click", () => {
   renderExport();
@@ -262,5 +300,12 @@ $("#download-alignments").addEventListener("click", () =>
 $("#download-outcomes").addEventListener("click", () =>
   download(exportOutcomes(state.outcomes, state.mappings), "outcomes.csv")
 );
+
+document.querySelectorAll<HTMLButtonElement>("[data-step-action]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const step = Number(btn.dataset.stepAction) as 1 | 2 | 3;
+    setStep(step);
+  });
+});
 
 setStep(1);
