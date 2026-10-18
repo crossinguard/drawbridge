@@ -119,43 +119,43 @@
 }
 
 .dark {
-  --background: #0f140f;
-  --foreground: #f0f2eb;
-  --card: #181f18;
-  --card-foreground: #f0f2eb;
-  --popover: #181f18;
-  --popover-foreground: #f0f2eb;
-  --primary: #7cb18e;
-  --primary-foreground: #0f140f;
-  --primary-accent: #9bc9a8;
-  --secondary: #1f2a1f;
-  --secondary-foreground: #f0f2eb;
-  --secondary-accent: #7cb18e;
-  --muted: #232b23;
-  --muted-foreground: #9db39d;
-  --accent: #006a34;
-  --accent-foreground: #f0f2eb;
-  --info: #7cb18e;
-  --info-foreground: #0f140f;
-  --success: #7cb18e;
-  --success-foreground: #0f140f;
+  --background: #12150a;
+  --foreground: #f1f3e2;
+  --card: #1a1e0e;
+  --card-foreground: #f1f3e2;
+  --popover: #1a1e0e;
+  --popover-foreground: #f1f3e2;
+  --primary: #a4bd35;
+  --primary-foreground: #161a08;
+  --primary-accent: #c1d552;
+  --secondary: #2a3112;
+  --secondary-foreground: #f1f3e2;
+  --secondary-accent: #a4bd35;
+  --muted: #242a15;
+  --muted-foreground: #a9b489;
+  --accent: #4a5a17;
+  --accent-foreground: #f1f3e2;
+  --info: #a4bd35;
+  --info-foreground: #161a08;
+  --success: #a4bd35;
+  --success-foreground: #161a08;
   --warning: #ffc000;
-  --warning-foreground: #0f140f;
+  --warning-foreground: #161a08;
   --error: #f87171;
-  --error-foreground: #0f140f;
-  --border: rgba(240, 242, 235, 0.12);
-  --input: rgba(240, 242, 235, 0.16);
-  --outline: #7cb18e;
+  --error-foreground: #161a08;
+  --border: rgba(241, 243, 226, 0.14);
+  --input: rgba(241, 243, 226, 0.18);
+  --outline: #a4bd35;
 
   /* sidebars variables */
-  --sidebar-background: #181f18;
-  --sidebar-foreground: #f0f2eb;
-  --sidebar-primary: #7cb18e;
-  --sidebar-primary-foreground: #0f140f;
-  --sidebar-accent: #1f2a1f;
-  --sidebar-accent-foreground: #f0f2eb;
-  --sidebar-border: rgba(240, 242, 235, 0.12);
-  --sidebar-outline: #7cb18e;
+  --sidebar-background: #1b1f10;
+  --sidebar-foreground: #f1f3e2;
+  --sidebar-primary: #a4bd35;
+  --sidebar-primary-foreground: #161a08;
+  --sidebar-accent: #2a3112;
+  --sidebar-accent-foreground: #f1f3e2;
+  --sidebar-border: rgba(241, 243, 226, 0.14);
+  --sidebar-outline: #a4bd35;
 }
 
 @layer base {
