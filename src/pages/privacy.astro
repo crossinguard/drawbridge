@@ -15,7 +15,7 @@ import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
         <ul class="list-disc space-y-2 pl-5 leading-relaxed text-muted-foreground">
           <li>No server-side processing.</li>
           <li>No analytics or tracking.</li>
-          <li>No cookies or localStorage.</li>
+          <li>No cookies.</li>
           <li>No account or login.</li>
           <li>No network requests after the page is loaded.</li>
         </ul>
@@ -31,6 +31,15 @@ import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
           The production site sends a Content Security Policy header that blocks external requests
           (<code>default-src 'self'</code>). This means even if malicious code were somehow introduced, it could not
           send your data to another server.
+        </p>
+      </section>
+
+      <section class="grid gap-3">
+        <h2 class="text-lg font-semibold">Local preferences</h2>
+        <p class="leading-relaxed text-muted-foreground">
+          Drawbridge stores a few small preferences in your browser’s localStorage so your choices persist between
+          visits. This currently includes your selected color theme and whether the quick-start guide is open on each
+          tool page. These values never leave your device and are not transmitted anywhere.
         </p>
       </section>
 
