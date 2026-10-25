@@ -40,6 +40,16 @@ Build for production:
 bun run build
 ```
 
+### Checks
+
+```bash
+bun run check        # astro check — types
+bun run format       # prettier --write . (also sorts Tailwind classes)
+bun run test         # integration test for the .docx import path
+bun run verify       # CSV serializer/parser checks
+bun run test:e2e     # browser smoke test (needs `bun run build` first)
+```
+
 ## Deployment (Netlify)
 
 `netlify.toml` is preconfigured (`bun run build`, publish `dist/`). Connect the repo in Netlify and deploy — no environment variables needed.
@@ -50,12 +60,19 @@ bun run build
 src/
 ├── layouts/
 │   └── DrawbridgeLayout.astro     # shared site shell
+├── content.config.ts              # the `guides` content collection
 ├── lib/
+│   ├── copy.ts                    # shared site copy
+│   ├── nav.ts                     # primary navigation links
+│   ├── utils.ts                   # `cn()` class-name helper
 │   ├── parse/                     # file/text parsers
 │   ├── rubric/                    # rubric model, points, Canvas CSV
 │   └── tools/
 │       ├── registry.ts            # tool list + status metadata
+│       ├── steps.ts               # the shared ToolStep contract
+│       ├── rubric-csv/
 │       └── outcome-mapper/
+├── content/guides/                # guide MDX (reference + quick-start)
 ├── pages/
 │   ├── index.astro                # tool directory
 │   ├── about.astro
@@ -65,20 +82,30 @@ src/
 │   │   └── outcome-mapper/
 │   └── guides/
 │       ├── index.astro
-│       ├── rubric-csv/
-│       └── outcome-mapper/
+│       └── [tool]/index.astro     # one route for every guide
 ├── scripts/
 │   ├── app.ts                     # rubric-csv controller
+│   ├── lib/                       # shared client runtime
+│   │   ├── alerts.ts              # Starwind alerts from client code
+│   │   ├── dom.ts                 # byId, esc, icon, slugify
+│   │   ├── io.ts                  # download, copyToClipboard
+│   │   └── stepper.ts             # shared step navigation
 │   └── tools/outcome-mapper/
 └── components/
     ├── drawbridge/                # site-wide components
+    │   └── tools/                 # tool-page components
     └── starwind/                  # Starwind UI components
 ```
 
 ## Adding a tool
 
-1. Add an entry to `src/lib/tools/registry.ts` with its title, description, icon, and status.
-2. Add the tool page under `src/pages/tools/<slug>/`.
-3. Add the guide page under `src/pages/guides/<slug>/`.
+1. Add an entry to `src/lib/tools/registry.ts` with its title, description, heading, icon, and status.
+2. Add `src/lib/tools/<slug>/steps.ts` describing the tool's steps.
+3. Add the tool's logic under `src/lib/tools/<slug>/`.
+4. Add the tool page at `src/pages/tools/<slug>/index.astro`, built from `ToolLayout` and `ToolStep`.
+5. Add the tool's controller at `src/scripts/tools/<slug>/app.ts`.
+6. Add guide MDX at `src/content/guides/<slug>.mdx` (reference) and `src/content/guides/<slug>-quick-start.mdx` (quick-start).
 
-The directory, status badges, and guides index are all derived from the registry, so no other file needs editing.
+The directory, status badges, and guides index are all derived from the registry and the guides collection, so no other file needs editing.
+
+See `AGENTS.md` for the conventions behind these files.

@@ -8,18 +8,40 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
+### Checks
+
+```bash
+bun run check        # astro check — types
+bun run format       # prettier --write .
+bun run build        # astro build
+bun run test         # integration test for the .docx import path
+bun run verify       # CSV serializer/parser checks
+bun run test:e2e     # browser smoke test — builds nothing, run `bun run build` first
+```
+
+Prettier formats everything, including Tailwind class order. It is configured in
+`.prettierrc` with `prettier-plugin-tailwindcss` pointing at
+`src/styles/starwind.css` (required for Tailwind v4).
+
 ## Project structure
 
 ```text
 src/
 ├── layouts/
 │   └── DrawbridgeLayout.astro     # shared site shell (nav, footer, CSP, theme)
+├── content.config.ts              # the `guides` content collection
 ├── lib/
+│   ├── copy.ts                    # shared site copy
+│   ├── nav.ts                     # primary navigation links
+│   ├── utils.ts                   # `cn()` class-name helper
 │   ├── parse/                     # file/text parsers
 │   ├── rubric/                    # rubric model, points, Canvas CSV
 │   └── tools/
 │       ├── registry.ts            # tool list + status metadata
+│       ├── steps.ts               # the shared ToolStep contract
+│       ├── rubric-csv/
 │       └── outcome-mapper/
+├── content/guides/                # guide MDX (reference + quick-start)
 ├── pages/
 │   ├── index.astro                # tool directory (home)
 │   ├── about.astro
@@ -29,13 +51,18 @@ src/
 │   │   └── outcome-mapper/
 │   └── guides/
 │       ├── index.astro
-│       ├── rubric-csv/
-│       └── outcome-mapper/
+│       └── [tool]/index.astro     # one route for every guide
 ├── scripts/
 │   ├── app.ts                     # rubric-csv controller
+│   ├── lib/                       # shared client runtime
+│   │   ├── alerts.ts              # Starwind alerts from client code
+│   │   ├── dom.ts                 # byId, esc, icon, slugify
+│   │   ├── io.ts                  # download, copyToClipboard
+│   │   └── stepper.ts             # shared step navigation
 │   └── tools/outcome-mapper/
 └── components/
     ├── drawbridge/                # site-wide components (Header, Footer)
+    │   └── tools/                 # tool-page components (ToolLayout, ToolStep…)
     └── starwind/                  # Starwind UI components
 ```
 
@@ -46,8 +73,89 @@ src/
   `src/lib/parse/` for shared rubric parsing).
 - Client controllers belong in `src/scripts/` — `src/scripts/app.ts` for
   rubric-csv, `src/scripts/tools/[tool-name]/app.ts` for newer tools.
-- Every tool page uses `DrawbridgeLayout` and displays the "100% local" privacy badge.
+- Every tool page is built from `ToolLayout` and displays the "100% local"
+  privacy badge.
 - Guides follow the two-part pattern: `quick-start` and `reference`.
+
+### Tool pages
+
+A tool page is assembled from shared components in
+`src/components/drawbridge/tools/`. It never repeats the page shell:
+
+```astro
+<ToolLayout tool={tool} steps={steps}>
+  <QuickStart slot="quick-start">
+    <QuickStartContent />
+  </QuickStart>
+
+  <ToolStep step={steps[0]} title="Import rubric" hidden={false}>
+    <Fragment slot="description">Supporting copy for the card heading.</Fragment>
+    <!-- step content -->
+    <LocalOnlyNotice slot="footer">…</LocalOnlyNotice>
+  </ToolStep>
+
+  <ToolStep step={steps[1]} title="Review & edit">
+    …<Card slot="extra"><!-- an extra card in this step --></Card>
+  </ToolStep>
+
+  <ToolStep step={steps[2]} title="Export">
+    <CodePreview id="csv-preview" />
+    <StepNav slot="footer" />
+  </ToolStep>
+
+  <script>
+    import "@/scripts/app";
+  </script>
+</ToolLayout>
+```
+
+| Component         | Purpose                                                    |
+| ----------------- | ---------------------------------------------------------- |
+| `ToolLayout`      | Page shell: header, quick-start slot, stepper, step slots. |
+| `ToolHeader`      | Heading, subtitle, status line, guide link, privacy badge. |
+| `StepIndicator`   | The numbered stepper.                                      |
+| `ToolStep`        | One step's `<section>` and card scaffolding.               |
+| `StepNav`         | Back / continue buttons for a step's card footer.          |
+| `LocalOnlyNotice` | The "Nothing leaves your browser" alert.                   |
+| `LocalBadge`      | The "100% local" badge.                                    |
+| `CodePreview`     | The `<pre>` used for generated CSV.                        |
+| `StatRow`         | A row of label + value badges.                             |
+
+### The step contract
+
+Each tool declares its steps in `src/lib/tools/[tool-name]/steps.ts`:
+
+```ts
+import type { ToolStep } from "@/lib/tools/steps";
+
+export const steps: ToolStep[] = [
+  { id: "import", label: "Import" },
+  { id: "review", label: "Review & edit" },
+  { id: "export", label: "Export CSV" },
+];
+```
+
+`StepIndicator` renders one `[data-step]` element per step, each carrying the
+id of the section it controls. The shared stepper in
+`src/scripts/lib/stepper.ts` discovers those elements from the DOM, so adding
+or renaming a step needs no changes to the runtime.
+
+Controllers opt into the behaviour that differs per tool:
+
+```ts
+const stepper = createStepper({
+  canReach: (index) => index === 0 || state.rubric.criteria.length > 0,
+  canAdvance: (target) => {
+    /* return false to block the transition and explain why */
+  },
+  onEnter: (index) => {
+    /* e.g. render the export preview */
+  },
+});
+```
+
+`src/lib/tools/steps.ts` is imported by both pages and controllers, so it must
+stay free of Astro-only imports.
 
 ### The tool registry
 
@@ -70,7 +178,22 @@ placeholder cards.
 
 The registry imports SVG icons as Astro components, so it must only be
 imported from `.astro` files. Importing it from a client script under
-`src/scripts/` would degrade the icons to plain asset metadata.
+`src/scripts/` would degrade the icons to plain asset metadata. Anything a
+controller needs lives in a separate, icon-free module.
+
+## Guides
+
+Guides live in the `guides` content collection (`src/content.config.ts`) as MDX
+under `src/content/guides/`. Each tool contributes two entries, distinguished
+by their `kind` frontmatter:
+
+| Kind          | Where it renders                                           |
+| ------------- | ---------------------------------------------------------- |
+| `reference`   | `/guides/<tool>` via `src/pages/guides/[tool]/index.astro` |
+| `quick-start` | Inside the tool page, in the quick-start collapsible.      |
+
+Both entries carry `title`, `description` and `toolSlug`. The guide route is
+generated from the collection, so adding a guide needs no route changes.
 
 ## Privacy
 
