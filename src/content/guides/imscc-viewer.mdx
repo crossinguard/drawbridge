@@ -1,0 +1,124 @@
+---
+title: "Canvas Course Export Viewer reference"
+description: "What the viewer reads from a Canvas export, and what the QA report checks."
+toolSlug: "imscc-viewer"
+kind: "reference"
+---
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/starwind/table";
+
+## Getting an export out of Canvas
+
+In the course, go to **Settings → Export Course Content** and choose **Common Cartridge (.imscc)**. Canvas also writes
+some extra files alongside the archive:
+
+- **`course_settings/`** — the course settings, the modules, the assignment groups, the late policy, and the file list.
+- **`wiki_content/`** — one HTML file per page.
+- **`g<id>/`** — one folder per assignment, quiz, or discussion, holding the content and its settings.
+- **`non_cc_assessments/`** — the questions for quizzes that do not use the standard QTI layout.
+- **`web_resources/`** — the files the course owns.
+
+The viewer accepts the `.imscc` archive, the same archive renamed to `.zip`, or an already-extracted folder. All three
+produce the same result.
+
+## How content is matched to modules
+
+Canvas does not put module items directly into the export. A module item points at an _identifier_, and the manifest
+records what that identifier means:
+
+```text
+module_meta.xml     module item  ──▶  identifier
+imsmanifest.xml     <item identifierref>  ──▶  resource
+imsmanifest.xml     <resource>  ──▶  the content file(s)
+```
+
+The viewer follows that chain. It does not rely on the module's own `identifierref`, because for external links Canvas
+writes the item's own identifier there instead of the resource identifier — following it would leave every external link
+unresolved.
+
+## What the viewer reads
+
+<Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Content</TableHead>
+      <TableHead>Where it comes from</TableHead>
+      <TableHead>What is shown</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    <TableRow>
+      <TableCell>Modules</TableCell>
+      <TableCell>`course_settings/module_meta.xml`</TableCell>
+      <TableCell>Title, position, publish state, sequential-progress flag, and every item with its type and state</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>Assignments</TableCell>
+      <TableCell>`g<id>/assignment_settings.xml` and the body HTML</TableCell>
+      <TableCell>Points, grading type, submission types, due dates, assignment group, peer review, and the body</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>Quizzes</TableCell>
+      <TableCell>`g<id>/assessment_meta.xml` and the QTI file</TableCell>
+      <TableCell>Attempts, time limit, scoring, lockdown browser, access code, and the number and type of questions</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>Pages</TableCell>
+      <TableCell>`wiki_content/*.html`</TableCell>
+      <TableCell>Body, whether it is the front page, and who may edit it</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>Discussions</TableCell>
+      <TableCell>`g<id>.xml` and its `topicMeta` sidecar</TableCell>
+      <TableCell>Body, discussion type, initial post requirement, rating, and anonymity</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>External links</TableCell>
+      <TableCell>`g<id>.xml` (`webLink`)</TableCell>
+      <TableCell>Title and destination</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>Files</TableCell>
+      <TableCell>`web_resources/` and `course_settings/files_meta.xml`</TableCell>
+      <TableCell>Name, folder, type, and whether Canvas marks it hidden</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>Course settings</TableCell>
+      <TableCell>`course_settings/course_settings.xml` and `context.xml`</TableCell>
+      <TableCell>Code, licence, visibility, enrolment, grading scheme, and the late submission policy</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
+
+## The QA report
+
+The report groups findings into seven categories.
+
+| Category                  | What it looks for                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Structure**             | Module items with no matching resource, content that is in the export but in no module, empty modules, hidden files |
+| **Publish state**         | Unpublished modules and items, and locked modules                                                                   |
+| **Content**               | Pages and assignments whose body is almost empty, and courses with no front page                                    |
+| **Links & references**    | Links that leave the course, images hosted elsewhere, and references to the source Canvas instance                  |
+| **Grading & submissions** | Assignment groups weighted 0%, assignments without a due date, a point value, or a place in the final grade         |
+| **Quizzes**               | Access codes, quizzes with no questions, unlimited attempts, and lockdown browser                                   |
+| **Course settings**       | Visibility and enrolment, hidden final grade, course licence, missing card image, and the late penalty              |
+
+A finding lists the items it is about. Clicking one of them opens the item in the browse step.
+
+### The three downloads
+
+- **Report (Markdown)** — the course summary, every finding, and every module with its items.
+- **Findings (CSV)** — one row per finding, with the severity, the category, and the notes.
+- **Inventory (CSV)** — one row per item, with the module, the type, the state, the points, the size of the body, and the number of links.
+
+## What the viewer does not do
+
+- **It does not show Canvas' styling.** Course content is rendered as plain, readable prose. The text and the structure are
+  preserved; the colours and the boxes are not.
+- **It does not load images from other sites.** Images that are part of the export are shown. Images hosted elsewhere are
+  reported instead, because showing them would send a request to a third party — and the page's content security policy
+  blocks it anyway.
+- **It does not follow links inside the export.** Links to other pages in the same course become jumps within the viewer.
+  Links to files inside the export are listed. Links to the source Canvas instance are listed, not opened.
+- **It does not change anything in Canvas.** The export is a snapshot; the viewer only reads it.
