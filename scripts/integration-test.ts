@@ -49,30 +49,51 @@ check("course info table rows", tables[1]?.rows[1], ["Semester", "Fall 2026"]);
 const draft = tableToRubric(tables[0], { defaultName: "sample-rubric", settings: DEFAULT_SETTINGS });
 check("header detected", draft.usedHeader, true);
 check("rubric name from file name", draft.rubric.name, "sample-rubric");
-check("criterion names", draft.rubric.criteria.map((c) => c.name), [
-  "Thesis",
-  "Evidence",
-  "Organization & clarity",
-  "Style & tone",
-]);
-check("max points parsed", draft.rubric.criteria.map((c) => c.maxPoints), [5, 4, 3, 2]);
-check("rating names from header", draft.rubric.criteria[0]?.ratings.map((r) => r.name), [
-  "Exemplary",
-  "Proficient",
-  "Developing",
-  "Beginning",
-]);
-check("ragged rating counts (blank trailing cells dropped)", draft.rubric.criteria.map((c) => c.ratings.length), [
-  4,
-  4,
-  3,
-  2,
-]);
-check("points distribution (5 pts, half up)", draft.rubric.criteria[0]?.ratings.map((r) => r.points), [5, 3, 0, 0]);
-check("points distribution (ragged 3 pts)", draft.rubric.criteria[2]?.ratings.map((r) => r.points), [3, 2, 0]);
-check("points distribution (ragged 2 pts)", draft.rubric.criteria[3]?.ratings.map((r) => r.points), [2, 1]);
-check("comma/quote description preserved", draft.rubric.criteria[1]?.ratings[0]?.description, 'Integrates relevant quotes and examples that "show, don\'t tell", and each one is tied back to the claim.');
-check("descriptions are full sentences", draft.rubric.criteria[0]?.ratings[1]?.description, "States a workable claim, though parts of the essay drift away from proving it.");
+check(
+  "criterion names",
+  draft.rubric.criteria.map((c) => c.name),
+  ["Thesis", "Evidence", "Organization & clarity", "Style & tone"],
+);
+check(
+  "max points parsed",
+  draft.rubric.criteria.map((c) => c.maxPoints),
+  [5, 4, 3, 2],
+);
+check(
+  "rating names from header",
+  draft.rubric.criteria[0]?.ratings.map((r) => r.name),
+  ["Exemplary", "Proficient", "Developing", "Beginning"],
+);
+check(
+  "ragged rating counts (blank trailing cells dropped)",
+  draft.rubric.criteria.map((c) => c.ratings.length),
+  [4, 4, 3, 2],
+);
+check(
+  "points distribution (5 pts, half up)",
+  draft.rubric.criteria[0]?.ratings.map((r) => r.points),
+  [5, 3, 0, 0],
+);
+check(
+  "points distribution (ragged 3 pts)",
+  draft.rubric.criteria[2]?.ratings.map((r) => r.points),
+  [3, 2, 0],
+);
+check(
+  "points distribution (ragged 2 pts)",
+  draft.rubric.criteria[3]?.ratings.map((r) => r.points),
+  [2, 1],
+);
+check(
+  "comma/quote description preserved",
+  draft.rubric.criteria[1]?.ratings[0]?.description,
+  'Integrates relevant quotes and examples that "show, don\'t tell", and each one is tied back to the claim.',
+);
+check(
+  "descriptions are full sentences",
+  draft.rubric.criteria[0]?.ratings[1]?.description,
+  "States a workable claim, though parts of the essay drift away from proving it.",
+);
 check("no parse warnings for the sample", draft.warnings.length, 0);
 
 // ---------------------------------------------------------------------------
@@ -98,12 +119,21 @@ check("pasted table rows (spans expanded)", pasteTables[0]?.rows, [
 
 const pasteDraft = tableToRubric(pasteTables[0], { settings: DEFAULT_SETTINGS });
 check("header detected on second row", pasteDraft.usedHeader, true);
-check("merged-cell rubric criteria", pasteDraft.rubric.criteria.map((c) => c.name), ["Style", "Tone"]);
-check("merged-cell max points (rowspan propagated)", pasteDraft.rubric.criteria.map((c) => c.maxPoints), [2, 2]);
-check("merged-cell rating names from real header row", pasteDraft.rubric.criteria[0]?.ratings.map((r) => r.name), [
-  "Rating A",
-  "Rating B",
-]);
+check(
+  "merged-cell rubric criteria",
+  pasteDraft.rubric.criteria.map((c) => c.name),
+  ["Style", "Tone"],
+);
+check(
+  "merged-cell max points (rowspan propagated)",
+  pasteDraft.rubric.criteria.map((c) => c.maxPoints),
+  [2, 2],
+);
+check(
+  "merged-cell rating names from real header row",
+  pasteDraft.rubric.criteria[0]?.ratings.map((r) => r.name),
+  ["Rating A", "Rating B"],
+);
 check("merged-cell warnings include first-row note", pasteDraft.warnings.length, 1);
 
 if (failures > 0) {

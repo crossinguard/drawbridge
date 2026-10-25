@@ -10,14 +10,7 @@ import Book from "@tabler/icons/outline/book.svg";
 import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
 import { Badge } from "@/components/starwind/badge";
 import { Button } from "@/components/starwind/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/starwind/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/starwind/card";
 import { Label } from "@/components/starwind/label";
 import { Textarea } from "@/components/starwind/textarea";
 import QuickStartCollapsible from "@/components/drawbridge/QuickStartCollapsible.astro";
@@ -56,7 +49,10 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
       </div>
     </header>
 
-    <QuickStartCollapsible toolSlug="outcome-mapper" description="Load outcomes, create mappings, and export an alignment table.">
+    <QuickStartCollapsible
+      toolSlug="outcome-mapper"
+      description="Load outcomes, create mappings, and export an alignment table."
+    >
       <QuickStartContent />
     </QuickStartCollapsible>
 
@@ -67,7 +63,9 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
           data-step-action="1"
           class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted"
         >
-          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">1</span>
+          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">
+            1
+          </span>
           <span data-step-label>Import</span>
         </button>
         <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
@@ -79,7 +77,9 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
           class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted disabled:pointer-events-none"
           disabled
         >
-          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">2</span>
+          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">
+            2
+          </span>
           <span data-step-label>Map</span>
         </button>
         <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
@@ -91,7 +91,9 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
           class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted disabled:pointer-events-none"
           disabled
         >
-          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">3</span>
+          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">
+            3
+          </span>
           <span data-step-label>Export</span>
         </button>
       </li>
@@ -129,7 +131,9 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
           <div id="import-warnings" class="grid gap-2"></div>
           <div class="flex flex-wrap items-center gap-2">
             <Button id="parse-outcomes">Load outcomes</Button>
-            <Button id="load-sample-outcomes" variant="outline">Load sample outcomes</Button>
+            <Button id="load-sample-outcomes" variant="outline">
+              Load sample outcomes
+            </Button>
           </div>
         </CardContent>
         <CardFooter>
@@ -148,16 +152,16 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
       <Card>
         <CardHeader>
           <CardTitle id="map-title">Map outcomes</CardTitle>
-          <CardDescription>
-            For each lower-level outcome, select the higher-level outcomes it supports.
-          </CardDescription>
+          <CardDescription>For each lower-level outcome, select the higher-level outcomes it supports.</CardDescription>
         </CardHeader>
         <CardContent class="grid gap-6">
           <div id="outcome-summary" class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm"></div>
           <div id="outcome-editor" class="grid gap-6"></div>
         </CardContent>
         <CardFooter class="justify-between">
-          <Button id="back-to-import" variant="ghost">Back</Button>
+          <Button id="back-to-import" variant="ghost">
+            Back
+          </Button>
           <Button id="to-export">Continue to export</Button>
         </CardFooter>
       </Card>
@@ -168,14 +172,14 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
       <Card>
         <CardHeader>
           <CardTitle id="export-title">Export</CardTitle>
-          <CardDescription>
-            Download the alignment table or the updated outcome list.
-          </CardDescription>
+          <CardDescription>Download the alignment table or the updated outcome list.</CardDescription>
         </CardHeader>
         <CardContent class="grid gap-4">
           <div class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
             <span>Alignments:</span>
-            <Badge id="alignment-count" variant="secondary">0</Badge>
+            <Badge id="alignment-count" variant="secondary">
+              0
+            </Badge>
           </div>
           <pre
             id="export-preview"
@@ -183,7 +187,9 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
           ></pre>
         </CardContent>
         <CardFooter class="justify-between">
-          <Button id="back-to-map" variant="ghost">Back</Button>
+          <Button id="back-to-map" variant="ghost">
+            Back
+          </Button>
           <div class="flex flex-wrap gap-2">
             <Button id="copy-export" variant="outline">
               <ClipboardText class="size-4" aria-hidden="true" />

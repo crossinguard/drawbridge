@@ -9,21 +9,17 @@ const links = [
 ---
 
 <footer class="border-t border-border bg-background">
-  <div
-    class="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:justify-between"
-  >
+  <div class="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">
     <div class="inline-flex items-center gap-2">
       <ShieldLock class="size-4 text-primary" aria-hidden="true" />
       <span>Nothing leaves your device.</span>
     </div>
     <nav aria-label="Footer" class="flex flex-wrap items-center justify-center gap-4">
-      {
-        links.map((link) => (
-          <a href={link.href} class="transition-colors hover:text-foreground">
-            {link.label}
-          </a>
-        ))
-      }
+      {links.map((link) => (
+        <a href={link.href} class="transition-colors hover:text-foreground">
+          {link.label}
+        </a>
+      ))}
     </nav>
   </div>
 </footer>

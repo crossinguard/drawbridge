@@ -31,9 +31,7 @@ function pipeRow(line: string): string[] {
   let l = line.trim();
   if (l.startsWith("|")) l = l.slice(1);
   if (l.endsWith("|") && !l.endsWith("\\|")) l = l.slice(0, -1);
-  return l
-    .split(/(?<!\\)\|/)
-    .map((cell) => cell.trim().replace(/\\\|/g, "|").replace(/\s+/g, " "));
+  return l.split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, "|").replace(/\s+/g, " "));
 }
 
 function isSeparatorRow(cells: string[]): boolean {

@@ -50,12 +50,7 @@ export interface ToolStatusMeta {
 }
 
 /** Status display order on the tool directory, most finished first. */
-export const TOOL_STATUS_ORDER: readonly ToolStatus[] = [
-  "stable",
-  "experimental",
-  "under-development",
-  "planned",
-];
+export const TOOL_STATUS_ORDER: readonly ToolStatus[] = ["stable", "experimental", "under-development", "planned"];
 
 export const TOOL_STATUS_META: Record<ToolStatus, ToolStatusMeta> = {
   stable: {
@@ -89,8 +84,7 @@ export const TOOLS: readonly ToolEntry[] = [
     icon: FileTypeCsv,
     href: "/tools/rubric-csv",
     guideHref: "/guides/rubric-csv",
-    guideDescription:
-      "Detailed reference for converting a Word rubric table into a Canvas import CSV.",
+    guideDescription: "Detailed reference for converting a Word rubric table into a Canvas import CSV.",
   },
   {
     slug: "outcome-mapper",

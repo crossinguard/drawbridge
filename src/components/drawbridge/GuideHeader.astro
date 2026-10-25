@@ -20,18 +20,24 @@ const status = getToolBySlug(toolSlug)?.status;
   <nav aria-label="Breadcrumb">
     <ol class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
       <li>
-        <a href="/#tools" class="hover:text-foreground hover:underline underline-offset-4">Tools</a>
+        <a href="/#tools" class="hover:text-foreground hover:underline underline-offset-4">
+          Tools
+        </a>
       </li>
       <li>
         <ChevronRight class="size-4" aria-hidden="true" />
       </li>
       <li>
-        <a href={toolHref} class="hover:text-foreground hover:underline underline-offset-4">{toolName}</a>
+        <a href={toolHref} class="hover:text-foreground hover:underline underline-offset-4">
+          {toolName}
+        </a>
       </li>
       <li>
         <ChevronRight class="size-4" aria-hidden="true" />
       </li>
-      <li class="font-medium text-foreground" aria-current="page">Reference</li>
+      <li class="font-medium text-foreground" aria-current="page">
+        Reference
+      </li>
     </ol>
   </nav>
 

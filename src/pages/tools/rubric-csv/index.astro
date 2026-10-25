@@ -75,7 +75,9 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
           data-step-action="1"
           class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted"
         >
-          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">1</span>
+          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">
+            1
+          </span>
           <span data-step-label>Import</span>
         </button>
         <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
@@ -87,7 +89,9 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
           class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted disabled:pointer-events-none"
           disabled
         >
-          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">2</span>
+          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">
+            2
+          </span>
           <span data-step-label>Review & edit</span>
         </button>
         <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
@@ -99,7 +103,9 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
           class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted disabled:pointer-events-none"
           disabled
         >
-          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">3</span>
+          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">
+            3
+          </span>
           <span data-step-label>Export CSV</span>
         </button>
       </li>
@@ -169,8 +175,7 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
                   placeholder={"Paste a table here — straight from Word, or as markdown / tab-separated text…"}
                 />
                 <p class="text-muted-foreground text-xs">
-                  Rich paste from Word is detected automatically. Markdown pipe tables and tab-separated text also
-                  work.
+                  Rich paste from Word is detected automatically. Markdown pipe tables and tab-separated text also work.
                 </p>
                 <div>
                   <Button id="parse-paste" variant="outline">
@@ -197,11 +202,7 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
 
                 <div class="grid gap-2">
                   <Label for="csv-paste-input">Or paste CSV content</Label>
-                  <Textarea
-                    id="csv-paste-input"
-                    rows="6"
-                    placeholder={"Paste a Canvas rubric import CSV here…"}
-                  />
+                  <Textarea id="csv-paste-input" rows="6" placeholder={"Paste a Canvas rubric import CSV here…"} />
                   <div>
                     <Button id="parse-csv-paste" variant="outline">
                       Parse pasted CSV
@@ -220,7 +221,9 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
                 <p class="text-sm font-medium text-foreground">No file to hand?</p>
                 <p class="text-xs text-muted-foreground">Load a simple starter rubric and edit it in place.</p>
               </div>
-              <Button id="load-sample" variant="outline" size="sm">Load starter rubric</Button>
+              <Button id="load-sample" variant="outline" size="sm">
+                Load starter rubric
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -255,10 +258,14 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
 
           <div class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
             <span>Total possible points:</span>
-            <Badge id="total-badge" variant="secondary">0</Badge>
+            <Badge id="total-badge" variant="secondary">
+              0
+            </Badge>
             <span aria-hidden="true">·</span>
             <span>Criteria:</span>
-            <Badge id="count-badge" variant="secondary">0</Badge>
+            <Badge id="count-badge" variant="secondary">
+              0
+            </Badge>
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
@@ -305,8 +312,8 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
         <CardHeader>
           <CardTitle>Criteria</CardTitle>
           <CardDescription>
-            Edit names, descriptions, and points. Manually edited points are marked and kept when presets change
-            (until you reset them).
+            Edit names, descriptions, and points. Manually edited points are marked and kept when presets change (until
+            you reset them).
           </CardDescription>
           <CardAction>
             <Button id="add-criterion" variant="outline" size="sm">
@@ -338,7 +345,9 @@ import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
         <CardContent class="grid gap-4">
           <div class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
             <span>File:</span>
-            <Badge id="csv-filename" variant="secondary">rubric.csv</Badge>
+            <Badge id="csv-filename" variant="secondary">
+              rubric.csv
+            </Badge>
           </div>
           <pre
             id="csv-preview"

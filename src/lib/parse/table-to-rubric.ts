@@ -41,12 +41,7 @@ export function tableToRubric(table: ExtractedTable, opts: TableToRubricOptions)
     return { rubric: emptyRubric(opts.defaultName), usedHeader: false, warnings: ["The table is empty."] };
   }
 
-  const headerIndex =
-    opts.firstRowIsHeader !== undefined
-      ? opts.firstRowIsHeader
-        ? 0
-        : -1
-      : findHeaderRow(rows);
+  const headerIndex = opts.firstRowIsHeader !== undefined ? (opts.firstRowIsHeader ? 0 : -1) : findHeaderRow(rows);
   const usedHeader = headerIndex >= 0;
   const header = usedHeader ? rows[headerIndex] : [];
   const dataRows = rows.slice(headerIndex + 1);
@@ -59,7 +54,7 @@ export function tableToRubric(table: ExtractedTable, opts: TableToRubricOptions)
     ratingNames.push(name !== "" ? name : `Rating ${i + 1}`);
   }
   if (!usedHeader) {
-    warnings.push("No header row was detected. Rating names default to \"Rating 1, 2, …\" — edit them below if needed.");
+    warnings.push('No header row was detected. Rating names default to "Rating 1, 2, …" — edit them below if needed.');
   } else if (headerIndex > 0) {
     warnings.push(`Row ${headerIndex} looks like a title/banner row and was skipped.`);
   }

@@ -22,7 +22,7 @@ export function exportAlignments(outcomes: Outcome[], mappings: Mapping[]): stri
         escapeCsv(parent.level),
         escapeCsv(parent.id),
         escapeCsv(parent.text),
-      ].join(",")
+      ].join(","),
     );
   }
 
@@ -42,9 +42,7 @@ export function exportOutcomes(outcomes: Outcome[], mappings: Mapping[]): string
   const rows: string[] = ["level,id,text,mapsTo"];
   for (const outcome of outcomes) {
     const mapsTo = parentsByChild.get(outcome.id)?.join(",") ?? "";
-    rows.push(
-      [escapeCsv(outcome.level), escapeCsv(outcome.id), escapeCsv(outcome.text), escapeCsv(mapsTo)].join(",")
-    );
+    rows.push([escapeCsv(outcome.level), escapeCsv(outcome.id), escapeCsv(outcome.text), escapeCsv(mapsTo)].join(","));
   }
 
   return rows.join("\n");

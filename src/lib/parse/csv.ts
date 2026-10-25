@@ -27,15 +27,15 @@ export function parseCsv(text: string): string[][] {
     } else {
       if (char === '"') {
         inQuotes = true;
-      } else if (char === ',') {
+      } else if (char === ",") {
         row.push(field);
         field = "";
-      } else if (char === '\r' || char === '\n') {
+      } else if (char === "\r" || char === "\n") {
         row.push(field);
         if (row.some((cell) => cell !== "")) rows.push(row);
         row = [];
         field = "";
-        if (char === '\r' && next === '\n') i++;
+        if (char === "\r" && next === "\n") i++;
       } else {
         field += char;
       }

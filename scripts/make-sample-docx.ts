@@ -21,7 +21,10 @@ function escXml(text: string): string {
 }
 
 function paragraph(text: string, opts: { bold?: boolean; sizeHalfPt?: number } = {}): string {
-  const rpr = opts.bold || opts.sizeHalfPt ? `<w:rPr>${opts.bold ? "<w:b/>" : ""}${opts.sizeHalfPt ? `<w:sz w:val="${opts.sizeHalfPt}"/>` : ""}</w:rPr>` : "";
+  const rpr =
+    opts.bold || opts.sizeHalfPt
+      ? `<w:rPr>${opts.bold ? "<w:b/>" : ""}${opts.sizeHalfPt ? `<w:sz w:val="${opts.sizeHalfPt}"/>` : ""}</w:rPr>`
+      : "";
   return `<w:p><w:r>${rpr}<w:t xml:space="preserve">${escXml(text)}</w:t></w:r></w:p>`;
 }
 

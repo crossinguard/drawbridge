@@ -33,23 +33,21 @@ const currentPath = Astro.url.pathname;
 
     <div class="flex items-center gap-2">
       <nav aria-label="Primary" class="hidden items-center gap-1 text-sm md:flex">
-        {
-          links.map((link) => {
-            const active = currentPath === link.href || currentPath.startsWith(`${link.href}/`);
-            return (
-              <a
-                href={link.href}
-                aria-current={active ? "page" : undefined}
-                class={[
-                  "rounded-md px-3 py-2 transition-colors hover:bg-muted hover:text-foreground",
-                  active ? "bg-muted text-foreground font-medium" : "text-muted-foreground",
-                ].join(" ")}
-              >
-                {link.label}
-              </a>
-            );
-          })
-        }
+        {links.map((link) => {
+          const active = currentPath === link.href || currentPath.startsWith(`${link.href}/`);
+          return (
+            <a
+              href={link.href}
+              aria-current={active ? "page" : undefined}
+              class={[
+                "rounded-md px-3 py-2 transition-colors hover:bg-muted hover:text-foreground",
+                active ? "bg-muted text-foreground font-medium" : "text-muted-foreground",
+              ].join(" ")}
+            >
+              {link.label}
+            </a>
+          );
+        })}
       </nav>
 
       <ThemeToggle />
@@ -66,23 +64,21 @@ const currentPath = Astro.url.pathname;
             <SheetDescription class="sr-only">Site navigation links</SheetDescription>
           </SheetHeader>
           <nav aria-label="Mobile" class="grid gap-1 py-6">
-            {
-              links.map((link) => {
-                const active = currentPath === link.href || currentPath.startsWith(`${link.href}/`);
-                return (
-                  <a
-                    href={link.href}
-                    aria-current={active ? "page" : undefined}
-                    class={[
-                      "rounded-md px-3 py-3 text-base font-medium transition-colors hover:bg-muted",
-                      active ? "bg-muted text-foreground" : "text-foreground",
-                    ].join(" ")}
-                  >
-                    {link.label}
-                  </a>
-                );
-              })
-            }
+            {links.map((link) => {
+              const active = currentPath === link.href || currentPath.startsWith(`${link.href}/`);
+              return (
+                <a
+                  href={link.href}
+                  aria-current={active ? "page" : undefined}
+                  class={[
+                    "rounded-md px-3 py-3 text-base font-medium transition-colors hover:bg-muted",
+                    active ? "bg-muted text-foreground" : "text-foreground",
+                  ].join(" ")}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
           </nav>
         </SheetContent>
       </Sheet>

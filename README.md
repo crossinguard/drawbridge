@@ -13,12 +13,12 @@ The homepage is the tool directory. Tools are grouped by how finished they are:
 
 ### Statuses
 
-| Status | Meaning |
-| --- | --- |
-| **Stable** | Confirmed working. Any issues are bugs that need to be fixed. |
-| **Experimental** | Should do what we want it to do, but use with caution. |
+| Status                | Meaning                                                             |
+| --------------------- | ------------------------------------------------------------------- |
+| **Stable**            | Confirmed working. Any issues are bugs that need to be fixed.       |
+| **Experimental**      | Should do what we want it to do, but use with caution.              |
 | **Under development** | Somewhat functional, but probably broken in some way or incomplete. |
-| **Planned** | An idea for a tool. Nothing is functional yet. |
+| **Planned**           | An idea for a tool. Nothing is functional yet.                      |
 
 ## Privacy
 

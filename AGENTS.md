@@ -58,12 +58,12 @@ it appear on the homepage.
 
 Every entry carries a `status`:
 
-| Status | Meaning |
-| --- | --- |
-| `stable` | Confirmed working. Any issues are bugs that need to be fixed. |
-| `experimental` | Should do what we want it to do, but use with caution. |
+| Status              | Meaning                                                             |
+| ------------------- | ------------------------------------------------------------------- |
+| `stable`            | Confirmed working. Any issues are bugs that need to be fixed.       |
+| `experimental`      | Should do what we want it to do, but use with caution.              |
 | `under-development` | Somewhat functional, but probably broken in some way or incomplete. |
-| `planned` | An idea for a tool. Nothing is functional yet. |
+| `planned`           | An idea for a tool. Nothing is functional yet.                      |
 
 Planned tools have no `href` or `guideHref`, and render as non-clickable
 placeholder cards.

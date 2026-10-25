@@ -162,7 +162,7 @@ function renderMapEditor(): void {
   const grouped = groupByLevel(state.outcomes);
   const summary = $("#outcome-summary");
   summary.innerHTML = OUTCOME_LEVELS.map(
-    (level) => `<span class="${badgeClasses({ variant: "secondary" })}">${level}: ${grouped[level].length}</span>`
+    (level) => `<span class="${badgeClasses({ variant: "secondary" })}">${level}: ${grouped[level].length}</span>`,
   ).join("");
 
   const editor = $("#outcome-editor");
@@ -202,9 +202,7 @@ function renderMapEditor(): void {
         const checkboxes = document.createElement("div");
         checkboxes.className = "flex flex-wrap gap-3";
         for (const parent of parents) {
-          const checked = state.mappings.some(
-            (m) => m.childId === outcome.id && m.parentId === parent.id
-          );
+          const checked = state.mappings.some((m) => m.childId === outcome.id && m.parentId === parent.id);
           const id = `map-${slugify(outcome.id)}-${slugify(parent.id)}`;
           const label = document.createElement("label");
           label.className = "inline-flex items-center gap-2 text-sm";
@@ -295,10 +293,10 @@ $("#to-export").addEventListener("click", () => {
 $("#back-to-map").addEventListener("click", () => setStep(2));
 $("#copy-export").addEventListener("click", () => copyToClipboard(exportAlignments(state.outcomes, state.mappings)));
 $("#download-alignments").addEventListener("click", () =>
-  download(exportAlignments(state.outcomes, state.mappings), "outcome-alignments.csv")
+  download(exportAlignments(state.outcomes, state.mappings), "outcome-alignments.csv"),
 );
 $("#download-outcomes").addEventListener("click", () =>
-  download(exportOutcomes(state.outcomes, state.mappings), "outcomes.csv")
+  download(exportOutcomes(state.outcomes, state.mappings), "outcomes.csv"),
 );
 
 document.querySelectorAll<HTMLButtonElement>("[data-step-action]").forEach((btn) => {

@@ -24,10 +24,7 @@ function check(name: string, actual: unknown, expected: unknown): void {
 }
 
 // 1) Round-trip against the Canvas reference template.
-const reference = readFileSync(
-  new URL("../src/assets/reference/import_rubric_template.csv", import.meta.url),
-  "utf8",
-);
+const reference = readFileSync(new URL("../src/assets/reference/import_rubric_template.csv", import.meta.url), "utf8");
 
 const referenceRubric: Rubric = {
   name: "Rubric 1",
@@ -82,7 +79,7 @@ check("full-half-zero percentages (2 levels)", presetPercentages("full-half-zero
 check(
   "even percentages (4 levels)",
   presetPercentages("even", 4, []).map((p) => Math.round(p * 100) / 100),
-  [100, Math.round((100 * 2) / 3 * 100) / 100, Math.round((100 / 3) * 100) / 100, 0],
+  [100, Math.round(((100 * 2) / 3) * 100) / 100, Math.round((100 / 3) * 100) / 100, 0],
 );
 check("half rounds up (5 pts)", computePoints(5, 50, "up"), 3);
 check("half rounds up (2 pts)", computePoints(2, 50, "up"), 1);
@@ -101,14 +98,21 @@ const rows = parseTextTable(markdown);
 check("markdown rows parsed", rows.length, 3);
 const draft = tableToRubric({ rows }, { defaultName: "Essay rubric", settings: DEFAULT_SETTINGS });
 check("header detected", draft.usedHeader, true);
-check("rating names from headers", draft.rubric.criteria[0]?.ratings.map((r) => r.name), [
-  "Rating A",
-  "Rating B",
-  "Rating C",
-  "Rating D",
-]);
-check("default points (5 pts, round up)", draft.rubric.criteria[0]?.ratings.map((r) => r.points), [5, 3, 0, 0]);
-check("default points (4 pts, round up)", draft.rubric.criteria[1]?.ratings.map((r) => r.points), [4, 2, 0, 0]);
+check(
+  "rating names from headers",
+  draft.rubric.criteria[0]?.ratings.map((r) => r.name),
+  ["Rating A", "Rating B", "Rating C", "Rating D"],
+);
+check(
+  "default points (5 pts, round up)",
+  draft.rubric.criteria[0]?.ratings.map((r) => r.points),
+  [5, 3, 0, 0],
+);
+check(
+  "default points (4 pts, round up)",
+  draft.rubric.criteria[1]?.ratings.map((r) => r.points),
+  [4, 2, 0, 0],
+);
 check("rubric name from defaultName", draft.rubric.name, "Essay rubric");
 
 // 5) Ragged rows: trailing empty rating cells are trimmed per criterion.
@@ -142,10 +146,18 @@ const levelRemovalRubric: Rubric = {
   ],
 };
 recomputeAll(levelRemovalRubric, { preset: "even", rounding: "up", customPercentages: [] });
-check("even points before level removal", levelRemovalRubric.criteria[0]?.ratings.map((r) => r.points), [5, 4, 2, 0]);
+check(
+  "even points before level removal",
+  levelRemovalRubric.criteria[0]?.ratings.map((r) => r.points),
+  [5, 4, 2, 0],
+);
 levelRemovalRubric.criteria[0]?.ratings.pop();
 recomputeAll(levelRemovalRubric, { preset: "even", rounding: "up", customPercentages: [] });
-check("even points after level removal", levelRemovalRubric.criteria[0]?.ratings.map((r) => r.points), [5, 3, 0]);
+check(
+  "even points after level removal",
+  levelRemovalRubric.criteria[0]?.ratings.map((r) => r.points),
+  [5, 3, 0],
+);
 
 // 8) Custom percentages grow/shrink with rating levels.
 const customRubric: Rubric = {
@@ -163,10 +175,18 @@ const customRubric: Rubric = {
   ],
 };
 recomputeAll(customRubric, { preset: "custom", rounding: "exact", customPercentages: [100, 50] });
-check("custom percentages initial", customRubric.criteria[0]?.ratings.map((r) => r.points), [10, 5]);
+check(
+  "custom percentages initial",
+  customRubric.criteria[0]?.ratings.map((r) => r.points),
+  [10, 5],
+);
 customRubric.criteria[0]?.ratings.push({ name: "C", description: "", points: 0, manual: false });
 recomputeAll(customRubric, { preset: "custom", rounding: "exact", customPercentages: [100, 50, 25] });
-check("custom percentages after adding level", customRubric.criteria[0]?.ratings.map((r) => r.points), [10, 5, 2.5]);
+check(
+  "custom percentages after adding level",
+  customRubric.criteria[0]?.ratings.map((r) => r.points),
+  [10, 5, 2.5],
+);
 
 // 9) Canvas CSV round-trip.
 const csvRubric: Rubric = {
@@ -198,16 +218,32 @@ const imported = parseCanvasCsv(csvText);
 check("CSV round-trip preserves rubric name", imported.name, csvRubric.name);
 check("CSV round-trip preserves criterion count", imported.criteria.length, 2);
 check("CSV round-trip preserves first criterion", imported.criteria[0]?.name, "Thesis");
-check("CSV round-trip preserves rating names", imported.criteria[0]?.ratings.map((r) => r.name), ["Excellent", "Fair", "Poor"]);
-check("CSV round-trip preserves rating points", imported.criteria[0]?.ratings.map((r) => r.points), [5, 3, 0]);
-check("CSV round-trip preserves ragged row lengths", imported.criteria.map((c) => c.ratings.length), [3, 2]);
+check(
+  "CSV round-trip preserves rating names",
+  imported.criteria[0]?.ratings.map((r) => r.name),
+  ["Excellent", "Fair", "Poor"],
+);
+check(
+  "CSV round-trip preserves rating points",
+  imported.criteria[0]?.ratings.map((r) => r.points),
+  [5, 3, 0],
+);
+check(
+  "CSV round-trip preserves ragged row lengths",
+  imported.criteria.map((c) => c.ratings.length),
+  [3, 2],
+);
 
 // 10) CSV parser escaping.
 const ratingHeader = ["Rating Name", "Rating Description", "Rating Points"];
 const csvHeader = [...HEADER_BASE, ...ratingHeader, ...ratingHeader, ...ratingHeader].join(",");
 const escapedCsv = `${csvHeader}\n${escapeCsv(csvRubric.name)},Thesis,Claim quality,false,Excellent,"Clear, debatable claim",5,Fair,"Vague claim",1,Poor,"No claim",0`;
 const escapedImported = parseCanvasCsv(escapedCsv);
-check("CSV parser handles commas and quotes", escapedImported.criteria[0]?.ratings[0]?.description, "Clear, debatable claim");
+check(
+  "CSV parser handles commas and quotes",
+  escapedImported.criteria[0]?.ratings[0]?.description,
+  "Clear, debatable claim",
+);
 
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed.`);

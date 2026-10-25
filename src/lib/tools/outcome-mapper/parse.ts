@@ -32,9 +32,7 @@ export function parseOutcomes(input: string): ParsedInput {
   const seenIds = new Set<string>();
 
   if (levelIdx === -1 || idIdx === -1 || textIdx === -1) {
-    warnings.push(
-      "Could not find required columns: level, id, text. Please check the header row."
-    );
+    warnings.push("Could not find required columns: level, id, text. Please check the header row.");
     return { outcomes: [], mappings: [], warnings };
   }
 
@@ -56,9 +54,7 @@ export function parseOutcomes(input: string): ParsedInput {
 
     const level = normalizeLevel(levelRaw);
     if (!level) {
-      warnings.push(
-        `Row ${i + 2}: unknown level "${levelRaw}". Use program, course, or assessment.`
-      );
+      warnings.push(`Row ${i + 2}: unknown level "${levelRaw}". Use program, course, or assessment.`);
       continue;
     }
 
@@ -116,9 +112,7 @@ function splitRow(line: string, delimiter: string): string[] {
 }
 
 function normalizeHeader(header: string): string {
-  return header
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
+  return header.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
 function normalizeLevel(value: string): OutcomeLevel | null {

@@ -16,7 +16,14 @@ import { alert as alertClasses, alertDescription, alertTitle } from "@/component
 import { badge as badgeClasses } from "@/components/starwind/badge/variants";
 import { button as buttonClasses } from "@/components/starwind/button/variants";
 import { input as inputClasses } from "@/components/starwind/input/variants";
-import { table as tableClasses, tableBody, tableCell, tableHead, tableHeader, tableRow } from "@/components/starwind/table/variants";
+import {
+  table as tableClasses,
+  tableBody,
+  tableCell,
+  tableHead,
+  tableHeader,
+  tableRow,
+} from "@/components/starwind/table/variants";
 import { textarea as textareaClasses } from "@/components/starwind/textarea/variants";
 
 import { formatPoints, toCanvasCsv } from "@/lib/rubric/canvas-csv";
@@ -142,7 +149,11 @@ function renderStepper(): void {
           : "border border-input text-muted-foreground");
     badge.innerHTML = done ? icon(check, "size-4") : String(n);
 
-    label.className = active ? "font-medium text-foreground" : done ? "font-medium text-foreground" : "text-muted-foreground";
+    label.className = active
+      ? "font-medium text-foreground"
+      : done
+        ? "font-medium text-foreground"
+        : "text-muted-foreground";
 
     btn.disabled = !reachable;
     if (active) li.setAttribute("aria-current", "step");
@@ -172,7 +183,9 @@ function loadSampleRubric(): void {
 
 async function handleDocxFile(file: File): Promise<void> {
   if (!/\.docx$/i.test(file.name)) {
-    toast.error("Not a Word document", { description: "Please choose a .docx file (older .doc files are not supported)." });
+    toast.error("Not a Word document", {
+      description: "Please choose a .docx file (older .doc files are not supported).",
+    });
     return;
   }
   const id = toast.loading("Reading document…");
@@ -207,7 +220,10 @@ function renderPicker(tables: ExtractedTable[]): void {
       const firstRow = table.rows[0] ?? [];
       const preview = firstRow
         .slice(0, 4)
-        .map((cell) => `<span class="text-muted-foreground rounded-md border px-1.5 py-0.5 text-xs">${esc(cell.slice(0, 24))}</span>`)
+        .map(
+          (cell) =>
+            `<span class="text-muted-foreground rounded-md border px-1.5 py-0.5 text-xs">${esc(cell.slice(0, 24))}</span>`,
+        )
         .join(" ");
       return `
         <button type="button" class="${buttonClasses({ variant: "outline" })} h-auto flex-col items-start gap-1.5 py-3 text-left" data-action="pick-table" data-index="${i}">
@@ -503,7 +519,7 @@ function renderGridTable(): string {
           )
           .join("")}
         <td class="${tableCell()} align-top text-right">${rowActions(i)}</td>
-      </tr>`
+      </tr>`,
     )
     .join("");
 
@@ -570,15 +586,17 @@ function renderGrid(): void {
 /** Update a criterion's auto-computed points inputs without re-rendering (keeps focus).
  *  Refreshes both layouts so a resize never shows stale values. */
 function updateRowPoints(index: number, criterion: Rubric["criteria"][number]): void {
-  document.querySelectorAll<HTMLInputElement>(`[data-criterion="${index}"] input[data-field="rating-points"]`).forEach((input) => {
-    const j = Number(input.dataset.rating);
-    const rating = criterion.ratings[j];
-    if (rating && !rating.manual) {
-      input.value = formatPoints(rating.points);
-      input.removeAttribute("data-manual");
-      input.title = "Auto-computed";
-    }
-  });
+  document
+    .querySelectorAll<HTMLInputElement>(`[data-criterion="${index}"] input[data-field="rating-points"]`)
+    .forEach((input) => {
+      const j = Number(input.dataset.rating);
+      const rating = criterion.ratings[j];
+      if (rating && !rating.manual) {
+        input.value = formatPoints(rating.points);
+        input.removeAttribute("data-manual");
+        input.title = "Auto-computed";
+      }
+    });
 }
 
 function addCriterion(): void {
@@ -697,13 +715,19 @@ function onGridClick(event: Event): void {
   switch (btn.dataset.action) {
     case "criterion-up":
       if (i > 0) {
-        [state.rubric.criteria[i - 1], state.rubric.criteria[i]] = [state.rubric.criteria[i], state.rubric.criteria[i - 1]];
+        [state.rubric.criteria[i - 1], state.rubric.criteria[i]] = [
+          state.rubric.criteria[i],
+          state.rubric.criteria[i - 1],
+        ];
         renderGrid();
       }
       break;
     case "criterion-down":
       if (i < state.rubric.criteria.length - 1) {
-        [state.rubric.criteria[i + 1], state.rubric.criteria[i]] = [state.rubric.criteria[i], state.rubric.criteria[i + 1]];
+        [state.rubric.criteria[i + 1], state.rubric.criteria[i]] = [
+          state.rubric.criteria[i],
+          state.rubric.criteria[i + 1],
+        ];
         renderGrid();
       }
       break;
