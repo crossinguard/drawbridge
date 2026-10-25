@@ -12,6 +12,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# npm lockfile — this project uses bun
+package-lock.json
+
 
 # environment variables
 .env
