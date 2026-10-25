@@ -1,0 +1,38 @@
+---
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/starwind/card";
+import { stepSectionId, type ToolStep } from "@/lib/tools/steps";
+
+interface Props {
+  step: ToolStep;
+  /** Heading of the step's card. */
+  title: string;
+  /** Whether the step starts hidden. Only the first step is visible up front. */
+  hidden?: boolean;
+  class?: string;
+}
+
+const { step, title, hidden = true, class: className } = Astro.props;
+
+const titleId = `${stepSectionId(step.id)}-title`;
+---
+
+<section
+  id={stepSectionId(step.id)}
+  hidden={hidden}
+  class:list={["grid gap-4 sm:gap-6", className]}
+  aria-labelledby={titleId}
+>
+  <Card>
+    <CardHeader>
+      <CardTitle id={titleId}>{title}</CardTitle>
+      <CardDescription>
+        <slot name="description" />
+      </CardDescription>
+    </CardHeader>
+    <CardContent class="grid gap-6">
+      <slot />
+    </CardContent>
+    <slot name="footer" />
+  </Card>
+  <slot name="extra" />
+</section>

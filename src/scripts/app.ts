@@ -7,12 +7,9 @@ import { toast } from "@starwind-ui/runtime/toast";
 import arrowDown from "@tabler/icons/outline/arrow-down.svg?raw";
 import arrowUp from "@tabler/icons/outline/arrow-up.svg?raw";
 import alertTriangle from "@tabler/icons/outline/alert-triangle.svg?raw";
-import check from "@tabler/icons/outline/check.svg?raw";
-import plus from "@tabler/icons/outline/plus.svg?raw";
 import trash from "@tabler/icons/outline/trash.svg?raw";
 import x from "@tabler/icons/outline/x.svg?raw";
 
-import { alert as alertClasses, alertDescription, alertTitle } from "@/components/starwind/alert/variants";
 import { badge as badgeClasses } from "@/components/starwind/badge/variants";
 import { button as buttonClasses } from "@/components/starwind/button/variants";
 import { input as inputClasses } from "@/components/starwind/input/variants";
@@ -26,6 +23,11 @@ import {
 } from "@/components/starwind/table/variants";
 import { textarea as textareaClasses } from "@/components/starwind/textarea/variants";
 
+import { renderAlertList } from "@/scripts/lib/alerts";
+import { byId, esc, escAttr, icon, slugify } from "@/scripts/lib/dom";
+import { copyToClipboard, download } from "@/scripts/lib/io";
+import { createStepper } from "@/scripts/lib/stepper";
+
 import { formatPoints, toCanvasCsv } from "@/lib/rubric/canvas-csv";
 import { PRESET_DESCRIPTIONS, applyPoints, presetPercentages, recomputeAll, totalPoints } from "@/lib/rubric/points";
 import { DEFAULT_SETTINGS, type ExtractedTable, type Rubric, type RubricSettings } from "@/lib/rubric/types";
@@ -34,6 +36,7 @@ import { extractTablesFromDocx } from "@/lib/parse/docx";
 import { extractHtmlTables } from "@/lib/parse/html";
 import { parseTextTable } from "@/lib/parse/text";
 import { tableToRubric } from "@/lib/parse/table-to-rubric";
+import { steps } from "@/lib/tools/rubric-csv/steps";
 
 // ---------------------------------------------------------------------------
 // State
@@ -46,7 +49,6 @@ interface AppState {
   ratingNames: string[];
   warnings: string[];
   usedHeader: boolean;
-  step: 1 | 2 | 3;
   csv: string;
   fileName: string;
   pendingTables: ExtractedTable[];
@@ -59,7 +61,6 @@ const state: AppState = {
   ratingNames: [],
   warnings: [],
   usedHeader: false,
-  step: 1,
   csv: "",
   fileName: "rubric.csv",
   pendingTables: [],
@@ -68,31 +69,6 @@ const state: AppState = {
 // ---------------------------------------------------------------------------
 // Small helpers
 // ---------------------------------------------------------------------------
-
-function $<T extends HTMLElement>(id: string): T {
-  return document.getElementById(id) as T;
-}
-
-/** Inline an SVG icon with a size class. */
-function icon(raw: string, cls = "size-4"): string {
-  return raw.replace("<svg", `<svg class="${cls}" aria-hidden="true"`);
-}
-
-function esc(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-function escAttr(text: string): string {
-  return esc(text).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-
-function slugify(name: string): string {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return slug || "rubric";
-}
 
 function parseNumber(value: string): number | null {
   if (value.trim() === "") return null;
@@ -116,50 +92,30 @@ function hasUnsavedWork(): boolean {
 // Step navigation
 // ---------------------------------------------------------------------------
 
-function goToStep(step: 1 | 2 | 3): void {
-  // Prevent jumping forward to steps that haven't been reached yet.
-  if (step > 1 && state.rubric.criteria.length === 0) return;
-  if (step === 3 && state.rubric.criteria.length === 0) return;
-
-  state.step = step;
-  const sections: Record<number, string> = { 1: "step-import", 2: "step-review", 3: "step-export" };
-  for (const [n, id] of Object.entries(sections)) {
-    $(id).hidden = Number(n) !== step;
-  }
-  renderStepper();
-  if (step === 3) renderCsv();
-}
-
-function renderStepper(): void {
-  for (let n = 1; n <= 3; n++) {
-    const li = $(`step-${n}`);
-    const btn = li.querySelector("[data-step-action]") as HTMLButtonElement;
-    const badge = li.querySelector("[data-step-badge]") as HTMLElement;
-    const label = li.querySelector("[data-step-label]") as HTMLElement;
-    const active = state.step === n;
-    const done = state.step > n;
-    const reachable = n === 1 || state.rubric.criteria.length > 0;
-
-    badge.className =
-      "flex size-6 items-center justify-center rounded-full text-xs font-medium " +
-      (active
-        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-        : done
-          ? "bg-primary text-primary-foreground"
-          : "border border-input text-muted-foreground");
-    badge.innerHTML = done ? icon(check, "size-4") : String(n);
-
-    label.className = active
-      ? "font-medium text-foreground"
-      : done
-        ? "font-medium text-foreground"
-        : "text-muted-foreground";
-
-    btn.disabled = !reachable;
-    if (active) li.setAttribute("aria-current", "step");
-    else li.removeAttribute("aria-current");
-  }
-}
+/**
+ * The stepper drives the import → review → export flow.
+ *
+ * Steps after the first are only reachable once a rubric has been parsed, and
+ * the export step additionally needs at least one rating level.
+ */
+const stepper = createStepper({
+  canReach: (index) => index === 0 || state.rubric.criteria.length > 0,
+  canAdvance: (target) => {
+    if (target !== steps.length - 1) return true;
+    if (state.rubric.criteria.length === 0) {
+      toast.warning("Nothing to export", { description: "Add at least one criterion first." });
+      return false;
+    }
+    if (state.ratingNames.length === 0) {
+      toast.warning("No rating levels", { description: "Add at least one rating level first." });
+      return false;
+    }
+    return true;
+  },
+  onEnter: (index) => {
+    if (index === steps.length - 1) renderCsv();
+  },
+});
 
 // ---------------------------------------------------------------------------
 // Import step
@@ -214,7 +170,7 @@ function handleTables(tables: ExtractedTable[], defaultName?: string): void {
 }
 
 function renderPicker(tables: ExtractedTable[]): void {
-  const picker = $("table-picker");
+  const picker = byId("table-picker");
   const items = tables
     .map((table, i) => {
       const firstRow = table.rows[0] ?? [];
@@ -250,7 +206,7 @@ function onRichPaste(event: ClipboardEvent): void {
 }
 
 function parsePastedText(): void {
-  const text = ($("paste-input") as HTMLTextAreaElement).value;
+  const text = (byId("paste-input") as HTMLTextAreaElement).value;
   const rows = parseTextTable(text);
   if (rows.length === 0 || rows.every((row) => row.length < 2)) {
     toast.error("No table found", {
@@ -275,7 +231,7 @@ async function handleCsvFile(file: File): Promise<void> {
 }
 
 function parsePastedCsv(): void {
-  const text = ($("csv-paste-input") as HTMLTextAreaElement).value;
+  const text = (byId("csv-paste-input") as HTMLTextAreaElement).value;
   buildDraftFromCsv(text);
 }
 
@@ -295,11 +251,11 @@ function loadRubric(rubric: Rubric, warnings: string[] = []): void {
   renderGrid();
   updateTotals();
 
-  const nameInput = $("rubric-name") as HTMLInputElement;
+  const nameInput = byId("rubric-name") as HTMLInputElement;
   nameInput.value = state.rubric.name;
 
-  $("table-picker").innerHTML = "";
-  goToStep(2);
+  byId("table-picker").innerHTML = "";
+  stepper.goTo(1);
 }
 
 function buildDraft(table: ExtractedTable, defaultName?: string): void {
@@ -324,17 +280,12 @@ function buildDraftFromCsv(csvText: string): void {
 }
 
 function renderWarnings(): void {
-  const container = $("parse-warnings");
-  if (state.warnings.length === 0) {
-    container.innerHTML = "";
-    return;
-  }
-  const items = state.warnings.map((w) => `<li>${esc(w)}</li>`).join("");
-  container.innerHTML = `
-    <div class="${alertClasses({ variant: "warning" })}" role="alert">
-      <h5 class="${alertTitle()}">${icon(alertTriangle, "size-5")} Parsing notes</h5>
-      <p class="${alertDescription()}"><ul class="grid gap-1 pl-4 text-sm list-disc">${items}</ul></p>
-    </div>`;
+  renderAlertList(byId("parse-warnings"), {
+    variant: "warning",
+    title: "Parsing notes",
+    icon: alertTriangle,
+    items: state.warnings,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -342,7 +293,7 @@ function renderWarnings(): void {
 // ---------------------------------------------------------------------------
 
 function renderSettings(): void {
-  const container = $("levels-settings");
+  const container = byId("levels-settings");
   const showPct = state.settings.preset === "custom";
   const levels = state.ratingNames.length;
 
@@ -376,11 +327,11 @@ function renderSettings(): void {
       .join("");
   }
 
-  ($("preset-select") as HTMLSelectElement).value = state.settings.preset;
-  const roundingSelect = $("rounding-select") as HTMLSelectElement;
+  (byId("preset-select") as HTMLSelectElement).value = state.settings.preset;
+  const roundingSelect = byId("rounding-select") as HTMLSelectElement;
   roundingSelect.value = state.settings.rounding;
   roundingSelect.disabled = state.settings.preset === "manual";
-  $("preset-hint").textContent = PRESET_DESCRIPTIONS[state.settings.preset];
+  byId("preset-hint").textContent = PRESET_DESCRIPTIONS[state.settings.preset];
 }
 
 function onPresetChange(value: string): void {
@@ -567,7 +518,7 @@ function renderGridCards(): string {
 }
 
 function renderGrid(): void {
-  const container = $("criteria-grid");
+  const container = byId("criteria-grid");
 
   if (state.rubric.criteria.length === 0) {
     container.innerHTML =
@@ -764,53 +715,28 @@ function onLevelsInput(event: Event): void {
 }
 
 function updateTotals(): void {
-  $("total-badge").textContent = formatPoints(totalPoints(state.rubric));
-  $("count-badge").textContent = String(state.rubric.criteria.length);
+  byId("total-badge").textContent = formatPoints(totalPoints(state.rubric));
+  byId("count-badge").textContent = String(state.rubric.criteria.length);
 }
 
 // ---------------------------------------------------------------------------
 // Export step
 // ---------------------------------------------------------------------------
 
-function toExport(): void {
-  if (state.rubric.criteria.length === 0) {
-    toast.warning("Nothing to export", { description: "Add at least one criterion first." });
-    return;
-  }
-  if (state.ratingNames.length === 0) {
-    toast.warning("No rating levels", { description: "Add at least one rating level first." });
-    return;
-  }
-  goToStep(3);
-}
-
 function renderCsv(): void {
   state.csv = toCanvasCsv(state.rubric);
-  state.fileName = `${slugify(state.rubric.name)}.csv`;
-  $("csv-filename").textContent = state.fileName;
-  $("csv-preview").textContent = state.csv;
+  state.fileName = `${slugify(state.rubric.name, "rubric")}.csv`;
+  byId("csv-filename").textContent = state.fileName;
+  byId("csv-preview").textContent = state.csv;
 }
 
 function downloadCsv(): void {
-  const blob = new Blob([state.csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = state.fileName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  download(state.csv, state.fileName);
   toast.success(`Downloaded ${state.fileName}`, { description: "Import it in Canvas: Rubrics → +Rubric → import." });
 }
 
 async function copyCsv(): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(state.csv);
-    toast.success("CSV copied to clipboard");
-  } catch {
-    toast.error("Copy failed", { description: "Your browser blocked clipboard access — use Download instead." });
-  }
+  await copyToClipboard(state.csv, "CSV");
 }
 
 // ---------------------------------------------------------------------------
@@ -819,8 +745,8 @@ async function copyCsv(): Promise<void> {
 
 export function initApp(): void {
   // Import: file upload + drag & drop
-  const dropzone = $("dropzone");
-  const fileInput = $("file-input") as HTMLInputElement;
+  const dropzone = byId("dropzone");
+  const fileInput = byId("file-input") as HTMLInputElement;
   dropzone.addEventListener("click", () => fileInput.click());
   dropzone.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -848,12 +774,12 @@ export function initApp(): void {
   });
 
   // Import: paste
-  $("paste-input").addEventListener("paste", onRichPaste);
-  $("parse-paste").addEventListener("click", parsePastedText);
+  byId("paste-input").addEventListener("paste", onRichPaste);
+  byId("parse-paste").addEventListener("click", parsePastedText);
 
   // Import: Canvas CSV file
-  const csvDropzone = $("csv-dropzone");
-  const csvFileInput = $("csv-file-input") as HTMLInputElement;
+  const csvDropzone = byId("csv-dropzone");
+  const csvFileInput = byId("csv-file-input") as HTMLInputElement;
   csvDropzone.addEventListener("click", () => csvFileInput.click());
   csvDropzone.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -881,10 +807,10 @@ export function initApp(): void {
   });
 
   // Import: Canvas CSV paste
-  $("parse-csv-paste").addEventListener("click", parsePastedCsv);
+  byId("parse-csv-paste").addEventListener("click", parsePastedCsv);
 
   // Import: table picker (delegated)
-  $("table-picker").addEventListener("click", (e) => {
+  byId("table-picker").addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-action="pick-table"]');
     if (!btn) return;
     const table = state.pendingTables[Number(btn.dataset.index)];
@@ -892,13 +818,13 @@ export function initApp(): void {
   });
 
   // Review: rubric name
-  $("rubric-name").addEventListener("input", (e) => {
+  byId("rubric-name").addEventListener("input", (e) => {
     state.rubric.name = (e.target as HTMLInputElement).value || "Untitled Rubric";
   });
 
   // Review: preset + rounding
-  $("preset-select").addEventListener("change", (e) => onPresetChange((e.target as HTMLSelectElement).value));
-  $("rounding-select").addEventListener("change", (e) => {
+  byId("preset-select").addEventListener("change", (e) => onPresetChange((e.target as HTMLSelectElement).value));
+  byId("rounding-select").addEventListener("change", (e) => {
     state.settings.rounding = (e.target as HTMLSelectElement).value as RubricSettings["rounding"];
     recomputeAll(state.rubric, state.settings);
     renderGrid();
@@ -906,48 +832,36 @@ export function initApp(): void {
   });
 
   // Review: rating levels (delegated)
-  $("levels-settings").addEventListener("input", onLevelsInput);
-  $("levels-settings").addEventListener("click", (e) => {
+  byId("levels-settings").addEventListener("input", onLevelsInput);
+  byId("levels-settings").addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-action="remove-level"]');
     if (!btn) return;
     const wrapper = btn.closest<HTMLElement>("[data-level]");
     if (wrapper) removeLevel(Number(wrapper.dataset.level));
   });
-  $("add-level").addEventListener("click", addLevel);
-  $("reset-points").addEventListener("click", resetPoints);
+  byId("add-level").addEventListener("click", addLevel);
+  byId("reset-points").addEventListener("click", resetPoints);
 
   // Review: criteria grid (delegated)
-  const grid = $("criteria-grid");
+  const grid = byId("criteria-grid");
   grid.addEventListener("input", onGridInput);
   grid.addEventListener("change", onGridChange);
   grid.addEventListener("click", onGridClick);
-  $("add-criterion").addEventListener("click", addCriterion);
-
-  // Navigation
-  $("back-to-import").addEventListener("click", () => goToStep(1));
-  $("to-export").addEventListener("click", toExport);
-  $("back-to-review").addEventListener("click", () => goToStep(2));
-
-  // Stepper navigation
-  document.querySelectorAll<HTMLButtonElement>("[data-step-action]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const step = Number(btn.dataset.stepAction) as 1 | 2 | 3;
-      goToStep(step);
-    });
-  });
+  byId("add-criterion").addEventListener("click", addCriterion);
 
   // Starter template
-  $("load-sample").addEventListener("click", loadSampleRubric);
+  byId("load-sample").addEventListener("click", loadSampleRubric);
 
   // Export
-  $("download-csv").addEventListener("click", downloadCsv);
-  $("copy-csv").addEventListener("click", () => void copyCsv());
+  byId("download-csv").addEventListener("click", downloadCsv);
+  byId("copy-csv").addEventListener("click", () => void copyCsv());
 
   // Warn before closing a tab with unsaved work.
   window.addEventListener("beforeunload", (event) => {
     if (!hasUnsavedWork()) return;
+    // `preventDefault` is what triggers the browser's confirmation prompt;
+    // the legacy `returnValue` property is deprecated.
     event.preventDefault();
-    event.returnValue = "";
   });
 }
 

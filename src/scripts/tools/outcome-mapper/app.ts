@@ -5,13 +5,17 @@
 import { toast } from "@starwind-ui/runtime/toast";
 
 import { badge as badgeClasses } from "@/components/starwind/badge/variants";
-import { alert as alertClasses, alertDescription, alertTitle } from "@/components/starwind/alert/variants";
-import check from "@tabler/icons/outline/check.svg?raw";
+
+import { renderAlertList } from "@/scripts/lib/alerts";
+import { byId, esc, escAttr, slugify } from "@/scripts/lib/dom";
+import { copyToClipboard, download } from "@/scripts/lib/io";
+import { createStepper } from "@/scripts/lib/stepper";
 
 import { parseOutcomes } from "@/lib/tools/outcome-mapper/parse";
 import { exportAlignments, exportOutcomes, groupByLevel, parentLevel } from "@/lib/tools/outcome-mapper/export";
 import type { Mapping, Outcome } from "@/lib/tools/outcome-mapper/types";
 import { OUTCOME_LEVELS } from "@/lib/tools/outcome-mapper/types";
+import { steps } from "@/lib/tools/outcome-mapper/steps";
 
 // ---------------------------------------------------------------------------
 // State
@@ -20,80 +24,28 @@ import { OUTCOME_LEVELS } from "@/lib/tools/outcome-mapper/types";
 interface AppState {
   outcomes: Outcome[];
   mappings: Mapping[];
-  step: 1 | 2 | 3;
 }
 
 const state: AppState = {
   outcomes: [],
   mappings: [],
-  step: 1,
 };
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Step navigation
 // ---------------------------------------------------------------------------
 
-function $<T extends HTMLElement>(id: string): T {
-  return document.getElementById(id) as T;
-}
-
-function esc(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-/** Inline an SVG icon with a size class. */
-function icon(raw: string, cls = "size-4"): string {
-  return raw.replace("<svg", `<svg class="${cls}" aria-hidden="true"`);
-}
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function canReachStep(step: number): boolean {
-  if (step <= 1) return true;
-  if (step === 2) return state.outcomes.length > 0;
-  return state.outcomes.length > 0;
-}
-
-function setStep(step: 1 | 2 | 3): void {
-  if (!canReachStep(step)) return;
-  state.step = step;
-  const sections = ["step-import", "step-map", "step-export"];
-  sections.forEach((id, idx) => {
-    $(`#${id}`).hidden = step !== idx + 1;
-  });
-
-  for (let i = 1; i <= 3; i++) {
-    const li = document.querySelector<HTMLElement>(`#step-${i}`);
-    const btn = li?.querySelector<HTMLButtonElement>("[data-step-action]");
-    const badge = document.querySelector<HTMLElement>(`#step-${i} [data-step-badge]`);
-    const label = document.querySelector<HTMLElement>(`#step-${i} [data-step-label]`);
-    if (!badge || !label || !btn || !li) continue;
-
-    const done = i < step;
-    const active = i === step;
-    const reachable = canReachStep(i);
-
-    badge.className =
-      "flex size-6 items-center justify-center rounded-full text-xs font-medium " +
-      (active
-        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-        : done
-          ? "bg-primary text-primary-foreground"
-          : "border border-input text-muted-foreground");
-    badge.innerHTML = done ? icon(check, "size-4") : String(i);
-
-    label.className = active || done ? "font-medium text-foreground" : "text-muted-foreground";
-    btn.disabled = !reachable;
-
-    if (active) li.setAttribute("aria-current", "step");
-    else li.removeAttribute("aria-current");
-  }
-}
+/**
+ * The stepper drives the import → map → export flow.
+ *
+ * Only the first step is reachable until outcomes have been loaded.
+ */
+const stepper = createStepper({
+  canReach: (index) => index === 0 || state.outcomes.length > 0,
+  onEnter: (index) => {
+    if (index === steps.length - 1) renderExport();
+  },
+});
 
 // ---------------------------------------------------------------------------
 // Import
@@ -110,14 +62,14 @@ assessment,ao2,Body paragraphs include evidence that supports the claim,co2
 assessment,ao3,Writing uses discipline-appropriate vocabulary and tone,co3`;
 
 function loadSampleOutcomes(): void {
-  const input = $("#outcome-input" as "textarea");
+  const input = byId<HTMLTextAreaElement>("outcome-input");
   input.value = SAMPLE_OUTCOMES;
   handleParse();
   toast.success("Sample outcomes loaded", { description: "Adjust the mappings or replace them with your own." });
 }
 
 function handleParse(): void {
-  const input = $("#outcome-input" as "textarea").value;
+  const input = byId<HTMLTextAreaElement>("outcome-input").value;
   const { outcomes, mappings, warnings } = parseOutcomes(input);
 
   state.outcomes = outcomes;
@@ -131,27 +83,15 @@ function handleParse(): void {
   }
 
   renderMapEditor();
-  setStep(2);
+  stepper.goTo(1);
 }
 
 function renderWarnings(warnings: string[]): void {
-  const container = $("#import-warnings");
-  container.innerHTML = "";
-  if (warnings.length === 0) return;
-
-  const alert = document.createElement("div");
-  alert.className = `${alertClasses({ variant: "warning" })}`;
-  alert.innerHTML = `
-    <div class="grid gap-1">
-      <div class="${alertTitle()}">Import notes</div>
-      <div class="${alertDescription()}">
-        <ul class="list-disc space-y-1 pl-5">
-          ${warnings.map((w) => `<li>${esc(w)}</li>`).join("")}
-        </ul>
-      </div>
-    </div>
-  `;
-  container.appendChild(alert);
+  renderAlertList(byId("import-warnings"), {
+    variant: "warning",
+    title: "Import notes",
+    items: warnings,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -160,12 +100,12 @@ function renderWarnings(warnings: string[]): void {
 
 function renderMapEditor(): void {
   const grouped = groupByLevel(state.outcomes);
-  const summary = $("#outcome-summary");
+  const summary = byId("outcome-summary");
   summary.innerHTML = OUTCOME_LEVELS.map(
     (level) => `<span class="${badgeClasses({ variant: "secondary" })}">${level}: ${grouped[level].length}</span>`,
   ).join("");
 
-  const editor = $("#outcome-editor");
+  const editor = byId("outcome-editor");
   editor.innerHTML = "";
 
   for (const level of OUTCOME_LEVELS) {
@@ -179,7 +119,7 @@ function renderMapEditor(): void {
     section.className = "grid gap-3";
 
     const heading = document.createElement("h3");
-    heading.className = "text-foreground text-sm font-medium capitalize";
+    heading.className = "text-sm font-medium text-foreground capitalize";
     heading.textContent = `${level} outcomes`;
     section.appendChild(heading);
 
@@ -216,7 +156,7 @@ function renderMapEditor(): void {
         row.appendChild(checkboxes);
       } else {
         const note = document.createElement("p");
-        note.className = "text-muted-foreground text-xs";
+        note.className = "text-xs text-muted-foreground";
         note.textContent = "No higher-level outcomes to map to.";
         row.appendChild(note);
       }
@@ -231,10 +171,6 @@ function renderMapEditor(): void {
   editor.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((checkbox) => {
     checkbox.addEventListener("change", handleMappingChange);
   });
-}
-
-function escAttr(text: string): string {
-  return esc(text).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
 function handleMappingChange(event: Event): void {
@@ -256,54 +192,23 @@ function handleMappingChange(event: Event): void {
 
 function renderExport(): void {
   const alignments = exportAlignments(state.outcomes, state.mappings);
-  $("#export-preview").textContent = alignments;
-  $("#alignment-count").textContent = String(state.mappings.length);
-}
-
-function download(content: string, filename: string): void {
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function copyToClipboard(text: string): void {
-  navigator.clipboard
-    .writeText(text)
-    .then(() => toast.success("Copied to clipboard"))
-    .catch(() => toast.error("Could not copy"));
+  byId("export-preview").textContent = alignments;
+  byId("alignment-count").textContent = String(state.mappings.length);
 }
 
 // ---------------------------------------------------------------------------
 // Event bindings
 // ---------------------------------------------------------------------------
 
-$("#parse-outcomes").addEventListener("click", handleParse);
-$("#load-sample-outcomes").addEventListener("click", loadSampleOutcomes);
-$("#back-to-import").addEventListener("click", () => setStep(1));
-$("#to-export").addEventListener("click", () => {
-  renderExport();
-  setStep(3);
-});
-$("#back-to-map").addEventListener("click", () => setStep(2));
-$("#copy-export").addEventListener("click", () => copyToClipboard(exportAlignments(state.outcomes, state.mappings)));
-$("#download-alignments").addEventListener("click", () =>
+byId("parse-outcomes").addEventListener("click", handleParse);
+byId("load-sample-outcomes").addEventListener("click", loadSampleOutcomes);
+byId("copy-export").addEventListener(
+  "click",
+  () => void copyToClipboard(exportAlignments(state.outcomes, state.mappings), "Alignment table"),
+);
+byId("download-alignments").addEventListener("click", () =>
   download(exportAlignments(state.outcomes, state.mappings), "outcome-alignments.csv"),
 );
-$("#download-outcomes").addEventListener("click", () =>
+byId("download-outcomes").addEventListener("click", () =>
   download(exportOutcomes(state.outcomes, state.mappings), "outcomes.csv"),
 );
-
-document.querySelectorAll<HTMLButtonElement>("[data-step-action]").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const step = Number(btn.dataset.stepAction) as 1 | 2 | 3;
-    setStep(step);
-  });
-});
-
-setStep(1);

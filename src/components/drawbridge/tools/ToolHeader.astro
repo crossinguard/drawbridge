@@ -1,0 +1,42 @@
+---
+import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import Book from "@tabler/icons/outline/book.svg";
+
+import { Button } from "@/components/starwind/button";
+import LocalBadge from "@/components/drawbridge/tools/LocalBadge.astro";
+import ToolStatusLine from "@/components/drawbridge/ToolStatusLine.astro";
+import { PRIVACY_TAGLINE } from "@/lib/copy";
+import type { ToolEntry } from "@/lib/tools/registry";
+
+interface Props {
+  tool: ToolEntry;
+}
+
+const { tool } = Astro.props;
+---
+
+<header class="flex flex-wrap items-start justify-between gap-4">
+  <div class="grid gap-1">
+    <h1 class="inline-flex flex-wrap items-center gap-x-2.5 text-2xl font-bold tracking-tight sm:text-3xl">
+      {tool.heading.map((part, index) => (
+        <Fragment>
+          {index > 0 && <ArrowRight class="size-6 text-primary sm:size-7" aria-hidden="true" />}
+          <span>{part}</span>
+        </Fragment>
+      ))}
+    </h1>
+    <p class="text-sm text-muted-foreground sm:text-base">
+      {tool.description} {PRIVACY_TAGLINE}
+    </p>
+    <ToolStatusLine status={tool.status} />
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    {tool.guideHref && (
+      <Button as="a" href={tool.guideHref} variant="outline" size="sm" class="inline-flex items-center gap-2">
+        <Book class="size-4" aria-hidden="true" />
+        Guide
+      </Button>
+    )}
+    <LocalBadge />
+  </div>
+</header>

@@ -1,0 +1,28 @@
+---
+import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
+
+import StepIndicator from "@/components/drawbridge/tools/StepIndicator.astro";
+import ToolHeader from "@/components/drawbridge/tools/ToolHeader.astro";
+import type { ToolEntry } from "@/lib/tools/registry";
+import type { ToolStep } from "@/lib/tools/steps";
+
+interface Props {
+  tool: ToolEntry;
+  /** The tool's steps, in order. */
+  steps: ToolStep[];
+}
+
+const { tool, steps } = Astro.props;
+---
+
+<DrawbridgeLayout title={tool.title} description={tool.metaDescription ?? tool.description} fullWidth>
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:gap-6 sm:py-12">
+    <ToolHeader tool={tool} />
+
+    <slot name="quick-start" />
+
+    <StepIndicator steps={steps} />
+
+    <slot />
+  </div>
+</DrawbridgeLayout>

@@ -1,378 +1,264 @@
 ---
-import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
-import FileUpload from "@tabler/icons/outline/file-upload.svg";
-import FileTypeCsv from "@tabler/icons/outline/file-type-csv.svg";
-import ClipboardText from "@tabler/icons/outline/clipboard-text.svg";
-import ShieldLock from "@tabler/icons/outline/shield-lock.svg";
-import Download from "@tabler/icons/outline/download.svg";
-import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
-import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
-import Book from "@tabler/icons/outline/book.svg";
+import { getEntry, render } from "astro:content";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
-import { Badge } from "@/components/starwind/badge";
+import Download from "@tabler/icons/outline/download.svg";
+import FileTypeCsv from "@tabler/icons/outline/file-type-csv.svg";
+import FileUpload from "@tabler/icons/outline/file-upload.svg";
+import ClipboardText from "@tabler/icons/outline/clipboard-text.svg";
+
 import { Button } from "@/components/starwind/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/starwind/card";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/starwind/card";
 import { Input } from "@/components/starwind/input";
 import { Label } from "@/components/starwind/label";
 import { NativeSelect, NativeSelectOption } from "@/components/starwind/native-select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
 import { Textarea } from "@/components/starwind/textarea";
 
-import { PRESET_LABELS, ROUNDING_LABELS } from "@/lib/rubric/points";
 import QuickStartCollapsible from "@/components/drawbridge/QuickStartCollapsible.astro";
-import ToolStatusLine from "@/components/drawbridge/ToolStatusLine.astro";
+import CodePreview from "@/components/drawbridge/tools/CodePreview.astro";
+import LocalOnlyNotice from "@/components/drawbridge/tools/LocalOnlyNotice.astro";
+import StatRow from "@/components/drawbridge/tools/StatRow.astro";
+import StepNav from "@/components/drawbridge/tools/StepNav.astro";
+import ToolLayout from "@/components/drawbridge/tools/ToolLayout.astro";
+import ToolStep from "@/components/drawbridge/tools/ToolStep.astro";
+
+import { PRESET_LABELS, ROUNDING_LABELS } from "@/lib/rubric/points";
 import { requireToolBySlug } from "@/lib/tools/registry";
-import QuickStartContent from "@/content/guides/rubric-csv-quick-start.mdx";
+import { steps } from "@/lib/tools/rubric-csv/steps";
+
+const tool = requireToolBySlug("rubric-csv");
+
+const quickStartEntry = await getEntry("guides", "rubric-csv-quick-start");
+if (!quickStartEntry) throw new Error('Missing guide entry "rubric-csv-quick-start".');
+const { Content: QuickStartContent } = await render(quickStartEntry);
 ---
 
-<DrawbridgeLayout
-  title="Rubric → Canvas CSV"
-  description="Convert a Word rubric table into a Canvas import CSV — entirely in your browser, nothing is uploaded."
-  fullWidth
->
-  <div class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:gap-6 sm:py-12">
-    <header class="flex flex-wrap items-start justify-between gap-4">
-      <div class="grid gap-1">
-        <h1 class="inline-flex flex-wrap items-center gap-x-2.5 text-2xl font-bold tracking-tight sm:text-3xl">
-          <span>Rubric</span>
-          <ArrowRight class="text-primary size-6 sm:size-7" aria-hidden="true" />
-          <span>Canvas CSV</span>
-        </h1>
-        <p class="text-muted-foreground text-sm sm:text-base">
-          Convert a Word rubric table into a Canvas import CSV. Private by design — everything stays on your device.
-        </p>
-        <ToolStatusLine status={requireToolBySlug("rubric-csv").status} />
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <Button as="a" href="/guides/rubric-csv" variant="outline" size="sm" class="inline-flex items-center gap-2">
-          <Book class="size-4" aria-hidden="true" />
-          Guide
-        </Button>
-        <Badge variant="secondary">
-          <ShieldLock class="size-4" aria-hidden="true" />
-          100% local
-        </Badge>
-      </div>
-    </header>
+<ToolLayout tool={tool} steps={steps}>
+  <QuickStartCollapsible slot="quick-start" toolSlug={tool.slug} description={quickStartEntry.data.description}>
+    <QuickStartContent />
+  </QuickStartCollapsible>
 
-    <QuickStartCollapsible toolSlug="rubric-csv" description="Get from a Word table to a Canvas CSV in a few steps.">
-      <QuickStartContent />
-    </QuickStartCollapsible>
+  <!-- Step 1: Import -->
+  <ToolStep step={steps[0]} title="Import rubric" hidden={false} class="gap-6">
+    <Fragment slot="description">
+      Upload a Word document, paste a table, or import a Canvas CSV you previously exported. Rubric columns are expected
+      as: criterion, points, then one column per rating level. Not sure what that looks like?
+      <a
+        href="/sample-rubric.docx"
+        download
+        class="font-medium text-primary underline underline-offset-4 hover:text-primary-accent"
+      >
+        Download the sample .docx
+      </a>
+      — it includes criteria that skip rating levels.
+    </Fragment>
 
-    <ol class="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm" aria-label="Progress">
-      <li id="step-1" class="group flex items-center gap-2" data-step="1">
-        <button
-          type="button"
-          data-step-action="1"
-          class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted"
+    <Tabs defaultValue="upload">
+      <TabsList>
+        <TabsTrigger value="upload">
+          <FileUpload class="size-4" aria-hidden="true" />
+          Word file
+        </TabsTrigger>
+        <TabsTrigger value="paste">
+          <ClipboardText class="size-4" aria-hidden="true" />
+          Paste
+        </TabsTrigger>
+        <TabsTrigger value="csv">
+          <FileTypeCsv class="size-4" aria-hidden="true" />
+          Canvas CSV
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="upload" class="mt-4">
+        <div
+          id="dropzone"
+          class="grid cursor-pointer place-items-center gap-3 rounded-lg border-2 border-dashed border-input p-6 text-center transition-colors outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-outline/50 sm:p-10"
+          role="button"
+          tabindex="0"
+          aria-label="Upload a Word document"
         >
-          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">
-            1
-          </span>
-          <span data-step-label>Import</span>
-        </button>
-        <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
-      </li>
-      <li id="step-2" class="group flex items-center gap-2" data-step="2">
-        <button
-          type="button"
-          data-step-action="2"
-          class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted disabled:pointer-events-none"
-          disabled
-        >
-          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">
-            2
-          </span>
-          <span data-step-label>Review & edit</span>
-        </button>
-        <ChevronRight class="text-muted-foreground/60 size-4" aria-hidden="true" />
-      </li>
-      <li id="step-3" class="group flex items-center gap-2" data-step="3">
-        <button
-          type="button"
-          data-step-action="3"
-          class="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted disabled:pointer-events-none"
-          disabled
-        >
-          <span data-step-badge class="flex size-6 items-center justify-center rounded-full text-xs font-medium">
-            3
-          </span>
-          <span data-step-label>Export CSV</span>
-        </button>
-      </li>
-    </ol>
+          <FileUpload class="size-10 text-muted-foreground" aria-hidden="true" />
+          <p class="font-medium">Drop a Word document here</p>
+          <p class="text-sm text-muted-foreground">or click to browse — .docx files only</p>
+        </div>
+        <input
+          id="file-input"
+          type="file"
+          accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          hidden
+        />
+      </TabsContent>
 
-    <!-- Step 1: Import -->
-    <section id="step-import" class="grid gap-6" aria-labelledby="import-title">
-      <Card>
-        <CardHeader>
-          <CardTitle id="import-title">Import rubric</CardTitle>
-          <CardDescription>
-            Upload a Word document, paste a table, or import a Canvas CSV you previously exported. Rubric columns are
-            expected as: criterion, points, then one column per rating level. Not sure what that looks like?
-            <a
-              href="/sample-rubric.docx"
-              download
-              class="text-primary font-medium underline underline-offset-4 hover:text-primary-accent"
-            >
-              Download the sample .docx
-            </a>
-            — it includes criteria that skip rating levels.
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="grid gap-4">
-          <Tabs defaultValue="upload">
-            <TabsList>
-              <TabsTrigger value="upload">
-                <FileUpload class="size-4" aria-hidden="true" />
-                Word file
-              </TabsTrigger>
-              <TabsTrigger value="paste">
-                <ClipboardText class="size-4" aria-hidden="true" />
-                Paste
-              </TabsTrigger>
-              <TabsTrigger value="csv">
-                <FileTypeCsv class="size-4" aria-hidden="true" />
-                Canvas CSV
-              </TabsTrigger>
-            </TabsList>
+      <TabsContent value="paste" class="mt-4">
+        <div class="grid gap-2">
+          <Label for="paste-input">Paste table content</Label>
+          <Textarea
+            id="paste-input"
+            rows="8"
+            placeholder={"Paste a table here — straight from Word, or as markdown / tab-separated text…"}
+          />
+          <p class="text-xs text-muted-foreground">
+            Rich paste from Word is detected automatically. Markdown pipe tables and tab-separated text also work.
+          </p>
+          <div>
+            <Button id="parse-paste" variant="outline">
+              Parse pasted content
+            </Button>
+          </div>
+        </div>
+      </TabsContent>
 
-            <TabsContent value="upload" class="mt-4">
-              <div
-                id="dropzone"
-                class="hover:bg-muted/50 focus-visible:ring-outline/50 grid cursor-pointer place-items-center gap-3 rounded-lg border-2 border-dashed border-input p-6 text-center transition-colors outline-none focus-visible:ring-3 sm:p-10"
-                role="button"
-                tabindex="0"
-                aria-label="Upload a Word document"
-              >
-                <FileUpload class="text-muted-foreground size-10" aria-hidden="true" />
-                <p class="font-medium">Drop a Word document here</p>
-                <p class="text-muted-foreground text-sm">or click to browse — .docx files only</p>
-              </div>
-              <input
-                id="file-input"
-                type="file"
-                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                hidden
-              />
-            </TabsContent>
+      <TabsContent value="csv" class="mt-4">
+        <div class="grid gap-4">
+          <div
+            id="csv-dropzone"
+            class="grid cursor-pointer place-items-center gap-3 rounded-lg border-2 border-dashed border-input p-6 text-center transition-colors outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-outline/50 sm:p-10"
+            role="button"
+            tabindex="0"
+            aria-label="Upload a Canvas CSV file"
+          >
+            <FileTypeCsv class="size-10 text-muted-foreground" aria-hidden="true" />
+            <p class="font-medium">Drop a Canvas CSV here</p>
+            <p class="text-sm text-muted-foreground">or click to browse — .csv files only</p>
+          </div>
+          <input id="csv-file-input" type="file" accept=".csv,text/csv" hidden />
 
-            <TabsContent value="paste" class="mt-4">
-              <div class="grid gap-2">
-                <Label for="paste-input">Paste table content</Label>
-                <Textarea
-                  id="paste-input"
-                  rows="8"
-                  placeholder={"Paste a table here — straight from Word, or as markdown / tab-separated text…"}
-                />
-                <p class="text-muted-foreground text-xs">
-                  Rich paste from Word is detected automatically. Markdown pipe tables and tab-separated text also work.
-                </p>
-                <div>
-                  <Button id="parse-paste" variant="outline">
-                    Parse pasted content
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="csv" class="mt-4">
-              <div class="grid gap-4">
-                <div
-                  id="csv-dropzone"
-                  class="hover:bg-muted/50 focus-visible:ring-outline/50 grid cursor-pointer place-items-center gap-3 rounded-lg border-2 border-dashed border-input p-6 text-center transition-colors outline-none focus-visible:ring-3 sm:p-10"
-                  role="button"
-                  tabindex="0"
-                  aria-label="Upload a Canvas CSV file"
-                >
-                  <FileTypeCsv class="text-muted-foreground size-10" aria-hidden="true" />
-                  <p class="font-medium">Drop a Canvas CSV here</p>
-                  <p class="text-muted-foreground text-sm">or click to browse — .csv files only</p>
-                </div>
-                <input id="csv-file-input" type="file" accept=".csv,text/csv" hidden />
-
-                <div class="grid gap-2">
-                  <Label for="csv-paste-input">Or paste CSV content</Label>
-                  <Textarea id="csv-paste-input" rows="6" placeholder={"Paste a Canvas rubric import CSV here…"} />
-                  <div>
-                    <Button id="parse-csv-paste" variant="outline">
-                      Parse pasted CSV
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          <div id="table-picker" class="grid gap-2"></div>
-
-          <div class="rounded-lg border border-dashed border-border bg-muted/30 p-4">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div class="grid gap-0.5">
-                <p class="text-sm font-medium text-foreground">No file to hand?</p>
-                <p class="text-xs text-muted-foreground">Load a simple starter rubric and edit it in place.</p>
-              </div>
-              <Button id="load-sample" variant="outline" size="sm">
-                Load starter rubric
+          <div class="grid gap-2">
+            <Label for="csv-paste-input">Or paste CSV content</Label>
+            <Textarea id="csv-paste-input" rows="6" placeholder={"Paste a Canvas rubric import CSV here…"} />
+            <div>
+              <Button id="parse-csv-paste" variant="outline">
+                Parse pasted CSV
               </Button>
             </div>
           </div>
-        </CardContent>
-        <CardFooter>
-          <Alert variant="info">
-            <AlertTitle>Nothing leaves your browser</AlertTitle>
-            <AlertDescription>
-              Files and pasted content are processed locally — there is no server, no upload, and no tracking. Once
-              loaded, this app works fully offline and can be installed from your browser menu.
-            </AlertDescription>
-          </Alert>
-        </CardFooter>
-      </Card>
-    </section>
+        </div>
+      </TabsContent>
+    </Tabs>
 
-    <!-- Step 2: Review & edit -->
-    <section id="step-review" hidden class="grid gap-4 sm:gap-6" aria-labelledby="review-title">
-      <Card>
-        <CardHeader>
-          <CardTitle id="review-title">Review & edit</CardTitle>
-          <CardDescription>
-            Fix any parsing mistakes, name the rubric, and tune how points are distributed across rating levels.
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="grid gap-6">
-          <div id="parse-warnings" class="grid gap-3"></div>
+    <div id="table-picker" class="grid gap-2"></div>
 
-          <div class="grid gap-2">
-            <Label for="rubric-name">Rubric name</Label>
-            <Input id="rubric-name" placeholder="Untitled Rubric" />
-          </div>
+    <div class="rounded-lg border border-dashed border-border bg-muted/30 p-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="grid gap-0.5">
+          <p class="text-sm font-medium text-foreground">No file to hand?</p>
+          <p class="text-xs text-muted-foreground">Load a simple starter rubric and edit it in place.</p>
+        </div>
+        <Button id="load-sample" variant="outline" size="sm">
+          Load starter rubric
+        </Button>
+      </div>
+    </div>
 
-          <div class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-            <span>Total possible points:</span>
-            <Badge id="total-badge" variant="secondary">
-              0
-            </Badge>
-            <span aria-hidden="true">·</span>
-            <span>Criteria:</span>
-            <Badge id="count-badge" variant="secondary">
-              0
-            </Badge>
-          </div>
+    <LocalOnlyNotice slot="footer">
+      Files and pasted content are processed locally — there is no server, no upload, and no tracking. Once loaded, this
+      app works fully offline and can be installed from your browser menu.
+    </LocalOnlyNotice>
+  </ToolStep>
 
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div class="grid gap-2">
-              <Label for="preset-select">Points distribution</Label>
-              <NativeSelect id="preset-select">
-                {Object.entries(PRESET_LABELS).map(([value, label]) => (
-                  <NativeSelectOption value={value}>{label}</NativeSelectOption>
-                ))}
-              </NativeSelect>
-              <p id="preset-hint" class="text-muted-foreground text-xs">
-                1st rating = full points, 2nd = half rounded, remaining = 0.
-              </p>
-            </div>
-            <div class="grid gap-2">
-              <Label for="rounding-select">Rounding</Label>
-              <NativeSelect id="rounding-select">
-                {Object.entries(ROUNDING_LABELS).map(([value, label]) => (
-                  <NativeSelectOption value={value}>{label}</NativeSelectOption>
-                ))}
-              </NativeSelect>
-              <p class="text-muted-foreground text-xs">How computed points are rounded.</p>
-            </div>
-          </div>
+  <!-- Step 2: Review & edit -->
+  <ToolStep step={steps[1]} title="Review & edit">
+    <Fragment slot="description">
+      Fix any parsing mistakes, name the rubric, and tune how points are distributed across rating levels.
+    </Fragment>
 
-          <div class="grid gap-3">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <h3 class="text-foreground text-sm font-medium">Rating levels</h3>
-              <div class="flex gap-2">
-                <Button id="add-level" variant="outline" size="sm">
-                  Add level
-                </Button>
-                <Button id="reset-points" variant="ghost" size="sm">
-                  Reset all points
-                </Button>
-              </div>
-            </div>
-            <div id="levels-settings" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
-          </div>
-        </CardContent>
-      </Card>
+    <div id="parse-warnings" class="grid gap-3"></div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Criteria</CardTitle>
-          <CardDescription>
-            Edit names, descriptions, and points. Manually edited points are marked and kept when presets change (until
-            you reset them).
-          </CardDescription>
-          <CardAction>
-            <Button id="add-criterion" variant="outline" size="sm">
-              Add criterion
-            </Button>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          <div id="criteria-grid" class="grid gap-3"></div>
-        </CardContent>
-        <CardFooter class="justify-between">
-          <Button id="back-to-import" variant="ghost">
-            Back
+    <div class="grid gap-2">
+      <Label for="rubric-name">Rubric name</Label>
+      <Input id="rubric-name" placeholder="Untitled Rubric" />
+    </div>
+
+    <StatRow
+      items={[
+        { label: "Total possible points:", id: "total-badge" },
+        { label: "Criteria:", id: "count-badge" },
+      ]}
+    />
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid gap-2">
+        <Label for="preset-select">Points distribution</Label>
+        <NativeSelect id="preset-select">
+          {Object.entries(PRESET_LABELS).map(([value, label]) => (
+            <NativeSelectOption value={value}>{label}</NativeSelectOption>
+          ))}
+        </NativeSelect>
+        <p id="preset-hint" class="text-xs text-muted-foreground">
+          1st rating = full points, 2nd = half rounded, remaining = 0.
+        </p>
+      </div>
+      <div class="grid gap-2">
+        <Label for="rounding-select">Rounding</Label>
+        <NativeSelect id="rounding-select">
+          {Object.entries(ROUNDING_LABELS).map(([value, label]) => (
+            <NativeSelectOption value={value}>{label}</NativeSelectOption>
+          ))}
+        </NativeSelect>
+        <p class="text-xs text-muted-foreground">How computed points are rounded.</p>
+      </div>
+    </div>
+
+    <div class="grid gap-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-sm font-medium text-foreground">Rating levels</h3>
+        <div class="flex gap-2">
+          <Button id="add-level" variant="outline" size="sm">
+            Add level
           </Button>
-          <Button id="to-export">Continue to export</Button>
-        </CardFooter>
-      </Card>
-    </section>
-
-    <!-- Step 3: Export -->
-    <section id="step-export" hidden aria-labelledby="export-title">
-      <Card>
-        <CardHeader>
-          <CardTitle id="export-title">Export</CardTitle>
-          <CardDescription>
-            To import in Canvas: open your course → Rubrics → +Rubric → import, then choose this file.
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="grid gap-4">
-          <div class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-            <span>File:</span>
-            <Badge id="csv-filename" variant="secondary">
-              rubric.csv
-            </Badge>
-          </div>
-          <pre
-            id="csv-preview"
-            class="bg-muted/50 max-h-96 overflow-auto rounded-lg border p-4 text-xs break-all whitespace-pre-wrap"
-          ></pre>
-        </CardContent>
-        <CardFooter class="justify-between">
-          <Button id="back-to-review" variant="ghost">
-            Back
+          <Button id="reset-points" variant="ghost" size="sm">
+            Reset all points
           </Button>
-          <div class="flex gap-2">
-            <Button id="copy-csv" variant="outline">
-              Copy
-            </Button>
-            <Button id="download-csv">
-              <Download class="size-4" aria-hidden="true" />
-              Download CSV
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-    </section>
-  </div>
+        </div>
+      </div>
+      <div id="levels-settings" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </div>
+
+    <Card slot="extra">
+      <CardHeader>
+        <CardTitle>Criteria</CardTitle>
+        <CardDescription>
+          Edit names, descriptions, and points. Manually edited points are marked and kept when presets change (until
+          you reset them).
+        </CardDescription>
+        <CardAction>
+          <Button id="add-criterion" variant="outline" size="sm">
+            Add criterion
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <div id="criteria-grid" class="grid gap-3"></div>
+      </CardContent>
+      <StepNav />
+    </Card>
+  </ToolStep>
+
+  <!-- Step 3: Export -->
+  <ToolStep step={steps[2]} title="Export">
+    <Fragment slot="description">
+      To import in Canvas: open your course → Rubrics → +Rubric → import, then choose this file.
+    </Fragment>
+
+    <div class="grid gap-4">
+      <StatRow items={[{ label: "File:", id: "csv-filename", value: "rubric.csv" }]} />
+      <CodePreview id="csv-preview" />
+    </div>
+
+    <StepNav slot="footer">
+      <div slot="actions" class="flex gap-2">
+        <Button id="copy-csv" variant="outline">
+          Copy
+        </Button>
+        <Button id="download-csv">
+          <Download class="size-4" aria-hidden="true" />
+          Download CSV
+        </Button>
+      </div>
+    </StepNav>
+  </ToolStep>
 
   <script>
     import "@/scripts/app";
   </script>
-</DrawbridgeLayout>
+</ToolLayout>

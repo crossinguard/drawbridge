@@ -1,6 +1,7 @@
 ---
 import { badge as badgeClasses } from "@/components/starwind/badge/variants";
 import { TOOL_STATUS_META, type ToolStatus } from "@/lib/tools/registry";
+import { cn } from "@/lib/utils";
 
 interface Props {
   status: ToolStatus;
@@ -19,7 +20,8 @@ const meta = TOOL_STATUS_META[status];
     size,
     // `font-sans` keeps the badge out of the heading font when it is placed
     // inside a heading; `w-fit` stops it stretching inside a grid cell.
-    class: ["font-sans w-fit", className],
+    // `cn` merges the caller's classes last so they win over the base.
+    class: cn("w-fit font-sans", className),
   })}
 >
   {meta.label}

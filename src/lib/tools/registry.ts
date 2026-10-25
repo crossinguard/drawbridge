@@ -29,15 +29,27 @@ export interface ToolEntry {
   /** URL segment, also used as the guide slug. */
   slug: string;
   title: string;
+  /**
+   * One-line summary. Used on the directory card and as the basis for the
+   * tool page's subtitle and meta description, so the three never drift.
+   */
   description: string;
+  /**
+   * Override for the `<meta name="description">` tag, when the page needs
+   * different wording from the card. Falls back to `description`.
+   */
+  metaDescription?: string;
+  /**
+   * The words that make up the tool's page heading, joined by an arrow icon.
+   * `["Rubric", "Canvas CSV"]` renders as "Rubric → Canvas CSV".
+   */
+  heading: string[];
   status: ToolStatus;
   icon: SvgComponent;
   /** Live tools only. Absent for planned tools. */
   href?: string;
   /** Reference documentation. Absent for planned tools. */
   guideHref?: string;
-  /** One-line summary of the reference documentation. */
-  guideDescription?: string;
 }
 
 export interface ToolStatusMeta {
@@ -80,27 +92,30 @@ export const TOOLS: readonly ToolEntry[] = [
     slug: "rubric-csv",
     title: "Rubric → Canvas CSV",
     description: "Convert a Word rubric table into a Canvas import CSV.",
+    metaDescription:
+      "Convert a Word rubric table into a Canvas import CSV — entirely in your browser, nothing is uploaded.",
+    heading: ["Rubric", "Canvas CSV"],
     status: "experimental",
     icon: FileTypeCsv,
     href: "/tools/rubric-csv",
     guideHref: "/guides/rubric-csv",
-    guideDescription: "Detailed reference for converting a Word rubric table into a Canvas import CSV.",
   },
   {
     slug: "outcome-mapper",
     title: "Outcome Mapper",
     description: "Map program, course, and assessment outcomes and export the alignment table.",
+    heading: ["Outcome", "Mapper"],
     status: "under-development",
     icon: GitCompare,
     href: "/tools/outcome-mapper",
     guideHref: "/guides/outcome-mapper",
-    guideDescription: "Detailed reference for mapping program, course, and assessment outcomes.",
   },
   {
     slug: "imscc-viewer",
     title: "Canvas Course Export Viewer",
     description:
       "Open a Canvas course export package (.imscc) and browse its modules, pages, quizzes, and files without uploading it anywhere.",
+    heading: ["Canvas Course Export", "Viewer"],
     status: "planned",
     icon: PackageExport,
   },
@@ -109,6 +124,7 @@ export const TOOLS: readonly ToolEntry[] = [
     title: "Assessment Plan Builder",
     description:
       "Draft a course-level assessment plan by combining outcomes, rubrics, and Canvas assignments into one alignment table.",
+    heading: ["Assessment Plan", "Builder"],
     status: "planned",
     icon: ClipboardCheck,
   },
@@ -117,6 +133,7 @@ export const TOOLS: readonly ToolEntry[] = [
     title: "Rubric Version Diff",
     description:
       "Compare two versions of a rubric and highlight the criteria, rating scales, and point values that changed.",
+    heading: ["Rubric Version", "Diff"],
     status: "planned",
     icon: FileDiff,
   },

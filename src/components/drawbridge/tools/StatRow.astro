@@ -1,0 +1,31 @@
+---
+import { Badge } from "@/components/starwind/badge";
+
+/** A single label/value pair in a stat row. */
+export interface StatItem {
+  /** Label shown before the value. */
+  label: string;
+  /** DOM id of the badge holding the value, so the controller can update it. */
+  id?: string;
+  /** Initial value. */
+  value?: string | number;
+}
+
+interface Props {
+  items: StatItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+  {items.map((item, index) => (
+    <Fragment>
+      {index > 0 && <span aria-hidden="true">·</span>}
+      <span>{item.label}</span>
+      <Badge id={item.id} variant="secondary">
+        {item.value ?? 0}
+      </Badge>
+    </Fragment>
+  ))}
+</div>
