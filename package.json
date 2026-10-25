@@ -15,6 +15,7 @@
     "check": "astro check",
     "verify": "bun ./scripts/verify-serializer.ts",
     "test": "bun ./scripts/integration-test.ts",
+    "test:canvas": "bun ./scripts/canvas-parser-test.ts",
     "test:e2e": "bun ./scripts/e2e-test.ts",
     "sample": "bun ./scripts/make-sample-docx.ts"
   },
