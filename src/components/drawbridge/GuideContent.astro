@@ -5,7 +5,11 @@ import { Prose } from "@/components/starwind/prose";
 {/*
   The prose headings are sized down from Prose's defaults so the page's own
   `<h1>` keeps a clear visual lead over the `<h2>` sections in the guide.
+
+  `min-w-0` keeps a wide code block or table from pushing the page sideways:
+  without it the grid track grows to the content's width instead of letting
+  the block scroll inside it.
 */}
-<Prose class="max-w-none" style="--sw-prose-h2-size: 1.125rem;">
+<Prose class="min-w-0 max-w-none" style="--sw-prose-h2-size: 1.125rem;">
   <slot />
 </Prose>
