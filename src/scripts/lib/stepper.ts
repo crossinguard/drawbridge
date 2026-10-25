@@ -85,6 +85,10 @@ export function createStepper(options: StepperOptions): Stepper {
     current = index;
     render();
     options.onEnter?.(index);
+
+    // The step that was showing changes height, so the reader can end up
+    // looking at the wrong part of the page. Bring the stepper back into view.
+    items[0]?.closest("ol")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function advance(): void {
