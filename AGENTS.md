@@ -40,7 +40,8 @@ src/
 │       ├── registry.ts            # tool list + status metadata
 │       ├── steps.ts               # the shared ToolStep contract
 │       ├── rubric-csv/
-│       └── outcome-mapper/
+│       ├── outcome-mapper/
+│       └── imscc-viewer/          # Canvas course export viewer
 ├── content/guides/                # guide MDX (reference + quick-start)
 ├── pages/
 │   ├── index.astro                # tool directory (home)
@@ -48,7 +49,8 @@ src/
 │   ├── privacy.astro
 │   ├── tools/
 │   │   ├── rubric-csv/
-│   │   └── outcome-mapper/
+│   │   ├── outcome-mapper/
+│   │   └── imscc-viewer/
 │   └── guides/
 │       ├── index.astro
 │       └── [tool]/index.astro     # one route for every guide
@@ -59,9 +61,11 @@ src/
 │   │   ├── dom.ts                 # byId, esc, icon, slugify
 │   │   ├── io.ts                  # download, copyToClipboard
 │   │   └── stepper.ts             # shared step navigation
-│   └── tools/outcome-mapper/
+│   └── tools/
+│       ├── outcome-mapper/
+│       └── imscc-viewer/
 └── components/
-    ├── drawbridge/                # site-wide components (Header, Footer)
+    ├── drawbridge/                # site-wide components (Header, Footer, PageHeader)
     │   └── tools/                 # tool-page components (ToolLayout, ToolStep…)
     └── starwind/                  # Starwind UI components
 ```
@@ -180,6 +184,74 @@ The registry imports SVG icons as Astro components, so it must only be
 imported from `.astro` files. Importing it from a client script under
 `src/scripts/` would degrade the icons to plain asset metadata. Anything a
 controller needs lives in a separate, icon-free module.
+
+## The Canvas Common Cartridge
+
+The Canvas Course Export Viewer reads an IMS Common Cartridge. The format is
+not documented anywhere obvious, and it has sharp edges. What follows was
+worked out from a real export and is the reference for
+`src/lib/tools/imscc-viewer/`.
+
+### The join
+
+A module item does not point at content directly. It points at an identifier,
+and the manifest says what that identifier means:
+
+```text
+course_settings/module_meta.xml   module item ──▶ identifier
+imsmanifest.xml                   <item identifierref> ──▶ resource
+imsmanifest.xml                   <resource> ──▶ the file(s) holding the content
+```
+
+Do not follow the module's own `<identifierref>`. For external links Canvas
+writes the item's own identifier there instead of the resource identifier, so
+following it leaves every external link unresolved. The manifest's
+organization is the reliable path.
+
+### What is where
+
+| Path                       | Holds                                           |
+| -------------------------- | ----------------------------------------------- |
+| `imsmanifest.xml`          | The resource list and the module organization   |
+| `course_settings/`         | Course settings, modules, groups, late policy   |
+| `wiki_content/*.html`      | One file per page                               |
+| `g<id>/`                   | One folder per assignment, quiz, or discussion  |
+| `g<id>.xml`                | `webLink`, `topicMeta`, and LTI sidecars        |
+| `non_cc_assessments/*.qti` | The questions for quizzes using the bank layout |
+| `web_resources/`           | The files the course owns                       |
+
+A quiz's settings are in `g<id>/assessment_meta.xml`; its questions are in
+`non_cc_assessments/<id>.xml.qti`, or beside the settings. A discussion's
+settings are in a separate `topicMeta` file, named by the resource's
+`<dependency>`.
+
+### Sharp edges
+
+- **The namespace declaration can be broken.** Some exports write `xmlns:xsi`
+  with two URIs separated by a space. No XML parser accepts that, and browsers
+  refuse the whole document. `src/lib/tools/imscc-viewer/xml.ts` repairs it.
+- **Some resources have no `href`.** Their title has to come from the file
+  itself, not from the manifest.
+- **The document element often is the element being looked for.** A quiz's
+  settings live in `<quiz>`, not in a child of it. `childElements` matches the
+  document root; `allElements` matches it too.
+- **The file listing is not a reliable index.** `files_meta.xml` only records
+  the files Canvas considers hidden, not all of them.
+
+### Content handling
+
+Course content is not trusted. `src/lib/tools/imscc-viewer/content.ts` rebuilds
+it against an allowlist of tags and attributes — no scripts, no event handlers,
+no inline styles, no `javascript:` URLs — and rewrites Canvas' placeholders:
+
+| Placeholder                   | Becomes                               |
+| ----------------------------- | ------------------------------------- |
+| `$WIKI_REFERENCE$/pages/<id>` | A jump to that page inside the viewer |
+| `$IMS-CC-FILEBASE$/<path>`    | A file inside the cartridge           |
+| `$CANVAS_COURSE_REFERENCE$/…` | A jump to the module outline          |
+
+Images hosted outside the cartridge are dropped rather than loaded, because
+loading them would send a request to a third party.
 
 ## Guides
 

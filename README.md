@@ -10,6 +10,7 @@ The homepage is the tool directory. Tools are grouped by how finished they are:
 
 - **Rubric → Canvas CSV** — Convert a Word rubric table into a Canvas import CSV. _Experimental._
 - **Outcome Mapper** — Map program, course, and assessment outcomes and export the alignment table. _Under development._
+- **Canvas Course Export Viewer** — Open a Canvas course export and browse everything in it, with a QA report. _Experimental._
 
 ### Statuses
 
@@ -46,9 +47,14 @@ bun run build
 bun run check        # astro check — types
 bun run format       # prettier --write . (also sorts Tailwind classes)
 bun run test         # integration test for the .docx import path
+bun run test:canvas  # parser checks for the Canvas course export viewer
 bun run verify       # CSV serializer/parser checks
 bun run test:e2e     # browser smoke test (needs `bun run build` first)
 ```
+
+`bun run test:canvas` uses the sample export in `src/assets/reference/canvas/course/`, which is
+git-ignored — it is a local fixture, not part of the repository. The test skips
+itself when the sample is not there, so it never breaks a clean checkout.
 
 ## Deployment (Netlify)
 
@@ -71,7 +77,8 @@ src/
 │       ├── registry.ts            # tool list + status metadata
 │       ├── steps.ts               # the shared ToolStep contract
 │       ├── rubric-csv/
-│       └── outcome-mapper/
+│       ├── outcome-mapper/
+│       └── imscc-viewer/          # Canvas course export viewer
 ├── content/guides/                # guide MDX (reference + quick-start)
 ├── pages/
 │   ├── index.astro                # tool directory
@@ -79,7 +86,8 @@ src/
 │   ├── privacy.astro
 │   ├── tools/
 │   │   ├── rubric-csv/
-│   │   └── outcome-mapper/
+│   │   ├── outcome-mapper/
+│   │   └── imscc-viewer/
 │   └── guides/
 │       ├── index.astro
 │       └── [tool]/index.astro     # one route for every guide
@@ -90,7 +98,9 @@ src/
 │   │   ├── dom.ts                 # byId, esc, icon, slugify
 │   │   ├── io.ts                  # download, copyToClipboard
 │   │   └── stepper.ts             # shared step navigation
-│   └── tools/outcome-mapper/
+│   └── tools/
+│       ├── outcome-mapper/
+│       └── imscc-viewer/
 └── components/
     ├── drawbridge/                # site-wide components
     │   └── tools/                 # tool-page components
