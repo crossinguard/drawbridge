@@ -11,12 +11,8 @@ import {
   SheetTrigger,
 } from "@/components/starwind/sheet";
 import { ThemeToggle } from "@/components/starwind/theme-toggle";
-
-const links = [
-  { href: "/guides", label: "Guides" },
-  { href: "/about", label: "About" },
-  { href: "/privacy", label: "Privacy" },
-];
+import NavLink from "@/components/drawbridge/NavLink.astro";
+import { NAV_LINKS, isActiveLink } from "@/lib/nav";
 
 const currentPath = Astro.url.pathname;
 ---
@@ -26,28 +22,16 @@ const currentPath = Astro.url.pathname;
     <a
       href="/"
       aria-label="Drawbridge home"
-      class="font-heading text-2xl leading-none text-foreground hover:opacity-80 transition-opacity"
+      class="font-heading text-2xl leading-none text-foreground transition-opacity hover:opacity-80"
     >
       Drawbridge
     </a>
 
     <div class="flex items-center gap-2">
       <nav aria-label="Primary" class="hidden items-center gap-1 text-sm md:flex">
-        {links.map((link) => {
-          const active = currentPath === link.href || currentPath.startsWith(`${link.href}/`);
-          return (
-            <a
-              href={link.href}
-              aria-current={active ? "page" : undefined}
-              class={[
-                "rounded-md px-3 py-2 transition-colors hover:bg-muted hover:text-foreground",
-                active ? "bg-muted text-foreground font-medium" : "text-muted-foreground",
-              ].join(" ")}
-            >
-              {link.label}
-            </a>
-          );
-        })}
+        {NAV_LINKS.map((link) => (
+          <NavLink href={link.href} label={link.label} active={isActiveLink(currentPath, link.href)} size="sm" />
+        ))}
       </nav>
 
       <ThemeToggle />
@@ -64,21 +48,9 @@ const currentPath = Astro.url.pathname;
             <SheetDescription class="sr-only">Site navigation links</SheetDescription>
           </SheetHeader>
           <nav aria-label="Mobile" class="grid gap-1 py-6">
-            {links.map((link) => {
-              const active = currentPath === link.href || currentPath.startsWith(`${link.href}/`);
-              return (
-                <a
-                  href={link.href}
-                  aria-current={active ? "page" : undefined}
-                  class={[
-                    "rounded-md px-3 py-3 text-base font-medium transition-colors hover:bg-muted",
-                    active ? "bg-muted text-foreground" : "text-foreground",
-                  ].join(" ")}
-                >
-                  {link.label}
-                </a>
-              );
-            })}
+            {NAV_LINKS.map((link) => (
+              <NavLink href={link.href} label={link.label} active={isActiveLink(currentPath, link.href)} size="md" />
+            ))}
           </nav>
         </SheetContent>
       </Sheet>

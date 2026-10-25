@@ -1,11 +1,7 @@
 ---
 import ShieldLock from "@tabler/icons/outline/shield-lock.svg";
 
-const links = [
-  { href: "/about", label: "About" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/guides", label: "Guides" },
-];
+import { NAV_LINKS } from "@/lib/nav";
 ---
 
 <footer class="border-t border-border bg-background">
@@ -15,7 +11,7 @@ const links = [
       <span>Nothing leaves your device.</span>
     </div>
     <nav aria-label="Footer" class="flex flex-wrap items-center justify-center gap-4">
-      {links.map((link) => (
+      {NAV_LINKS.map((link) => (
         <a href={link.href} class="transition-colors hover:text-foreground">
           {link.label}
         </a>

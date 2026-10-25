@@ -1,65 +1,54 @@
 ---
 import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
+import PageHeader from "@/components/drawbridge/PageHeader.astro";
+import { Prose } from "@/components/starwind/prose";
 ---
 
 <DrawbridgeLayout title="Privacy" description="Drawbridge privacy details: nothing leaves your device.">
   <div class="mx-auto grid max-w-3xl gap-8">
-    <div class="grid gap-2 text-center">
-      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Privacy</h1>
-      <p class="text-muted-foreground">Drawbridge is built so that nothing leaves your device.</p>
-    </div>
+    <PageHeader title="Privacy" description="Drawbridge is built so that nothing leaves your device." />
 
-    <div class="grid gap-6 text-foreground">
-      <section class="grid gap-3">
-        <h2 class="text-lg font-semibold">What we do not do</h2>
-        <ul class="list-disc space-y-2 pl-5 leading-relaxed text-muted-foreground">
-          <li>No server-side processing.</li>
-          <li>No analytics or tracking.</li>
-          <li>No cookies.</li>
-          <li>No account or login.</li>
-          <li>No network requests after the page is loaded.</li>
-        </ul>
-      </section>
+    <Prose class="max-w-none text-foreground" style="--sw-prose-h2-size: 1.125rem;">
+      <h2>What we do not do</h2>
+      <ul>
+        <li>No server-side processing.</li>
+        <li>No analytics or tracking.</li>
+        <li>No cookies.</li>
+        <li>No account or login.</li>
+        <li>No network requests after the page is loaded.</li>
+      </ul>
 
-      <section class="grid gap-3">
-        <h2 class="text-lg font-semibold">How it works</h2>
-        <p class="leading-relaxed text-muted-foreground">
-          Drawbridge is a static site. When you open a tool, the page and its code are served to your browser. Any file
-          you import or text you paste is processed in memory by JavaScript running on your own device.
-        </p>
-        <p class="leading-relaxed text-muted-foreground">
-          The production site sends a Content Security Policy header that blocks external requests (
-          <code>default-src 'self'</code>). This means even if malicious code were somehow introduced, it could not send
-          your data to another server.
-        </p>
-      </section>
+      <h2>How it works</h2>
+      <p>
+        Drawbridge is a static site. When you open a tool, the page and its code are served to your browser. Any file
+        you import or text you paste is processed in memory by JavaScript running on your own device.
+      </p>
+      <p>
+        The production site sends a Content Security Policy header that blocks external requests (
+        <code>default-src 'self'</code>). This means even if malicious code were somehow introduced, it could not send
+        your data to another server.
+      </p>
 
-      <section class="grid gap-3">
-        <h2 class="text-lg font-semibold">Local preferences</h2>
-        <p class="leading-relaxed text-muted-foreground">
-          Drawbridge stores a few small preferences in your browser’s localStorage so your choices persist between
-          visits. This currently includes your selected color theme and whether the quick-start guide is open on each
-          tool page. These values never leave your device and are not transmitted anywhere.
-        </p>
-      </section>
+      <h2>Local preferences</h2>
+      <p>
+        Drawbridge stores a few small preferences in your browser’s localStorage so your choices persist between visits.
+        This currently includes your selected color theme and whether the quick-start guide is open on each tool page.
+        These values never leave your device and are not transmitted anywhere.
+      </p>
 
-      <section class="grid gap-3">
-        <h2 class="text-lg font-semibold">Offline use</h2>
-        <p class="leading-relaxed text-muted-foreground">
-          Drawbridge is an installable progressive web app. After the first load, a service worker caches the site so it
-          works without a network connection. You can verify this by turning off Wi-Fi after the initial load.
-        </p>
-      </section>
+      <h2>Offline use</h2>
+      <p>
+        Drawbridge is an installable progressive web app. After the first load, a service worker caches the site so it
+        works without a network connection. You can verify this by turning off Wi-Fi after the initial load.
+      </p>
 
-      <section class="grid gap-3">
-        <h2 class="text-lg font-semibold">Recommendations for sensitive data</h2>
-        <ul class="list-disc space-y-2 pl-5 leading-relaxed text-muted-foreground">
-          <li>Use a private or incognito browser window.</li>
-          <li>Disable browser extensions you do not trust.</li>
-          <li>Turn off your network connection after loading the site.</li>
-          <li>Close the tab when you are finished.</li>
-        </ul>
-      </section>
-    </div>
+      <h2>Recommendations for sensitive data</h2>
+      <ul>
+        <li>Use a private or incognito browser window.</li>
+        <li>Disable browser extensions you do not trust.</li>
+        <li>Turn off your network connection after loading the site.</li>
+        <li>Close the tab when you are finished.</li>
+      </ul>
+    </Prose>
   </div>
 </DrawbridgeLayout>

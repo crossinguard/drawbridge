@@ -1,62 +1,53 @@
 ---
 import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
 import supersonic from "@/assets/crossinguard/supersonic.svg";
+import PageHeader from "@/components/drawbridge/PageHeader.astro";
+import { Prose } from "@/components/starwind/prose";
 ---
 
 <DrawbridgeLayout title="About" description="About Drawbridge: free, private tools for assessment work.">
   <div class="mx-auto grid max-w-3xl gap-8">
-    <div class="grid gap-2 text-center">
-      <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">About</h1>
-      <p class="text-muted-foreground">What Drawbridge is and why it exists.</p>
-    </div>
+    <PageHeader title="About" description="What Drawbridge is and why it exists." />
 
-    <div class="grid gap-6 text-foreground">
-      <section class="grid gap-3">
-        <h2 class="text-lg font-semibold">Purpose</h2>
-        <p class="leading-relaxed text-muted-foreground">
-          Drawbridge is a collection of small, single-purpose tools for assessment work. It is built around a simple
-          idea: useful utilities should not require an account, a subscription, or a network connection.
-        </p>
-      </section>
+    <Prose class="max-w-none text-foreground" style="--sw-prose-h2-size: 1.125rem;">
+      <h2>Purpose</h2>
+      <p>
+        Drawbridge is a collection of small, single-purpose tools for assessment work. It is built around a simple idea:
+        useful utilities should not require an account, a subscription, or a network connection.
+      </p>
 
-      <section class="grid gap-3">
-        <h2 class="text-lg font-semibold">Privacy by design</h2>
-        <p class="leading-relaxed text-muted-foreground">
-          Every tool runs entirely in your browser. There is no server processing your files, no analytics tracking your
-          actions, and no database storing your work. Once the site is loaded, it works offline and can be installed as
-          a progressive web app.
-        </p>
-        <p class="leading-relaxed text-muted-foreground">
-          For high-stakes assessment data, this means you can use Drawbridge without sending information anywhere. Close
-          the tab and nothing remains.
-        </p>
-      </section>
+      <h2>Privacy by design</h2>
+      <p>
+        Every tool runs entirely in your browser. There is no server processing your files, no analytics tracking your
+        actions, and no database storing your work. Once the site is loaded, it works offline and can be installed as a
+        progressive web app.
+      </p>
+      <p>
+        For high-stakes assessment data, this means you can use Drawbridge without sending information anywhere. Close
+        the tab and nothing remains.
+      </p>
 
-      <section class="grid gap-3">
-        <h2 class="text-lg font-semibold">Open and free</h2>
-        <p class="leading-relaxed text-muted-foreground">
-          Drawbridge is free to use. It is primarily built for personal use, but others are welcome to use it if they
-          find it helpful.
-        </p>
-      </section>
+      <h2>Open and free</h2>
+      <p>
+        Drawbridge is free to use. It is primarily built for personal use, but others are welcome to use it if they find
+        it helpful.
+      </p>
 
-      <section class="grid gap-3">
-        <h2 class="text-lg font-semibold">Credits</h2>
-        <p class="leading-relaxed text-muted-foreground">
-          Drawbridge is built and maintained by
-          <a
-            href="https://crossinguard.dev"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="crossinguard.dev (opens in a new tab)"
-            class="inline-flex items-center gap-1.5 font-medium text-primary underline underline-offset-4 hover:text-primary-accent"
-          >
-            <img src={supersonic.src} alt="" width="16" height="16" aria-hidden="true" />
-            crossinguard
-          </a>
-          .
-        </p>
-      </section>
-    </div>
+      <h2>Credits</h2>
+      <p>
+        Drawbridge is built and maintained by
+        <a
+          href="https://crossinguard.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="crossinguard.dev (opens in a new tab)"
+          class="not-sw-prose inline-flex items-center gap-1.5 font-medium text-primary underline underline-offset-4 hover:text-primary-accent"
+        >
+          <img src={supersonic.src} alt="" width="16" height="16" aria-hidden="true" />
+          crossinguard
+        </a>
+        .
+      </p>
+    </Prose>
   </div>
 </DrawbridgeLayout>

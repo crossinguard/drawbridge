@@ -1,0 +1,30 @@
+---
+interface Props {
+  href: string;
+  label: string;
+  /** Whether this link points at the current page. */
+  active?: boolean;
+  /** Visual weight. `sm` for the header bar, `md` for the mobile sheet. */
+  size?: "sm" | "md";
+  class?: string;
+}
+
+const { href, label, active = false, size = "sm", class: className } = Astro.props;
+
+const activeClass = size === "md" ? "bg-muted text-foreground" : "bg-muted font-medium text-foreground";
+const inactiveClass = size === "md" ? "text-foreground" : "text-muted-foreground";
+const sizeClass = size === "md" ? "px-3 py-3 text-base font-medium" : "px-3 py-2";
+---
+
+<a
+  href={href}
+  aria-current={active ? "page" : undefined}
+  class:list={[
+    "rounded-md transition-colors hover:bg-muted hover:text-foreground",
+    sizeClass,
+    active ? activeClass : inactiveClass,
+    className,
+  ]}
+>
+  {label}
+</a>
