@@ -1,17 +1,47 @@
+---
+title: "Outcome Mapper reference"
+description: "Detailed reference for the Outcome Mapper tool."
+toolSlug: "outcome-mapper"
+kind: "reference"
+---
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/starwind/table";
+
 ## Input format
 
 The input is a table with a header row. Columns are case-insensitive and whitespace is trimmed.
 
-<div class="table-wrapper">
-
-| Column   | Required | Description                          |
-| -------- | -------- | ------------------------------------ |
-| `level`  | Yes      | `program`, `course`, or `assessment` |
-| `id`     | Yes      | A short unique identifier            |
-| `text`   | Yes      | The outcome statement                |
-| `mapsTo` | No       | Comma-separated parent outcome ids   |
-
-</div>
+<Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Column</TableHead>
+      <TableHead>Required</TableHead>
+      <TableHead>Description</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    <TableRow>
+      <TableCell>`level`</TableCell>
+      <TableCell>Yes</TableCell>
+      <TableCell>`program`, `course`, or `assessment`</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>`id`</TableCell>
+      <TableCell>Yes</TableCell>
+      <TableCell>A short unique identifier</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>`text`</TableCell>
+      <TableCell>Yes</TableCell>
+      <TableCell>The outcome statement</TableCell>
+    </TableRow>
+    <TableRow>
+      <TableCell>`mapsTo`</TableCell>
+      <TableCell>No</TableCell>
+      <TableCell>Comma-separated parent outcome ids</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
 
 ## Mapping rules
 

@@ -1,69 +1,11 @@
-<div class="guide-content">
+---
+import { Prose } from "@/components/starwind/prose";
+---
+
+{/*
+  The prose headings are sized down from Prose's defaults so the page's own
+  `<h1>` keeps a clear visual lead over the `<h2>` sections in the guide.
+*/}
+<Prose class="max-w-none" style="--sw-prose-h2-size: 1.125rem;">
   <slot />
-</div>
-
-<style>
-  @reference "@/styles/starwind.css";
-
-  .guide-content {
-    @apply grid gap-6;
-  }
-  .guide-content :global(h2) {
-    @apply text-lg font-semibold text-foreground;
-  }
-  .guide-content :global(p) {
-    @apply leading-relaxed text-muted-foreground;
-  }
-  .guide-content :global(ul) {
-    @apply list-disc space-y-1 pl-5 leading-relaxed text-muted-foreground;
-  }
-  .guide-content :global(ol) {
-    @apply list-decimal space-y-1 pl-5 leading-relaxed text-muted-foreground;
-  }
-  .guide-content :global(ol > li) {
-    @apply pl-2;
-  }
-  .guide-content :global(li > ul),
-  .guide-content :global(li > ol) {
-    @apply mt-2;
-  }
-  .guide-content :global(code) {
-    @apply rounded bg-muted px-1 py-0.5 text-xs font-medium text-foreground;
-  }
-  .guide-content :global(pre) {
-    @apply overflow-x-auto rounded-lg border border-border bg-muted/50 p-3 text-xs text-foreground;
-  }
-  .guide-content :global(pre code) {
-    @apply bg-transparent p-0;
-  }
-  .guide-content :global(table) {
-    @apply w-full text-sm;
-  }
-  .guide-content :global(thead) {
-    @apply bg-muted;
-  }
-  .guide-content :global(th) {
-    @apply px-4 py-2 text-left font-medium text-foreground;
-  }
-  .guide-content :global(td) {
-    @apply px-4 py-2 text-muted-foreground;
-  }
-  .guide-content :global(tr + tr) {
-    @apply border-t border-border;
-  }
-  .guide-content :global(dl) {
-    @apply grid gap-2 text-sm;
-  }
-  .guide-content :global(dt) {
-    @apply font-medium text-foreground;
-  }
-  .guide-content :global(dd) {
-    @apply text-muted-foreground;
-  }
-  .guide-content :global(a) {
-    @apply font-medium text-primary underline underline-offset-4 hover:text-primary-accent;
-  }
-  .guide-content :global(.table-wrapper) {
-    @apply overflow-x-auto rounded-lg border border-border;
-  }
-</style>
+</Prose>

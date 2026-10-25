@@ -1,0 +1,48 @@
+---
+import { getCollection, render } from "astro:content";
+
+import Book from "@tabler/icons/outline/book.svg";
+
+import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
+import { Button } from "@/components/starwind/button";
+import GuideContent from "@/components/drawbridge/GuideContent.astro";
+import GuideHeader from "@/components/drawbridge/GuideHeader.astro";
+import { requireToolBySlug } from "@/lib/tools/registry";
+
+/**
+ * One page per tool's reference guide.
+ *
+ * The guides live in the `guides` content collection, so adding a guide is a
+ * matter of dropping an MDX file into `src/content/guides/` — no route
+ * changes needed.
+ */
+export async function getStaticPaths() {
+  const entries = await getCollection("guides", ({ data }) => data.kind === "reference");
+  return entries.map((entry) => ({
+    params: { tool: entry.data.toolSlug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+
+const tool = requireToolBySlug(entry.data.toolSlug);
+---
+
+<DrawbridgeLayout title={entry.data.title} description={entry.data.description}>
+  <article class="mx-auto grid max-w-3xl gap-8">
+    <GuideHeader toolName={tool.title} toolSlug={tool.slug} description={entry.data.description} />
+
+    <GuideContent>
+      <Content />
+    </GuideContent>
+
+    <div>
+      <Button as="a" href={`/tools/${tool.slug}`} variant="outline" class="inline-flex items-center gap-2">
+        <Book class="size-4" aria-hidden="true" />
+        Back to tool
+      </Button>
+    </div>
+  </article>
+</DrawbridgeLayout>

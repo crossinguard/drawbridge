@@ -1,3 +1,12 @@
+---
+title: "Rubric → Canvas CSV reference"
+description: "Detailed reference for the Rubric → Canvas CSV tool."
+toolSlug: "rubric-csv"
+kind: "reference"
+---
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/starwind/table";
+
 ## Expected table shape
 
 The source table should have one row per criterion and one column per rating level. The first two columns are reserved:
@@ -6,13 +15,26 @@ The source table should have one row per criterion and one column per rating lev
 2. **Points** — the maximum points for that criterion
 3. **Rating columns** — one column per rating level, left to right from highest to lowest
 
-<div class="table-wrapper">
-
-| Criterion    | Points | Exemplary         | Proficient     | Developing |
-| ------------ | ------ | ----------------- | -------------- | ---------- |
-| Organization | 4      | Clear and logical | Mostly logical | Unclear    |
-
-</div>
+<Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>Criterion</TableHead>
+      <TableHead>Points</TableHead>
+      <TableHead>Exemplary</TableHead>
+      <TableHead>Proficient</TableHead>
+      <TableHead>Developing</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    <TableRow>
+      <TableCell>Organization</TableCell>
+      <TableCell>4</TableCell>
+      <TableCell>Clear and logical</TableCell>
+      <TableCell>Mostly logical</TableCell>
+      <TableCell>Unclear</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
 
 ## Supported import formats
 

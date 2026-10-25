@@ -1,13 +1,15 @@
 ---
+import { getCollection } from "astro:content";
+
 import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
 import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
 import Book from "@tabler/icons/outline/book.svg";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/starwind/card";
 import ToolStatusBadge from "@/components/drawbridge/ToolStatusBadge.astro";
-import { TOOLS } from "@/lib/tools/registry";
+import { getToolBySlug } from "@/lib/tools/registry";
 
-const guides = TOOLS.filter((tool) => tool.guideHref && tool.guideDescription);
+const guides = await getCollection("guides", ({ data }) => data.kind === "reference");
 ---
 
 <DrawbridgeLayout title="Guides" description="User guides for Drawbridge tools.">
@@ -18,33 +20,38 @@ const guides = TOOLS.filter((tool) => tool.guideHref && tool.guideDescription);
     </div>
 
     <section class="grid gap-4 sm:grid-cols-2">
-      {guides.map((guide) => (
-        <Card class="flex flex-col text-left transition-shadow hover:shadow-sm">
-          <CardHeader>
-            <div class="mb-2 flex items-start justify-between gap-2">
-              <div class="text-primary">
-                <Book class="size-7" aria-hidden="true" />
+      {guides.map((guide) => {
+        const tool = getToolBySlug(guide.data.toolSlug);
+        if (!tool) return null;
+
+        return (
+          <Card class="flex flex-col text-left transition-shadow hover:shadow-sm">
+            <CardHeader>
+              <div class="mb-2 flex items-start justify-between gap-2">
+                <div class="text-primary">
+                  <Book class="size-7" aria-hidden="true" />
+                </div>
+                <ToolStatusBadge status={tool.status} />
               </div>
-              <ToolStatusBadge status={guide.status} />
-            </div>
-            <CardTitle>
-              <a href={guide.guideHref} class="hover:underline underline-offset-4">
-                {guide.title}
+              <CardTitle>
+                <a href={`/guides/${tool.slug}`} class="hover:underline underline-offset-4">
+                  {tool.title}
+                </a>
+              </CardTitle>
+              <CardDescription>{guide.data.description}</CardDescription>
+            </CardHeader>
+            <CardContent class="mt-auto">
+              <a
+                href={`/guides/${tool.slug}`}
+                class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4"
+              >
+                View guide
+                <ArrowRight class="size-4" aria-hidden="true" />
               </a>
-            </CardTitle>
-            <CardDescription>{guide.guideDescription}</CardDescription>
-          </CardHeader>
-          <CardContent class="mt-auto">
-            <a
-              href={guide.guideHref}
-              class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4"
-            >
-              View guide
-              <ArrowRight class="size-4" aria-hidden="true" />
-            </a>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        );
+      })}
     </section>
   </div>
 </DrawbridgeLayout>

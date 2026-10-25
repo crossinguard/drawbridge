@@ -1,5 +1,12 @@
 ---
-import ChevronRight from "@tabler/icons/outline/chevron-right.svg";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/starwind/breadcrumb";
 
 import ToolStatusBadge from "@/components/drawbridge/ToolStatusBadge.astro";
 import { getToolBySlug } from "@/lib/tools/registry";
@@ -17,29 +24,21 @@ const status = getToolBySlug(toolSlug)?.status;
 ---
 
 <div class="mx-auto grid max-w-3xl gap-4">
-  <nav aria-label="Breadcrumb">
-    <ol class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-      <li>
-        <a href="/#tools" class="hover:text-foreground hover:underline underline-offset-4">
-          Tools
-        </a>
-      </li>
-      <li>
-        <ChevronRight class="size-4" aria-hidden="true" />
-      </li>
-      <li>
-        <a href={toolHref} class="hover:text-foreground hover:underline underline-offset-4">
-          {toolName}
-        </a>
-      </li>
-      <li>
-        <ChevronRight class="size-4" aria-hidden="true" />
-      </li>
-      <li class="font-medium text-foreground" aria-current="page">
-        Reference
-      </li>
-    </ol>
-  </nav>
+  <Breadcrumb>
+    <BreadcrumbList>
+      <BreadcrumbItem>
+        <BreadcrumbLink href="/#tools">Tools</BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator />
+      <BreadcrumbItem>
+        <BreadcrumbLink href={toolHref}>{toolName}</BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator />
+      <BreadcrumbItem>
+        <BreadcrumbPage>Reference</BreadcrumbPage>
+      </BreadcrumbItem>
+    </BreadcrumbList>
+  </Breadcrumb>
 
   <div class="grid gap-2">
     <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{toolName}: Reference</h1>
