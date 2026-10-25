@@ -1,5 +1,8 @@
 # build output
 dist/
+# Canvas sample course export — a real course, kept out of the repository.
+# The small rubric reference template next to it is tracked.
+src/assets/reference/canvas/course/
 # generated types
 .astro/
 

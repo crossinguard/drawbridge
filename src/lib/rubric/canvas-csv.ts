@@ -21,7 +21,7 @@ export function formatPoints(n: number): string {
 /**
  * Serialize a rubric into the Canvas rubric import CSV format.
  *
- * Shape (per src/assets/reference/import_rubric_template.csv):
+ * Shape (per src/assets/reference/canvas/rubric/import_rubric_template.csv):
  * - One row per criterion; ratings flatten into repeating
  *   `Rating Name, Rating Description, Rating Points` triplets.
  * - Header contains as many triplets as the widest criterion; rows may be
