@@ -28,6 +28,13 @@ export interface StepperOptions {
 export interface Stepper {
   /** Move to a step, if it can be reached. */
   goTo(index: number): void;
+  /**
+   * Redraw the stepper.
+   *
+   * Call this when something outside the stepper changes what is reachable —
+   * loading a file, for instance — so the buttons reflect the new state.
+   */
+  refresh(): void;
   /** Index of the currently active step. */
   readonly current: number;
 }
@@ -114,6 +121,7 @@ export function createStepper(options: StepperOptions): Stepper {
 
   return {
     goTo,
+    refresh: render,
     get current() {
       return current;
     },
