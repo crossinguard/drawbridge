@@ -1,39 +1,12 @@
 ---
 import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
 import ShieldLock from "@tabler/icons/outline/shield-lock.svg";
-import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
-import FileTypeCsv from "@tabler/icons/outline/file-type-csv.svg";
-import GitCompare from "@tabler/icons/outline/git-compare.svg";
-import Book from "@tabler/icons/outline/book.svg";
 
 import drawbridgeLogo from "@/assets/branding/drawbridge-logo.svg";
 import drawbridgeLogoDark from "@/assets/branding/drawbridge-logo-dark.svg";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/starwind/card";
+import ToolDirectory from "@/components/drawbridge/ToolDirectory.astro";
 import { Badge } from "@/components/starwind/badge";
-
-const tools = [
-  {
-    href: "/tools/rubric-csv",
-    icon: FileTypeCsv,
-    title: "Rubric → Canvas CSV",
-    description: "Convert a Word rubric table into a Canvas import CSV.",
-    guideHref: "/guides/rubric-csv",
-  },
-  {
-    href: "/tools/outcome-mapper",
-    icon: GitCompare,
-    title: "Outcome Mapper",
-    description: "Map program, course, and assessment outcomes and export the alignment table.",
-    guideHref: "/guides/outcome-mapper",
-  },
-];
 ---
 
 <DrawbridgeLayout
@@ -65,40 +38,15 @@ const tools = [
       </div>
     </section>
 
-    <section class="grid gap-4 sm:grid-cols-2">
-      {
-        tools.map((tool) => (
-          <Card class="flex flex-col text-left transition-shadow hover:shadow-sm">
-            <CardHeader>
-              <div class="text-primary mb-2">
-                <tool.icon class="size-8" aria-hidden="true" />
-              </div>
-              <CardTitle>
-                <a href={tool.href} class="hover:underline underline-offset-4">
-                  {tool.title}
-                </a>
-              </CardTitle>
-              <CardDescription>{tool.description}</CardDescription>
-            </CardHeader>
-            <CardContent class="mt-auto grid gap-3">
-              <a
-                href={tool.href}
-                class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-accent"
-              >
-                Open tool
-                <ArrowRight class="size-4" aria-hidden="true" />
-              </a>
-              <a
-                href={tool.guideHref}
-                class="text-muted-foreground inline-flex items-center justify-center gap-2 text-sm hover:text-foreground"
-              >
-                <Book class="size-4" aria-hidden="true" />
-                Guide
-              </a>
-            </CardContent>
-          </Card>
-        ))
-      }
+    <section id="tools" class="grid gap-6 scroll-mt-8 text-left">
+      <div class="grid gap-2 text-center">
+        <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">Tools</h2>
+        <p class="text-muted-foreground">
+          Each tool runs in your browser. No data leaves your device. Tools are grouped by how finished they are.
+        </p>
+      </div>
+
+      <ToolDirectory />
     </section>
 
     <section class="rounded-lg border border-border bg-muted/30 p-6 text-left">

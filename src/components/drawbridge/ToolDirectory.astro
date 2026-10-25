@@ -1,0 +1,46 @@
+---
+import ToolCard from "@/components/drawbridge/ToolCard.astro";
+import ToolStatusBadge from "@/components/drawbridge/ToolStatusBadge.astro";
+import { TOOL_STATUS_META, TOOL_STATUS_ORDER, toolsByStatus } from "@/lib/tools/registry";
+
+// Only render statuses that actually have tools. The key above still
+// documents every status, so a status with no tools yet is not hidden.
+const sections = TOOL_STATUS_ORDER.map((status) => ({
+  status,
+  tools: toolsByStatus(status),
+})).filter((section) => section.tools.length > 0);
+---
+
+<div class="grid gap-8">
+  <dl class="grid gap-3 rounded-lg border border-border bg-muted/30 p-4 sm:grid-cols-2">
+    {
+      TOOL_STATUS_ORDER.map((status) => (
+        <div class="flex flex-col gap-1">
+          <dt>
+            <ToolStatusBadge status={status} />
+          </dt>
+          <dd class="text-muted-foreground text-sm">{TOOL_STATUS_META[status].description}</dd>
+        </div>
+      ))
+    }
+  </dl>
+
+  {
+    sections.map((section) => (
+      <section id={section.status} class="grid gap-4 scroll-mt-8">
+        <h3 class="flex items-center gap-2.5">
+          <ToolStatusBadge status={section.status} size="md" />
+          <span class="text-muted-foreground text-base font-normal">
+            {section.tools.length} {section.tools.length === 1 ? "tool" : "tools"}
+          </span>
+        </h3>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          {section.tools.map((tool) => (
+            <ToolCard tool={tool} />
+          ))}
+        </div>
+      </section>
+    ))
+  }
+</div>

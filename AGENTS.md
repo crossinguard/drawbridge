@@ -15,16 +15,16 @@ src/
 ├── layouts/
 │   └── DrawbridgeLayout.astro     # shared site shell (nav, footer, CSP, theme)
 ├── lib/
-│   ├── shared/                    # cross-tool helpers
-│   └── tools/                     # one folder per tool
-│       ├── rubric-csv/
+│   ├── parse/                     # file/text parsers
+│   ├── rubric/                    # rubric model, points, Canvas CSV
+│   └── tools/
+│       ├── registry.ts            # tool list + status metadata
 │       └── outcome-mapper/
 ├── pages/
-│   ├── index.astro                # tool directory
+│   ├── index.astro                # tool directory (home)
 │   ├── about.astro
 │   ├── privacy.astro
 │   ├── tools/
-│   │   ├── index.astro
 │   │   ├── rubric-csv/
 │   │   └── outcome-mapper/
 │   └── guides/
@@ -32,7 +32,8 @@ src/
 │       ├── rubric-csv/
 │       └── outcome-mapper/
 ├── scripts/
-│   └── tools/                     # client-side controllers
+│   ├── app.ts                     # rubric-csv controller
+│   └── tools/outcome-mapper/
 └── components/
     ├── drawbridge/                # site-wide components (Header, Footer)
     └── starwind/                  # Starwind UI components
@@ -41,10 +42,35 @@ src/
 ## Tool conventions
 
 - Each tool is a self-contained route under `src/pages/tools/[tool-name]/`.
-- Tool logic belongs in `src/lib/tools/[tool-name]/`.
-- Client controllers belong in `src/scripts/tools/[tool-name]/app.ts`.
+- Tool logic belongs in `src/lib/tools/[tool-name]/` (or `src/lib/rubric/` and
+  `src/lib/parse/` for shared rubric parsing).
+- Client controllers belong in `src/scripts/` — `src/scripts/app.ts` for
+  rubric-csv, `src/scripts/tools/[tool-name]/app.ts` for newer tools.
 - Every tool page uses `DrawbridgeLayout` and displays the "100% local" privacy badge.
 - Guides follow the two-part pattern: `quick-start` and `reference`.
+
+### The tool registry
+
+`src/lib/tools/registry.ts` is the single source of truth for the tool list.
+The homepage directory, the guides index, and the status badges on tool and
+guide pages all read from it — adding a tool to the registry is enough to make
+it appear on the homepage.
+
+Every entry carries a `status`:
+
+| Status | Meaning |
+| --- | --- |
+| `stable` | Confirmed working. Any issues are bugs that need to be fixed. |
+| `experimental` | Should do what we want it to do, but use with caution. |
+| `under-development` | Somewhat functional, but probably broken in some way or incomplete. |
+| `planned` | An idea for a tool. Nothing is functional yet. |
+
+Planned tools have no `href` or `guideHref`, and render as non-clickable
+placeholder cards.
+
+The registry imports SVG icons as Astro components, so it must only be
+imported from `.astro` files. Importing it from a client script under
+`src/scripts/` would degrade the icons to plain asset metadata.
 
 ## Privacy
 

@@ -21,6 +21,8 @@ import {
 import { Label } from "@/components/starwind/label";
 import { Textarea } from "@/components/starwind/textarea";
 import QuickStartCollapsible from "@/components/drawbridge/QuickStartCollapsible.astro";
+import ToolStatusLine from "@/components/drawbridge/ToolStatusLine.astro";
+import { requireToolBySlug } from "@/lib/tools/registry";
 import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
 ---
 
@@ -29,7 +31,7 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
   description="Map program, course, and assessment outcomes. Private by design — everything stays on your device."
   fullWidth
 >
-  <main class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:gap-6 sm:py-12">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:gap-6 sm:py-12">
     <header class="flex flex-wrap items-start justify-between gap-4">
       <div class="grid gap-1">
         <h1 class="inline-flex flex-wrap items-center gap-x-2.5 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -40,6 +42,7 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
         <p class="text-muted-foreground text-sm sm:text-base">
           Map program, course, and assessment outcomes. Private by design — everything stays on your device.
         </p>
+        <ToolStatusLine status={requireToolBySlug("outcome-mapper").status} />
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <Button as="a" href="/guides/outcome-mapper" variant="outline" size="sm" class="inline-flex items-center gap-2">
@@ -198,7 +201,7 @@ import QuickStartContent from "@/content/guides/outcome-mapper-quick-start.mdx";
         </CardFooter>
       </Card>
     </section>
-  </main>
+  </div>
 
   <script>
     import "@/scripts/tools/outcome-mapper/app";
