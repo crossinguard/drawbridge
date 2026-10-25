@@ -1,0 +1,242 @@
+---
+import { getEntry, render } from "astro:content";
+
+import ClipboardText from "@tabler/icons/outline/clipboard-text.svg";
+import Download from "@tabler/icons/outline/download.svg";
+import FileZip from "@tabler/icons/outline/file-zip.svg";
+import Folder from "@tabler/icons/outline/folder.svg";
+
+// The course content is rendered as prose; this pulls in the typography.
+import "@/components/starwind/prose/styles.css";
+
+import { Button } from "@/components/starwind/button";
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import { NativeSelect, NativeSelectOption } from "@/components/starwind/native-select";
+
+import QuickStartCollapsible from "@/components/drawbridge/QuickStartCollapsible.astro";
+import LocalOnlyNotice from "@/components/drawbridge/tools/LocalOnlyNotice.astro";
+import StepNav from "@/components/drawbridge/tools/StepNav.astro";
+import ToolLayout from "@/components/drawbridge/tools/ToolLayout.astro";
+import ToolStep from "@/components/drawbridge/tools/ToolStep.astro";
+
+import { requireToolBySlug } from "@/lib/tools/registry";
+import { steps } from "@/lib/tools/imscc-viewer/steps";
+
+const tool = requireToolBySlug("imscc-viewer");
+
+// `webkitdirectory` is not part of Astro's attribute types, but the browser
+// needs it as a real attribute for the folder picker to work.
+const folderInputProps = { webkitdirectory: true };
+
+const quickStartEntry = await getEntry("guides", "imscc-viewer-quick-start");
+if (!quickStartEntry) throw new Error('Missing guide entry "imscc-viewer-quick-start".');
+const { Content: QuickStartContent } = await render(quickStartEntry);
+---
+
+<ToolLayout tool={tool} steps={steps}>
+  <QuickStartCollapsible slot="quick-start" toolSlug={tool.slug} description={quickStartEntry.data.description}>
+    <QuickStartContent />
+  </QuickStartCollapsible>
+
+  <!-- Step 1: Open -->
+  <ToolStep step={steps[0]} title="Open a course export" hidden={false} class="gap-6">
+    <Fragment slot="description">
+      Choose a Canvas course export — the <code>.imscc</code> file from <em>Settings → Export Course Content</em>, or
+      the same file renamed to <code>.zip</code>. An already-extracted course folder works too. The file is read in your
+      browser and never uploaded.
+    </Fragment>
+
+    <div
+      id="drop-zone"
+      class="grid gap-4 rounded-lg border-2 border-dashed border-border bg-muted/20 p-6 text-center transition-colors"
+    >
+      <div class="grid gap-1">
+        <p class="text-sm font-medium">Drop the export here</p>
+        <p class="text-xs text-muted-foreground">
+          A <code>.imscc</code> or <code>.zip</code> archive, or an extracted course folder.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap justify-center gap-2">
+        <Button id="choose-file" variant="outline">
+          <FileZip class="size-4" aria-hidden="true" />
+          Choose an archive
+        </Button>
+        <Button id="choose-folder" variant="outline">
+          <Folder class="size-4" aria-hidden="true" />
+          Choose an extracted folder
+        </Button>
+      </div>
+
+      <input type="file" id="file-input" accept=".imscc,.zip" class="sr-only" />
+      <input type="file" id="folder-input" class="sr-only" {...folderInputProps} />
+
+      <p id="open-status" class="text-xs text-muted-foreground" role="status"></p>
+    </div>
+
+    <div id="open-errors" class="grid gap-2"></div>
+    <div id="open-warnings" class="grid gap-2"></div>
+
+    <div id="open-summary" class="grid gap-3 rounded-lg border border-border p-4" hidden></div>
+
+    <LocalOnlyNotice slot="footer">
+      The export is opened with the browser's own file APIs. There is no server, no upload, and no tracking — closing
+      the tab forgets everything.
+    </LocalOnlyNotice>
+  </ToolStep>
+
+  <!-- Step 2: Browse -->
+  <ToolStep step={steps[1]} title="Browse the course" class="gap-4">
+    <Fragment slot="description">
+      The outline on the left mirrors the modules. Switch to the table to see every item in one list, and use the
+      filters to narrow things down — the publish-state filter is the quickest way to find everything students cannot
+      see.
+    </Fragment>
+
+    <div class="grid gap-3">
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="grid min-w-[14rem] flex-1 gap-1.5">
+          <Label for="search-input">Search</Label>
+          <Input id="search-input" type="search" placeholder="Titles, body text, links…" autocomplete="off" />
+        </div>
+
+        <div class="grid gap-1.5">
+          <Label for="type-filter">Type</Label>
+          <NativeSelect id="type-filter">
+            <NativeSelectOption value="all">All types</NativeSelectOption>
+            <NativeSelectOption value="assignment">Assignments</NativeSelectOption>
+            <NativeSelectOption value="quiz">Quizzes</NativeSelectOption>
+            <NativeSelectOption value="page">Pages</NativeSelectOption>
+            <NativeSelectOption value="discussion">Discussions</NativeSelectOption>
+            <NativeSelectOption value="external-url">External links</NativeSelectOption>
+            <NativeSelectOption value="external-tool">External tools</NativeSelectOption>
+          </NativeSelect>
+        </div>
+
+        <div class="grid gap-1.5">
+          <Label for="state-filter">State</Label>
+          <NativeSelect id="state-filter">
+            <NativeSelectOption value="all">All states</NativeSelectOption>
+            <NativeSelectOption value="active">Published</NativeSelectOption>
+            <NativeSelectOption value="unpublished">Unpublished</NativeSelectOption>
+          </NativeSelect>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-1 rounded-md border border-border p-0.5" role="group" aria-label="View">
+          <button
+            type="button"
+            id="view-outline"
+            class="rounded px-2.5 py-1 text-sm transition-colors"
+            aria-pressed="true"
+          >
+            Outline
+          </button>
+          <button
+            type="button"
+            id="view-table"
+            class="rounded px-2.5 py-1 text-sm transition-colors"
+            aria-pressed="false"
+          >
+            Table
+          </button>
+        </div>
+
+        <p class="text-xs text-muted-foreground">
+          Showing{" "}
+          <span id="browse-count" class="font-medium text-foreground">
+            0
+          </span>{" "}
+          of
+          <span id="browse-total" class="font-medium text-foreground">
+            0
+          </span>{" "}
+          items
+        </p>
+      </div>
+    </div>
+
+    <div id="browse-grid" class="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+      <div
+        id="browse-outline-pane"
+        class="max-h-[32rem] min-w-0 overflow-y-auto rounded-lg border border-border p-2 lg:max-h-[38rem]"
+      >
+        <div id="browse-outline" class="grid min-w-0 gap-3"></div>
+      </div>
+
+      <div id="browse-table-pane" class="overflow-auto rounded-lg border border-border lg:max-h-[38rem]" hidden>
+        <table class="w-full min-w-[46rem] caption-bottom text-sm">
+          <thead class="[&_tr]:border-b">
+            <tr class="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
+              <th class="text-muted-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap">Item</th>
+              <th class="text-muted-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap">Type</th>
+              <th class="text-muted-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap">
+                State
+              </th>
+              <th class="text-muted-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap">
+                Module
+              </th>
+              <th class="text-muted-foreground h-10 px-2 text-right align-middle font-medium whitespace-nowrap">Pts</th>
+              <th class="text-muted-foreground h-10 px-2 text-right align-middle font-medium whitespace-nowrap">
+                Chars
+              </th>
+              <th class="text-muted-foreground h-10 px-2 text-right align-middle font-medium whitespace-nowrap">
+                Links
+              </th>
+            </tr>
+          </thead>
+          <tbody id="browse-table-body" class="[&_tr:last-child]:border-0"></tbody>
+        </table>
+      </div>
+
+      <div id="browse-detail" class="min-h-[20rem] rounded-lg border border-border"></div>
+    </div>
+
+    <p id="browse-empty" class="text-sm text-muted-foreground" hidden>
+      No items match the current filters.
+    </p>
+
+    <StepNav slot="footer" nextLabel="Continue to the QA report" />
+  </ToolStep>
+
+  <!-- Step 3: Audit -->
+  <ToolStep step={steps[2]} title="QA report" class="gap-4">
+    <Fragment slot="description">
+      What a reviewer would otherwise have to click through to find: unpublished items, content outside every module,
+      links that leave the course, and the settings worth a second look.
+    </Fragment>
+
+    <div id="audit-stats" class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"></div>
+
+    <div id="audit-findings" class="grid gap-6"></div>
+
+    <p id="audit-empty" class="text-sm text-muted-foreground" hidden></p>
+
+    <StepNav slot="footer">
+      <div slot="actions" class="flex flex-wrap gap-2">
+        <Button id="download-report" variant="outline">
+          <Download class="size-4" aria-hidden="true" />
+          Report (Markdown)
+        </Button>
+        <Button id="copy-report" variant="outline">
+          <ClipboardText class="size-4" aria-hidden="true" />
+          Copy report
+        </Button>
+        <Button id="download-findings" variant="outline">
+          <Download class="size-4" aria-hidden="true" />
+          Findings (CSV)
+        </Button>
+        <Button id="download-inventory" variant="outline">
+          <Download class="size-4" aria-hidden="true" />
+          Inventory (CSV)
+        </Button>
+      </div>
+    </StepNav>
+  </ToolStep>
+
+  <script>
+    import "@/scripts/tools/imscc-viewer/app";
+  </script>
+</ToolLayout>
