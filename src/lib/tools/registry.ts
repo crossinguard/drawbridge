@@ -115,9 +115,13 @@ export const TOOLS: readonly ToolEntry[] = [
     title: "Canvas Course Export Viewer",
     description:
       "Open a Canvas course export package (.imscc) and browse its modules, pages, quizzes, and files without uploading it anywhere.",
+    metaDescription:
+      "Open a Canvas course export (.imscc) and browse every module, page, quiz, and assignment in one place — a QA report included, and nothing is uploaded.",
     heading: ["Canvas Course Export", "Viewer"],
-    status: "planned",
+    status: "experimental",
     icon: PackageExport,
+    href: "/tools/imscc-viewer",
+    guideHref: "/guides/imscc-viewer",
   },
   {
     slug: "assessment-plan-builder",
