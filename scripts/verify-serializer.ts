@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { escapeCsv, formatPoints, toCanvasCsv } from "../src/lib/rubric/canvas-csv";
 import { computePoints, presetPercentages, recomputeAll } from "../src/lib/rubric/points";
 import { DEFAULT_SETTINGS, type Rubric } from "../src/lib/rubric/types";
-import { HEADER_BASE, parseCanvasCsv, parseCsv } from "../src/lib/parse/csv";
+import { HEADER_BASE, parseCanvasCsv } from "../src/lib/parse/csv";
 import { parseTextTable } from "../src/lib/parse/text";
 import { tableToRubric } from "../src/lib/parse/table-to-rubric";
 
