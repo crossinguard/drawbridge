@@ -16,6 +16,8 @@ import { spawn } from "node:child_process";
 
 import { chromium } from "playwright";
 
+import { buildSampleCartridge } from "./make-sample-cartridge";
+
 const PORT = Number(process.env.E2E_PORT ?? 4322);
 const EXTERNAL_BASE = process.env.BASE_URL;
 const BASE = EXTERNAL_BASE ?? `http://localhost:${PORT}`;
@@ -179,13 +181,77 @@ await page.waitForSelector("#step-import:not([hidden])");
 check("back returns to import", await page.locator("#step-import").isVisible(), true);
 
 // ---------------------------------------------------------------------------
+// Canvas Course Export Viewer
+// ---------------------------------------------------------------------------
+
+console.log("\nCanvas Course Export Viewer");
+await page.goto(`${BASE}/tools/imscc-viewer`, { waitUntil: "networkidle" });
+
+check("open step visible", await page.locator("#step-open").isVisible(), true);
+check("browse step hidden", await page.locator("#step-browse").isVisible(), false);
+check("audit step hidden", await page.locator("#step-audit").isVisible(), false);
+check("step 2 disabled", await page.locator("#step-2 [data-step-action]").isDisabled(), true);
+
+// Opening a cartridge should reveal what it holds and unlock the next step.
+const cartridge = await buildSampleCartridge();
+await page.setInputFiles("#file-input", {
+  name: "sample.imscc",
+  mimeType: "application/zip",
+  buffer: Buffer.from(cartridge),
+});
+await page.waitForSelector("#open-summary:not([hidden])");
+
+check("summary shows the course title", (await page.textContent("#open-summary"))?.includes("Sample Course"), true);
+check("summary shows the account", (await page.textContent("#open-summary"))?.includes("Sample District"), true);
+check("step 2 enabled once a course is loaded", await page.locator("#step-2 [data-step-action]").isDisabled(), false);
+
+await page.click("#open-course");
+await page.waitForSelector("#step-browse:not([hidden])");
+
+check("browse step visible", await page.locator("#step-browse").isVisible(), true);
+check("one module item", await page.textContent("#browse-total"), "1");
+check("outline rendered", (await page.locator("#browse-outline button[data-item]").count()) > 0, true);
+
+// The item's content and settings should be there.
+await page.click("#browse-outline button[data-item]");
+await page.waitForTimeout(200);
+const detail = (await page.textContent("#browse-detail")) ?? "";
+check("detail shows the title", detail.includes("Sample Assignment"), true);
+check("detail shows the points", detail.includes("25"), true);
+check("detail shows the body", detail.includes("Complete the sample assignment"), true);
+check("detail lists the links", detail.includes("Links in this item"), true);
+
+// The table view holds the same items.
+await page.click("#view-table");
+await page.waitForTimeout(200);
+check("table pane visible", await page.locator("#browse-table-pane").isVisible(), true);
+check("table rows", await page.locator("#browse-table-body tr").count(), 1);
+
+// The report should catch the self-enrolling course and the zero-weight group.
+await page.click("#step-3 [data-step-action]");
+await page.waitForSelector("#step-audit:not([hidden])");
+await page.waitForTimeout(200);
+
+const report = (await page.textContent("#audit-findings")) ?? "";
+check("findings rendered", (await page.locator("#audit-findings article").count()) > 0, true);
+check("self-enrolment finding", report.includes("self-enrolling"), true);
+check("zero-weight finding", report.includes("weighted 0%"), true);
+check("orphan finding", report.includes("not in any module"), true);
+
+// The report can be downloaded.
+const downloadPromise = page.waitForEvent("download");
+await page.click("#download-report");
+const download = await downloadPromise;
+check("report file name", download.suggestedFilename(), "sample-course-report.md");
+
+// ---------------------------------------------------------------------------
 // Guides
 // ---------------------------------------------------------------------------
 
 console.log("\nGuides");
 await page.goto(`${BASE}/guides`, { waitUntil: "networkidle" });
 check("two guide cards", await page.locator("section > a[href^='/guides/']").count(), 0);
-check("two guide links", await page.locator("a[href^='/guides/']").count(), 4);
+check("guide links", await page.locator("a[href^='/guides/']").count(), 6);
 
 await page.goto(`${BASE}/guides/rubric-csv`, { waitUntil: "networkidle" });
 check("guide renders", await page.locator(".sw-prose h2").count(), 5);
