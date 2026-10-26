@@ -3,23 +3,18 @@
  * graded items, in one shape.
  *
  * The model is built from a parsed Canvas course and is read by both the
- * review screen and the plain-text prep file, so the two can never disagree.
+ * review screen and the export bundle, so the two can never disagree.
+ *
+ * One piece of content can sit in more than one module. The model counts it
+ * once and keeps every module reference, so the gradebook totals stay right.
  */
-import { summariseQuestions } from "@/lib/canvas/quiz";
 import type { ProcessedContent } from "@/lib/canvas/content";
-import type {
-  CourseExport,
-  CourseItem,
-  ItemBank,
-  PublishState,
-  QuizDetails,
-  Rubric,
-  RubricCriterion,
-} from "@/lib/canvas/types";
+import type { CourseExport, CourseItem, ItemBank, PublishState, QuizDetails, Rubric } from "@/lib/canvas/types";
 
 import { naturalCompare } from "@/lib/utils";
 
 import { classifyUsage, type UsageMap } from "@/lib/tools/assessment-review/usage";
+import { hashString } from "@/lib/tools/assessment-review/text/hash";
 
 /** The kinds of graded item a course can hold. */
 export type AssessmentKind = "assignment" | "quiz" | "graded-discussion";
@@ -31,15 +26,37 @@ export const ASSESSMENT_KIND_LABELS: Record<AssessmentKind, string> = {
   "graded-discussion": "Graded discussion",
 };
 
+/** One place a piece of content is placed in the course. */
+export interface ModuleRef {
+  /** The module's identifier. */
+  moduleId: string;
+  /** The module's title. */
+  moduleTitle: string;
+  /** Whether the module is published. */
+  moduleState: PublishState;
+  /** The module item's identifier. */
+  itemId: string;
+  /** The title the module item shows, which may differ from the item's own. */
+  title: string;
+  /** Whether students can open the module item. */
+  state: PublishState;
+  /** 1-based order within the module. */
+  position?: number;
+  /** Nesting depth inside the module. */
+  indent?: number;
+}
+
 /** One graded item in the course. */
 export interface Assessment {
-  /** The course item's identifier. */
+  /** The content's identifier. */
   id: string;
   kind: AssessmentKind;
   /** The title the module item shows. */
   title: string;
   /** The title the content carries itself, when it differs. */
   ownTitle?: string;
+  /** Every module the item is placed in. */
+  moduleRefs: ModuleRef[];
   /** The module the item sits in, when it is in one. */
   moduleId?: string;
   moduleTitle?: string;
@@ -76,6 +93,8 @@ export interface RubricReview {
   attachedTo: Assessment[];
   /** The rubrics with identical criteria and levels. */
   duplicates: RubricReview[];
+  /** The family of rubrics with identical criteria and levels. */
+  familyId: string;
 }
 
 /** An assignment group, with what is in it. */
@@ -128,6 +147,7 @@ export function buildReview(course: CourseExport, content: Map<string, Processed
       id: assessment.id,
       item: assessment.item,
       inModule: assessment.inModule,
+      moduleRefs: assessment.moduleRefs,
     })),
     rubrics: rubrics.map((review) => ({
       rubric: review.rubric,
@@ -167,11 +187,26 @@ function collectReferences(course: CourseExport, content: Map<string, ProcessedC
   return references;
 }
 
-/** Every graded item in the course. */
+/**
+ * Every graded item in the course.
+ *
+ * The parser records one entry per module item, so a piece of content placed
+ * in two modules arrives twice. It is one graded item, and it is counted once.
+ */
 function collectAssessments(course: CourseExport, content: Map<string, ProcessedContent>): Assessment[] {
   const all = [...course.items, ...course.orphans];
 
-  return all.filter((item) => isGraded(item)).map((item) => toAssessment(item, content));
+  const byContent = new Map<string, CourseItem[]>();
+  for (const item of all) {
+    const list = byContent.get(item.id) ?? [];
+    list.push(item);
+    byContent.set(item.id, list);
+  }
+
+  return [...byContent.values()]
+    .map((group) => group.filter(isGraded))
+    .filter((group) => group.length > 0)
+    .map((group) => toAssessment(group, content));
 }
 
 /** True when the item counts towards a grade. */
@@ -182,14 +217,32 @@ function isGraded(item: CourseItem): boolean {
   return false;
 }
 
-/** Turn a course item into an assessment. */
-function toAssessment(item: CourseItem, content: Map<string, ProcessedContent>): Assessment {
-  const kind: AssessmentKind =
-    item.kind === "quiz" ? "quiz" : item.kind === "discussion" ? "graded-discussion" : "assignment";
+/** Turn the placements of one piece of content into an assessment. */
+function toAssessment(entries: CourseItem[], content: Map<string, ProcessedContent>): Assessment {
+  const moduleRefs: ModuleRef[] = [];
 
-  const assignment = item.assignment;
-  const quiz = item.quiz;
-  const discussion = item.discussion;
+  for (const entry of entries) {
+    if (!entry.moduleId) continue;
+    moduleRefs.push({
+      moduleId: entry.moduleId,
+      moduleTitle: entry.moduleTitle ?? "not in export",
+      moduleState: entry.moduleState ?? "unpublished",
+      itemId: entry.itemId ?? entry.id,
+      title: entry.title,
+      state: entry.state,
+      position: entry.position,
+      indent: entry.indent,
+    });
+  }
+
+  // The first placement is the one the reviewer reads first.
+  const primary = entries[0];
+  const kind: AssessmentKind =
+    primary.kind === "quiz" ? "quiz" : primary.kind === "discussion" ? "graded-discussion" : "assignment";
+
+  const assignment = primary.assignment;
+  const quiz = primary.quiz;
+  const discussion = primary.discussion;
 
   const groupId =
     kind === "quiz" ? quiz?.groupId : kind === "graded-discussion" ? discussion?.groupId : assignment?.groupId;
@@ -213,28 +266,29 @@ function toAssessment(item: CourseItem, content: Map<string, ProcessedContent>):
         ? (discussion?.rubricUseForGrading ?? false)
         : (assignment?.rubricUseForGrading ?? false);
 
-  const processed = content.get(item.id);
+  const processed = content.get(primary.id);
 
   return {
-    id: item.id,
+    id: primary.id,
     kind,
-    title: item.title,
-    ownTitle: item.ownTitle,
-    moduleId: item.moduleId,
-    moduleTitle: item.moduleTitle,
-    moduleState: item.moduleState,
+    title: primary.title,
+    ownTitle: primary.ownTitle,
+    moduleRefs,
+    moduleId: moduleRefs[0]?.moduleId,
+    moduleTitle: moduleRefs[0]?.moduleTitle,
+    moduleState: moduleRefs[0]?.moduleState,
     groupId,
     groupTitle,
     pointsPossible,
     rubricId,
     rubricUseForGrading,
     instructions: processed?.blocks.join("\n") ?? "",
-    instructionsSource: item.bodyPath,
+    instructionsSource: primary.bodyPath,
     dueAt: kind === "quiz" ? quiz?.dueAt : kind === "graded-discussion" ? discussion?.dueAt : assignment?.dueAt,
-    state: item.state,
-    inModule: Boolean(item.moduleId),
+    state: primary.state,
+    inModule: moduleRefs.length > 0,
     quiz,
-    item,
+    item: primary,
   };
 }
 
@@ -244,6 +298,7 @@ function collectRubrics(course: CourseExport, assessments: Assessment[]): Rubric
     rubric,
     attachedTo: assessments.filter((assessment) => assessment.rubricId === rubric.id),
     duplicates: [],
+    familyId: rubricFamilyId(rubric),
   }));
 
   // Two rubrics are duplicates when their criteria and levels are the same.
@@ -278,7 +333,24 @@ export function rubricSignature(rubric: Rubric): string {
     .join("|");
 }
 
-/** Every assignment group, with what is in it. */
+/**
+ * The family a rubric belongs to.
+ *
+ * Rubrics whose criteria and levels are the same are one family, however many
+ * copies of them there are. The family is what the export lists; the copies
+ * are the members.
+ */
+export function rubricFamilyId(rubric: Rubric): string {
+  const signature = rubricSignature(rubric);
+  if (signature === "") return `rubric-${rubric.id}`;
+  return `rf-${hashString(signature).slice(0, 10)}`;
+}
+
+/**
+ * Every assignment group, with what is in it.
+ *
+ * Every assessment belongs to one group, so nothing is counted twice.
+ */
 function collectGroups(course: CourseExport, assessments: Assessment[]): GroupReview[] {
   const total = assessments.reduce((sum, assessment) => sum + (assessment.pointsPossible ?? 0), 0);
 
@@ -333,29 +405,4 @@ function readDueRange(assessments: Assessment[]): { from?: string; to?: string }
 
   if (dates.length === 0) return undefined;
   return { from: dates[0], to: dates[dates.length - 1] };
-}
-
-/** The criteria of a rubric, in the order the rubric lists them. */
-export function criteriaOf(review: RubricReview): RubricCriterion[] {
-  return review.rubric.criteria;
-}
-
-/** The assessments in the course, in module order. */
-export function sortedAssessments(review: AssessmentReview): Assessment[] {
-  return [...review.assessments].sort((a, b) => {
-    const module = naturalCompare(a.moduleTitle ?? "", b.moduleTitle ?? "");
-    if (module !== 0) return module;
-    return naturalCompare(a.title, b.title);
-  });
-}
-
-/** The quizzes in the course. */
-export function quizzesOf(review: AssessmentReview): Assessment[] {
-  return review.assessments.filter((assessment) => assessment.kind === "quiz");
-}
-
-/** The points a quiz's questions add up to. */
-export function quizQuestionPoints(assessment: Assessment): number | undefined {
-  if (!assessment.quiz) return undefined;
-  return summariseQuestions(assessment.quiz).points;
 }

@@ -8,26 +8,45 @@
  * Each check reports the two names as a pair. It never calls one of them
  * wrong.
  */
-import { naturalCompare } from "@/lib/utils";
-
-import type { Finding } from "@/lib/tools/assessment-review/findings";
-import type { Assessment, AssessmentReview } from "@/lib/tools/assessment-review/model";
+import { makeFinding, makeStat, type CheckResults, type Finding } from "@/lib/tools/assessment-review/findings";
+import type { AssessmentReview } from "@/lib/tools/assessment-review/model";
+import { priorityFor, type ReviewSettings } from "@/lib/tools/assessment-review/settings";
 import { matchesPattern, titlePattern } from "@/lib/tools/assessment-review/usage";
 
 /** Run every check in this family. */
-export function checkNaming(review: AssessmentReview): Finding[] {
-  return [
-    ...checkItemAgainstContentTitle(review),
-    ...checkAssessmentAgainstRubricTitle(review),
-    ...checkTitlePatterns(review),
-    ...checkGroupNames(review),
-    ...checkWeekLabels(review),
-    ...checkWhitespace(review),
+export function checkNaming(review: AssessmentReview, settings: ReviewSettings): CheckResults {
+  const findings: Finding[] = [
+    ...checkItemAgainstContentTitle(review, settings),
+    ...checkAssessmentAgainstRubricTitle(review, settings),
+    ...checkTitlePatterns(review, settings),
+    ...checkGroupNames(review, settings),
+    ...checkWeekLabels(review, settings),
+    ...checkWhitespace(review, settings),
   ];
+
+  const patterns = coursePatterns(review, settings);
+  const outliers = patterns.length
+    ? review.assessments.filter((assessment) => !matchesPattern(assessment.title, patterns))
+    : [];
+
+  return {
+    findings,
+    candidates: [],
+    stats: [
+      makeStat({
+        check: "E3",
+        family: "naming",
+        description: "Graded items whose title follows the course's own naming pattern",
+        total: patterns.length > 0 ? review.assessments.length : 0,
+        passed: patterns.length > 0 ? review.assessments.length - outliers.length : 0,
+        exceptions: outliers.map((assessment) => assessment.title),
+      }),
+    ],
+  };
 }
 
 /** E1 — the module item's title against the title the content carries. */
-function checkItemAgainstContentTitle(review: AssessmentReview): Finding[] {
+function checkItemAgainstContentTitle(review: AssessmentReview, settings: ReviewSettings): Finding[] {
   const findings: Finding[] = [];
 
   for (const assessment of review.assessments) {
@@ -35,28 +54,31 @@ function checkItemAgainstContentTitle(review: AssessmentReview): Finding[] {
     if (!own) continue;
     if (own.trim() === assessment.title.trim()) continue;
 
-    findings.push({
-      id: `E1-${assessment.id}`,
-      check: "E1",
-      family: "naming",
-      title: `"${assessment.title}" is named "${own}" on the item itself`,
-      values: [
-        { label: "Module item", value: assessment.title, source: "course_settings/module_meta.xml" },
-        { label: "The item itself", value: own, source: assessment.item.settingsPath ?? "the item's settings" },
-      ],
-      itemIds: [assessment.id],
-      suggestedPriority: "low",
-      priorityReason: "The two names differ, so a reviewer looking for one will not find the other.",
-      notes: [],
-      needsReview: false,
-    });
+    findings.push(
+      makeFinding({
+        id: `E1-${assessment.id}`,
+        check: "E1",
+        family: "naming",
+        objectType: "assessment",
+        objectId: assessment.id,
+        objectName: assessment.title,
+        statement: `"${assessment.title}" is named "${own}" on the item itself.`,
+        values: [
+          { label: "Module item", value: assessment.title, source: "course_settings/module_meta.xml" },
+          { label: "The item itself", value: own, source: assessment.item.settingsPath ?? "the item's settings" },
+        ],
+        suggestedPriority: priorityFor(settings, "naming", "low"),
+        priorityReason: "The two names differ, so a reviewer looking for one will not find the other.",
+        needsReview: false,
+      }),
+    );
   }
 
   return findings;
 }
 
 /** E2 — the assessment's title against its rubric's title. */
-function checkAssessmentAgainstRubricTitle(review: AssessmentReview): Finding[] {
+function checkAssessmentAgainstRubricTitle(review: AssessmentReview, settings: ReviewSettings): Finding[] {
   const findings: Finding[] = [];
 
   for (const assessment of review.assessments) {
@@ -69,63 +91,84 @@ function checkAssessmentAgainstRubricTitle(review: AssessmentReview): Finding[] 
     // pairing, so this is reported as a pair rather than as a mismatch.
     if (resemble(assessment.title, rubric.title)) continue;
 
-    findings.push({
-      id: `E2-${assessment.id}`,
-      check: "E2",
-      family: "naming",
-      title: `"${assessment.title}" uses the rubric "${rubric.title}"`,
-      values: [
-        { label: "Assessment", value: assessment.title, source: "the item's settings" },
-        { label: "Rubric", value: rubric.title, source: "course_settings/rubrics.xml" },
-      ],
-      itemIds: [assessment.id],
-      suggestedPriority: "low",
-      priorityReason:
-        "The names do not resemble each other, which sometimes means a rubric left over from an earlier version.",
-      notes: [],
-      needsReview: false,
-    });
+    findings.push(
+      makeFinding({
+        id: `E2-${assessment.id}`,
+        check: "E2",
+        family: "naming",
+        objectType: "assessment",
+        objectId: assessment.id,
+        objectName: assessment.title,
+        statement: `"${assessment.title}" uses the rubric "${rubric.title}", which shares no words with it.`,
+        values: [
+          { label: "Assessment", value: assessment.title, source: "the item's settings" },
+          { label: "Rubric", value: rubric.title, source: "course_settings/rubrics.xml" },
+        ],
+        suggestedPriority: priorityFor(settings, "naming", "low"),
+        priorityReason:
+          "The names do not resemble each other, which sometimes means a rubric left over from an earlier version.",
+        needsReview: false,
+      }),
+    );
   }
 
   return findings;
 }
 
-/** E3 — titles that do not follow the course's own pattern. */
-function checkTitlePatterns(review: AssessmentReview): Finding[] {
-  const findings: Finding[] = [];
-  const patterns = review.usage.patterns;
+/**
+ * The patterns the course's own titles follow.
+ *
+ * They are read out of the course, and the reviewer can add more of their
+ * own. Turning the check off removes them all.
+ */
+function coursePatterns(review: AssessmentReview, settings: ReviewSettings): string[] {
+  if (!settings.naming.checkTitlePatterns) return [];
 
+  const patterns = new Set(review.usage.patterns);
+  for (const pattern of settings.naming.extraPatterns) {
+    const trimmed = pattern.trim().toLowerCase();
+    if (trimmed !== "") patterns.add(trimmed);
+  }
+
+  return [...patterns];
+}
+
+/** E3 — titles that do not follow the course's own pattern. */
+function checkTitlePatterns(review: AssessmentReview, settings: ReviewSettings): Finding[] {
+  const patterns = coursePatterns(review, settings);
   if (patterns.length === 0) return [];
 
   const outliers = review.assessments.filter((assessment) => !matchesPattern(assessment.title, patterns));
-
   if (outliers.length === 0) return [];
 
-  findings.push({
-    id: "E3-outliers",
-    check: "E3",
-    family: "naming",
-    title: `${outliers.length} of ${review.assessments.length} graded items do not follow the course's naming pattern`,
-    values: [
-      {
-        label: "Patterns the course follows",
-        value: patterns.join(", "),
-        source: "the titles of the course's module items",
-      },
-      { label: "Items that do not", value: String(outliers.length), source: "the course's module items" },
-    ],
-    itemIds: outliers.map((assessment) => assessment.id),
-    suggestedPriority: "low",
-    priorityReason: "Naming that does not follow the course's own pattern makes the course harder to scan.",
-    notes: outliers.map((assessment) => `• ${assessment.title} (${titlePattern(assessment.title)})`),
-    needsReview: false,
-  });
-
-  return findings;
+  return [
+    makeFinding({
+      id: "E3-outliers",
+      check: "E3",
+      family: "naming",
+      objectType: "course",
+      objectId: review.course.meta.title,
+      objectName: review.course.meta.title,
+      statement: `${outliers.length} of the ${review.assessments.length} graded items do not follow the course's naming pattern.`,
+      values: [
+        {
+          label: "Patterns the course follows",
+          value: patterns.join(", "),
+          source: "the titles of the course's module items",
+        },
+        { label: "Items that do not", value: String(outliers.length), source: "the course's module items" },
+      ],
+      affected: outliers.map((assessment) => assessment.id),
+      suggestedPriority: priorityFor(settings, "naming", "low"),
+      priorityReason: "Naming that does not follow the course's own pattern makes the course harder to scan.",
+      notes: outliers.map((assessment) => `• ${assessment.title} (${titlePattern(assessment.title)})`),
+      needsReview: false,
+    }),
+  ];
 }
 
 /** E5 — the name of a group against the names of what is in it. */
-function checkGroupNames(review: AssessmentReview): Finding[] {
+function checkGroupNames(review: AssessmentReview, settings: ReviewSettings): Finding[] {
   const findings: Finding[] = [];
 
   for (const group of review.groups) {
@@ -144,32 +187,36 @@ function checkGroupNames(review: AssessmentReview): Finding[] {
 
     if (named) continue;
 
-    findings.push({
-      id: `E5-${group.id}`,
-      check: "E5",
-      family: "naming",
-      title: `The group "${group.title}" does not share a name with the ${group.assessments.length} items in it`,
-      values: [
-        { label: "Group", value: group.title, source: "course_settings/assignment_groups.xml" },
-        {
-          label: "Items in it",
-          value: group.assessments.map((assessment) => assessment.title).join("; "),
-          source: "the course's assignment settings",
-        },
-      ],
-      itemIds: group.assessments.map((assessment) => assessment.id),
-      suggestedPriority: "low",
-      priorityReason: "The gradebook column and the items in it do not use the same words.",
-      notes: [],
-      needsReview: false,
-    });
+    findings.push(
+      makeFinding({
+        id: `E5-${group.id}`,
+        check: "E5",
+        family: "naming",
+        objectType: "group",
+        objectId: group.id,
+        objectName: group.title,
+        statement: `The group "${group.title}" does not share a name with the ${group.assessments.length} items in it.`,
+        values: [
+          { label: "Group", value: group.title, source: "course_settings/assignment_groups.xml" },
+          {
+            label: "Items in it",
+            value: group.assessments.map((assessment) => assessment.title).join("; "),
+            source: "the course's assignment settings",
+          },
+        ],
+        affected: group.assessments.map((assessment) => assessment.id),
+        suggestedPriority: priorityFor(settings, "naming", "low"),
+        priorityReason: "The gradebook column and the items in it do not use the same words.",
+        needsReview: false,
+      }),
+    );
   }
 
   return findings;
 }
 
 /** E6 — a week or number in a title against the module it sits in. */
-function checkWeekLabels(review: AssessmentReview): Finding[] {
+function checkWeekLabels(review: AssessmentReview, settings: ReviewSettings): Finding[] {
   const findings: Finding[] = [];
 
   for (const assessment of review.assessments) {
@@ -181,28 +228,31 @@ function checkWeekLabels(review: AssessmentReview): Finding[] {
     if (itemNumber === undefined || moduleNumber === undefined) continue;
     if (itemNumber === moduleNumber) continue;
 
-    findings.push({
-      id: `E6-${assessment.id}`,
-      check: "E6",
-      family: "naming",
-      title: `"${assessment.title}" is in "${assessment.moduleTitle}", which is numbered differently`,
-      values: [
-        { label: "Item", value: assessment.title, source: "course_settings/module_meta.xml" },
-        { label: "Module", value: assessment.moduleTitle, source: "course_settings/module_meta.xml" },
-      ],
-      itemIds: [assessment.id],
-      suggestedPriority: "low",
-      priorityReason: "The numbers do not line up, so the order on the syllabus may not be what a student sees.",
-      notes: [],
-      needsReview: false,
-    });
+    findings.push(
+      makeFinding({
+        id: `E6-${assessment.id}`,
+        check: "E6",
+        family: "naming",
+        objectType: "assessment",
+        objectId: assessment.id,
+        objectName: assessment.title,
+        statement: `"${assessment.title}" is in "${assessment.moduleTitle}", which is numbered differently.`,
+        values: [
+          { label: "Item", value: assessment.title, source: "course_settings/module_meta.xml" },
+          { label: "Module", value: assessment.moduleTitle, source: "course_settings/module_meta.xml" },
+        ],
+        suggestedPriority: priorityFor(settings, "naming", "low"),
+        priorityReason: "The numbers do not line up, so the order on the syllabus may not be what a student sees.",
+        needsReview: false,
+      }),
+    );
   }
 
   return findings;
 }
 
 /** E7 — stray spaces and inconsistent punctuation in a title. */
-function checkWhitespace(review: AssessmentReview): Finding[] {
+function checkWhitespace(review: AssessmentReview, settings: ReviewSettings): Finding[] {
   const findings: Finding[] = [];
 
   for (const assessment of review.assessments) {
@@ -215,18 +265,24 @@ function checkWhitespace(review: AssessmentReview): Finding[] {
 
     if (problems.length === 0) continue;
 
-    findings.push({
-      id: `E7-${assessment.id}`,
-      check: "E7",
-      family: "naming",
-      title: `"${assessment.title}" has ${problems.length === 1 ? "a spacing problem" : "spacing problems"}`,
-      values: [{ label: "Title", value: JSON.stringify(assessment.title), source: "course_settings/module_meta.xml" }],
-      itemIds: [assessment.id],
-      suggestedPriority: "low",
-      priorityReason: "Cosmetic, but it shows up in the gradebook and in listings.",
-      notes: problems,
-      needsReview: false,
-    });
+    findings.push(
+      makeFinding({
+        id: `E7-${assessment.id}`,
+        check: "E7",
+        family: "naming",
+        objectType: "assessment",
+        objectId: assessment.id,
+        objectName: assessment.title,
+        statement: `"${assessment.title}" has ${problems.length === 1 ? "a spacing problem" : "spacing problems"}.`,
+        values: [
+          { label: "Title", value: JSON.stringify(assessment.title), source: "course_settings/module_meta.xml" },
+        ],
+        suggestedPriority: priorityFor(settings, "naming", "low"),
+        priorityReason: "Cosmetic, but it shows up in the gradebook and in listings.",
+        notes: problems,
+        needsReview: false,
+      }),
+    );
   }
 
   return findings;
@@ -257,9 +313,4 @@ function resemble(a: string, b: string): boolean {
   // A rubric title often carries the assignment's words with the week number
   // changed, so compare the shapes too.
   return titlePattern(a) === titlePattern(b);
-}
-
-/** Sort assessments by their title, the way a reader would. */
-export function byTitle(assessments: readonly Assessment[]): Assessment[] {
-  return [...assessments].sort((a, b) => naturalCompare(a.title, b.title));
 }

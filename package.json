@@ -18,7 +18,8 @@
     "test": "bun ./scripts/integration-test.ts",
     "test:canvas": "bun ./scripts/canvas-parser-test.ts",
     "test:e2e": "bun ./scripts/e2e-test.ts",
-    "sample": "bun ./scripts/make-sample-docx.ts"
+    "sample": "bun ./scripts/make-sample-docx.ts",
+    "test:bundle": "bun ./scripts/review-bundle-test.ts"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.1.0",

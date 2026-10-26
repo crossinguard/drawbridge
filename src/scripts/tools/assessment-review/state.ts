@@ -8,11 +8,10 @@ import type { ProcessedContent } from "@/lib/canvas/content";
 import type { FileStore } from "@/lib/canvas/store";
 import type { CourseExport } from "@/lib/canvas/types";
 
-import type { Finding, Priority, ReviewRules } from "@/lib/tools/assessment-review/findings";
-import { DEFAULT_RULES } from "@/lib/tools/assessment-review/findings";
-import type { QuizComparisonGroup } from "@/lib/tools/assessment-review/checks/quizzes";
+import type { Candidate, CheckStat, Finding, ReviewOverrides } from "@/lib/tools/assessment-review/findings";
+import type { QuizComparisonGroup, QuizFamily } from "@/lib/tools/assessment-review/checks/quizzes";
 import type { AssessmentReview } from "@/lib/tools/assessment-review/model";
-import type { ReviewOverrides } from "@/lib/tools/assessment-review/prep-file";
+import { defaultSettings, type ReviewSettings } from "@/lib/tools/assessment-review/settings";
 
 /** Which view the review step shows. */
 export type ReviewTab = "overview" | "modules" | "assessments" | "quizzes" | "rubrics" | "gradebook" | "flags";
@@ -45,10 +44,16 @@ export interface AppState {
   review: AssessmentReview | null;
   /** The findings, most urgent first. */
   findings: Finding[];
+  /** What the checks could not stand behind. */
+  candidates: Candidate[];
+  /** What each check looked at. */
+  stats: CheckStat[];
   /** The quiz comparison groups. */
   groups: QuizComparisonGroup[];
-  /** The rules the review applies. */
-  rules: ReviewRules;
+  /** The quiz families. */
+  families: QuizFamily[];
+  /** The settings the review runs with. */
+  settings: ReviewSettings;
   /** What the reviewer changed. */
   overrides: ReviewOverrides;
   /** The current view. */
@@ -68,8 +73,11 @@ export const state: AppState = {
   content: new Map(),
   review: null,
   findings: [],
+  candidates: [],
+  stats: [],
   groups: [],
-  rules: { ...DEFAULT_RULES },
+  families: [],
+  settings: defaultSettings(),
   overrides: { priorities: new Map(), quizGroups: new Map() },
   tab: "overview",
   search: "",
@@ -86,7 +94,10 @@ export function resetState(): void {
   state.content = new Map();
   state.review = null;
   state.findings = [];
+  state.candidates = [];
+  state.stats = [];
   state.groups = [];
+  state.families = [];
   state.overrides = { priorities: new Map(), quizGroups: new Map() };
   state.tab = "overview";
   state.search = "";
@@ -97,6 +108,6 @@ export function resetState(): void {
 }
 
 /** The priority a finding ends up with, after the reviewer's changes. */
-export function priorityOf(finding: Finding): Priority {
+export function priorityOf(finding: Finding): "high" | "medium" | "low" {
   return state.overrides.priorities.get(finding.id) ?? finding.suggestedPriority;
 }

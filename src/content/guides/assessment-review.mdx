@@ -11,38 +11,60 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 A Canvas course export holds everything a reviewer needs to judge a course's assessments, but it is spread across
 hundreds of files and written in internal identifiers. The review reads it into one set of facts, compares the layers
-that have to agree, and writes them out as a plain-text file.
+that have to agree, and writes them out as a **bundle** of files.
 
 The review **reports facts and differences**. It does not decide that something is wrong. Where two layers disagree,
 the file says they disagree and shows both values with the file each came from.
 
-## The output file
+## The bundle
 
-The review file is the primary output. It is one plain-text Markdown file, and it is written so that someone who
-cannot open the `.imscc` — a colleague, or an LLM assistant — can work from it alone.
+The bundle is what a reviewer hands to an assistant — a colleague, or an LLM assistant that cannot open the archive
+itself. It is a ZIP holding one folder:
 
-The section order is fixed:
+| File                        | What it holds                                                                                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `00_brief.md`               | Start here. The export's identity, what was read and not, the reconciliation, the gradebook, the quiz families, the findings, the open questions, and what the other files are for. Under 20,000 characters. |
+| `manifest.json`             | Every file with its size and row count, which files belong to which review step, and the settings the review ran with.                                                                                       |
+| `data_assessments.csv`      | Every graded item: its modules, its group, its points, its rubric, and its findings.                                                                                                                         |
+| `data_quizzes.csv`          | Every quiz, one row each, one column per setting.                                                                                                                                                            |
+| `data_rubrics.csv`          | Every rubric, including the ones nothing attaches to, with the family of identical copies it belongs to.                                                                                                     |
+| `data_rubric_criteria.csv`  | Every criterion of every rubric, with the levels it defines.                                                                                                                                                 |
+| `data_gradebook_groups.csv` | The assignment groups: their weights, their items, and their share of the points.                                                                                                                            |
+| `data_modules_items.csv`    | Every module item, with the module it sits in and the object it points at.                                                                                                                                   |
+| `data_findings.csv`         | Every finding: one row each, with the two values compared, where each came from, and how sure the tool is.                                                                                                   |
+| `data_candidates.csv`       | The keyword matches and the cleanup items — the things the checks could not stand behind.                                                                                                                    |
+| `data_item_banks.csv`       | Every question bank, and which quizzes draw from it.                                                                                                                                                         |
+| `data_content.csv`          | The pages and the discussions that are not graded items.                                                                                                                                                     |
+| `data_texts.csv`            | The instructions text of the course, stored once. Items that share a text share its id.                                                                                                                      |
+| `detail_<id>.md`            | One item: its instructions, its rubric, and the findings about it.                                                                                                                                           |
 
-| #   | Section                       | What is in it                                                                                 |
-| --- | ----------------------------- | --------------------------------------------------------------------------------------------- |
-| 1   | Export identity               | Course title, code, term, export date, source file, due-date range                            |
-| 2   | About this file               | What is included, what is deliberately not, and how to read the markers                       |
-| 3   | What was read                 | File counts, modules, assessments, quizzes, rubrics, and the files that failed                |
-| 4   | Gradebook structure           | Weighting, groups, weights, item counts, point totals                                         |
-| 5   | Module map                    | Every module, in course order, with its items                                                 |
-| 6   | Assessment summary            | One row per graded item, with its module, group, points, rubric, and state                    |
-| 7   | Quiz table                    | One row per quiz, with its engine, where its questions come from, and its points              |
-| 8   | Quiz consistency              | The comparison groups, their settings, and the values that differ                             |
-| 9   | Facts by review step          | The facts grouped by the step they belong to: points, naming, quiz settings, rubrics, usage   |
-| 10  | Assessment details            | One block per graded item: settings, the full instructions, the full rubric, and its findings |
-| 11  | Rubric inventory              | Every rubric, what uses it, and which are copies of each other                                |
-| 12  | Legacy and unused content     | What looks like a leftover, with the reasons                                                  |
-| 13  | Pages and discussions         | Their names, modules, and states                                                              |
-| 14  | Not readable from this export | Every gap, stated plainly                                                                     |
-| 15  | `[REVIEW REQUIRED]` summary   | Everything the reviewer has to resolve, in one place                                          |
+### The brief
 
-The instructions in section 10 are written out in full. They are never trimmed, because a requirement that was cut
-off is a requirement nobody can check.
+The brief carries only what an assistant needs to start, and nothing else:
+
+1. **Export identity** — course title, code, term (with how it was worked out), export date, source file.
+2. **What was read, and what was not** — counts by type, files that failed to parse, and the known limits of the
+   export format, written once.
+3. **Reconciliation** — the seven checks, with pass or fail and a count.
+4. **Gradebook structure** — one table: group, weight, items, points, share of the points.
+5. **Quiz summary** — one row per quiz **family**, not per quiz.
+6. **Findings summary** — counts by family and severity, then the top findings, one line each, with their id.
+7. **Open questions** — anything the tool could not settle.
+8. **The other files** — what each one is for.
+
+### Say it once
+
+The bundle never repeats a fact on every item it touches.
+
+- **Families.** Quizzes that are set up the same way are one row: _"14 quizzes share these settings: attempts 1, time
+  limit 20 minutes, shuffle on."_ Only the members that differ from their family are named, with the setting they
+  differ on.
+- **Shared text.** Instructions that more than one item carries are stored once, in `data_texts.csv`, and the items
+  that use it are listed against it.
+- **Shared rubrics.** Rubrics with identical criteria and levels are one family, with the copies as its members.
+- **Passes are counted, not listed.** A check reports how many objects agreed and names only the exceptions:
+  _"27 of 29 quizzes: question points equal quiz points. Exceptions: A, B."_
+- **Objects in two modules** are listed once, with all of their modules.
 
 ## The checks
 
@@ -90,26 +112,35 @@ The review classifies every quiz by engine (Classic, New, Survey, or unknown), b
 (stored in the quiz, drawn from item banks, or both), by its question-type mix, and by how completely the export
 describes it.
 
-Quizzes of the same kind are grouped together — by title pattern first, and by engine, points, and assignment group
-when the title stands alone. Each group gets a matrix with one row per quiz and one column per setting, and the
-values that differ from the group's most common one are listed as plain statements.
+Quizzes of a kind are grouped together — by title pattern first, and by engine, points, and assignment group when the
+title stands alone. Which of those rules apply is a setting the reviewer controls, and the membership of every group
+can be changed by hand.
 
-The review also compares the written instructions with the settings. It looks for statements about attempts, the
-time limit, shuffling, and points, shows the sentence each statement came from, and compares it with the setting.
-When the instructions say nothing about a setting, the institution's default rule applies — by default, answers
-should be shuffled, and the time limit and the number of attempts are not reviewed — and the review says that it
-applied the rule.
+Within a group the quizzes are collapsed into **families** by their settings. The review also compares the written
+instructions with the settings. It looks for statements about attempts, the time limit, shuffling, and points, shows
+the sentence each statement came from, and compares it with the setting. When the instructions say nothing about a
+setting, the institution's default rule applies — by default, answers should be shuffled, and the time limit and the
+number of attempts are not reviewed — and the review says that it applied the rule.
 
 ### D — Rubrics and instructions
 
 The review breaks the instructions into discrete requirements, matches them against the rubric's criteria and levels
-in both directions, and reports the requirements nothing covers and the criteria nothing asked for. It compares the
-numbers in the two documents — page counts, word counts, source counts, and so on — and reports the ones that
-disagree.
+in both directions, and reports the requirements nothing covers and the criteria nothing asked for.
 
-It also reports the structural facts: criteria with no name, levels with no description, levels whose points do not
-run in descending order, criteria with only one level, criteria with different numbers of levels, and the same
-level text used twice in one criterion.
+Those matches are on words, so they are **candidates, not findings**. They go into `data_candidates.csv`, labelled
+_candidate mismatch (keyword match)_, and they are never counted as findings.
+
+What _is_ a finding is the countable part:
+
+- The quantities in the instructions against the quantities in the rubric. A requirement is a sentence or a bullet of at
+  least five words; list numerals, headings, bare links, "click here" lines, reference citations and template text are
+  dropped, and what was dropped is reported as a cleanup item. Quantities are read as ranges, so _"6-8 pages"_ and
+  _"5 pages or less"_ are reported as a disagreement, with both sentences, while _"6-8 pages"_ and _"at least 5
+  pages"_ are not reported at all, because they can both be true.
+- The structural facts: criteria with no name, levels with no description, criteria with only one level, and criteria
+  with different numbers of levels.
+- The facts about the levels: point values that do not run in order, a level below another that scores higher, the same
+  level text used twice in one criterion, a scale with no zero, and bands of levels that leave a gap or overlap.
 
 The institution's own list of retired terms and its list of words to look at are both applied when they are set.
 
@@ -120,23 +151,45 @@ rubric's title, the course's title pattern against the titles that do not follow
 of what is in it, a week number in a title with the module it sits in, and the spacing and punctuation of every
 title.
 
+## The reconciliation checks
+
+Seven checks run before the export is written, and their results are printed in the brief. A failure goes into the
+brief's open questions rather than being left out.
+
+1. Every graded object appears in the assessments table exactly once.
+2. Every module item with a content reference resolves to an object, or is listed as unresolved.
+3. No object is counted in group totals more than once, even when it sits in several modules.
+4. The points in the groups add up to the points of the graded items.
+5. The counts in the brief match the row counts in the tables.
+6. Every "nothing uses this" list — banks, rubrics, pages — is cross-checked against the usage data, with the
+   evidence for each entry.
+7. The number of findings in the brief equals the rows in the findings table.
+
 ## What is deliberately left out
 
 - **Quiz question text, answer choices, and answer keys.** Judging those needs a subject matter expert.
 - **Learner data.** The export does not carry names, submissions, or grades.
-- **The live state of the course.** Overrides, section dates, applied late policies, and mastery paths are not in
-  the export, so the review describes the export and not the course as it stands.
+- **The live state of the course.** Overrides, section dates, applied late policies, and mastery paths are not in the
+  export, so the review describes the export and not the course as it stands.
 - **Instructional design.** The order of the modules, the fit between objectives and activities, and accessibility
   are outside this review.
 
-Each of these is listed in section 14 of the file, so nothing looks complete when it is not.
+Each of these is listed once, in the brief's known limits, so nothing looks complete when it is not.
 
-## The rules the institution can set
+## The settings the reviewer can set
 
-The review takes three configurable rules, which apply to every course it is pointed at:
+Everything institution-specific is a setting. The settings are editable in the tool, and they are saved in the
+bundle's `manifest.json`, so a colleague can see exactly which rules produced the results.
 
-- Whether answers should be shuffled when the instructions are silent.
-- Whether the time limit is reviewed when the instructions are silent.
-- Whether the number of attempts is reviewed when the instructions are silent.
-
-It also takes two lists: the terms the institution has retired, and the words that ask the reviewer to look harder.
+- **When the instructions are silent** — whether answers should be shuffled, and whether the number of attempts and
+  the time limit should be checked.
+- **The retired terms** and **the words to look at** in a rubric level.
+- **The term pattern** — the regular expression the term of the export is read out of the course title and code with.
+- **How quizzes are grouped** for comparison, by title pattern, assignment group, engine, and points.
+- **The priority mapping** — the severity suggested for each family of checks. A suggestion only: the reviewer can
+  change any finding's severity.
+- **What the export leaves out** — pages, discussions that are not graded, rubrics that look like leftovers, and item
+  banks.
+- **The detail level** — `brief` (the brief and the tables), `standard` (a detail file for every item with
+  findings), or `full` (a detail file for every assignment and discussion, for every quiz that is not a copy of
+  another, and every instruction in full).

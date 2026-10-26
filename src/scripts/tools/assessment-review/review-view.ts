@@ -157,7 +157,7 @@ function renderOverview(): string {
                     <span class="${badgeClasses({ variant: priorityVariant(finding), size: "sm" })}">${esc(priorityOf(finding))}</span>
                     <span class="${badgeClasses({ variant: "outline", size: "sm" })}">${esc(finding.check)}</span>
                   </div>
-                  <p class="mt-1">${esc(finding.title)}</p>
+                  <p class="mt-1">${esc(finding.statement)}</p>
                 </li>
               `,
             )
@@ -256,7 +256,7 @@ function renderAssessments(): string {
     .map((assessment) => {
       const usage = review.usage.byId.get(assessment.id)?.state ?? "unclear";
       const rubric = review.rubrics.find((entry) => entry.rubric.id === assessment.rubricId)?.rubric;
-      const findings = state.findings.filter((finding) => finding.itemIds.includes(assessment.id));
+      const findings = state.findings.filter((finding) => finding.affected.includes(assessment.id));
 
       return `<tr class="${tableRow()} cursor-pointer" data-item="${escAttr(assessment.id)}">
         <td class="${tableCell()} max-w-72 truncate font-medium">${esc(assessment.title)}</td>
@@ -318,6 +318,35 @@ function renderQuizzes(): string {
         <td class="${tableCell()} max-w-56 truncate">${esc(group?.title ?? "—")}</td>
       </tr>`;
     })
+    .join("");
+
+  const families = state.families
+    .map(
+      (family) => `
+        <section class="grid gap-1 rounded-md border border-border p-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm font-medium">${esc(family.groupTitle)}</span>
+            <span class="${badgeClasses({ variant: "secondary", size: "sm" })}">${family.members.length}</span>
+            <span class="text-xs text-muted-foreground">${esc(family.id)}</span>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            ${esc(family.settings.map((setting) => `${setting.label}: ${setting.value}`).join(", "))}
+          </p>
+          <ul class="grid gap-0.5 text-xs">
+            ${family.members.map((member) => `<li class="truncate">${esc(member.title)}</li>`).join("")}
+          </ul>
+          ${
+            family.exceptions.length > 0
+              ? `<p class="text-xs text-muted-foreground">Differs: ${esc(
+                  family.exceptions
+                    .map((exception) => `${exception.title} (${exception.setting}: ${exception.value})`)
+                    .join("; "),
+                )}</p>`
+              : ""
+          }
+        </section>
+      `,
+    )
     .join("");
 
   const groups = state.groups
@@ -389,6 +418,11 @@ function renderQuizzes(): string {
           <tbody>${rows}</tbody>
         </table>
       </div>
+      <h3 class="text-sm font-medium">Families</h3>
+      <p class="text-xs text-muted-foreground">
+        Quizzes that are set up the same way. The export writes one row per family.
+      </p>
+      <div class="grid gap-3">${families}</div>
       <h3 class="text-sm font-medium">Comparison groups</h3>
       <div class="grid gap-6">${groups}</div>
       <div id="review-detail" class="min-h-64 rounded-lg border border-border"></div>
@@ -509,8 +543,9 @@ function renderFlags(): string {
                   <span class="${badgeClasses({ variant: priorityVariant(finding), size: "sm" })}">${esc(priorityOf(finding))}</span>
                   <span class="${badgeClasses({ variant: "outline", size: "sm" })}">${esc(finding.check)}</span>
                   <span class="text-xs text-muted-foreground">${esc(FAMILY_LABELS[finding.family])}</span>
+                  <span class="text-xs text-muted-foreground">${esc(finding.confidence)} confidence</span>
                 </div>
-                <p class="text-sm font-medium">${esc(finding.title)}</p>
+                <p class="text-sm font-medium">${esc(finding.statement)}</p>
                 <dl class="grid gap-1 text-xs">
                   ${finding.values
                     .map(
@@ -618,7 +653,7 @@ export function renderDetail(): void {
 
   const rubric = review.rubrics.find((entry) => entry.rubric.id === assessment.rubricId)?.rubric;
   const usage = review.usage.byId.get(assessment.id);
-  const findings = state.findings.filter((finding) => finding.itemIds.includes(assessment.id));
+  const findings = state.findings.filter((finding) => finding.affected.includes(assessment.id));
 
   container.innerHTML = `
     <div class="grid gap-4 p-4 sm:p-6">
@@ -704,8 +739,9 @@ export function renderDetail(): void {
                          <div class="flex flex-wrap items-center gap-2">
                            <span class="${badgeClasses({ variant: priorityVariant(finding), size: "sm" })}">${esc(priorityOf(finding))}</span>
                            <span class="${badgeClasses({ variant: "outline", size: "sm" })}">${esc(finding.check)}</span>
+                           <span class="text-xs text-muted-foreground">${esc(finding.confidence)} confidence</span>
                          </div>
-                         <p class="mt-1">${esc(finding.title)}</p>
+                         <p class="mt-1">${esc(finding.statement)}</p>
                          <ul class="mt-1 grid gap-0.5 text-xs text-muted-foreground">
                            ${finding.values.map((value) => `<li>${esc(value.label)}: ${esc(value.value)} <span class="opacity-70">(${esc(value.source)})</span></li>`).join("")}
                          </ul>

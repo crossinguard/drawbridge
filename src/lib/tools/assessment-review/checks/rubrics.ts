@@ -6,431 +6,452 @@
  * requirements, match them to the criteria, and report the structural facts
  * that are worth a look.
  *
- * Nothing here calls a criterion unclear or a level vague. It lists the
- * candidates and leaves the judgement to the reviewer.
+ * Nothing here calls a criterion unclear or a level vague. A keyword match is
+ * reported as a candidate, not as a finding: the tool cannot stand behind it.
  */
-import type { Rubric, RubricCriterion } from "@/lib/canvas/types";
+import type { Rubric, RubricCriterion, RubricRating } from "@/lib/canvas/types";
 
-import { points as formatPoints } from "@/lib/tools/assessment-review/findings";
-import type { Finding, ReviewRules } from "@/lib/tools/assessment-review/findings";
+import {
+  makeFinding,
+  makeStat,
+  points as formatPoints,
+  type Candidate,
+  type CheckResults,
+  type Finding,
+} from "@/lib/tools/assessment-review/findings";
 import type { Assessment, AssessmentReview } from "@/lib/tools/assessment-review/model";
+import { priorityFor, type ReviewSettings } from "@/lib/tools/assessment-review/settings";
+import { describeMeasure, measuresIn, rangesConflict, type Measure } from "@/lib/tools/assessment-review/text/measures";
+import { extractRequirements, keywordsOf, type Requirement } from "@/lib/tools/assessment-review/text/requirements";
 
 /** Where the rubric data comes from. */
 const RUBRIC_SOURCE = "course_settings/rubrics.xml";
 
-/** Words that carry no meaning when matching a requirement to a criterion. */
-const STOP_WORDS = new Set([
-  "about",
-  "after",
-  "again",
-  "against",
-  "also",
-  "and",
-  "any",
-  "are",
-  "because",
-  "been",
-  "before",
-  "being",
-  "between",
-  "both",
-  "but",
-  "can",
-  "could",
-  "does",
-  "doing",
-  "done",
-  "down",
-  "during",
-  "each",
-  "from",
-  "further",
-  "have",
-  "having",
-  "here",
-  "how",
-  "into",
-  "its",
-  "itself",
-  "just",
-  "more",
-  "most",
-  "must",
-  "not",
-  "now",
-  "off",
-  "once",
-  "only",
-  "other",
-  "over",
-  "own",
-  "same",
-  "should",
-  "some",
-  "such",
-  "than",
-  "that",
-  "the",
-  "their",
-  "them",
-  "then",
-  "there",
-  "these",
-  "they",
-  "this",
-  "those",
-  "through",
-  "under",
-  "until",
-  "very",
-  "was",
-  "were",
-  "what",
-  "when",
-  "where",
-  "which",
-  "while",
-  "with",
-  "would",
-  "your",
-]);
-
-/** The words that make a line of instructions a requirement. */
-const REQUIREMENT_WORDS = [
-  "must",
-  "should",
-  "include",
-  "submit",
-  "minimum",
-  "maximum",
-  "at least",
-  "no more than",
-  "use",
-  "provide",
-  "ensure",
-  "format",
-  "required",
-  "requirement",
-];
-
-/** One requirement taken from the instructions. */
-export interface Requirement {
-  /** The requirement, as written. */
-  text: string;
-  /** The words used to match it to a criterion. */
-  keywords: string[];
-  /** The numbers it mentions. */
-  numbers: number[];
-  /** The numbers it mentions, with what they count. */
-  measures: Measure[];
-}
-
-/** A number and what it counts. */
-export interface Measure {
-  /** The number. */
-  value: number;
-  /** What it counts, e.g. "pages". */
-  unit: string;
-}
-
-/** The units the review compares between the instructions and the rubric. */
-const MEASURE_UNITS = [
-  "page",
-  "pages",
-  "word",
-  "words",
-  "source",
-  "sources",
-  "sentence",
-  "sentences",
-  "question",
-  "questions",
-  "minute",
-  "minutes",
-  "hour",
-  "hours",
-  "day",
-  "days",
-  "week",
-  "weeks",
-  "point",
-  "points",
-  "file",
-  "files",
-  "claim",
-  "claims",
-  "criterion",
-  "criteria",
-  "paragraph",
-  "paragraphs",
-];
-
 /** Run every check in this family. */
-export function checkRubrics(review: AssessmentReview, rules: ReviewRules): Finding[] {
-  return [
+export function checkRubrics(review: AssessmentReview, settings: ReviewSettings): CheckResults {
+  const findings: Finding[] = [
+    ...checkMeasures(review, settings),
+    ...checkStructure(review, settings),
+    ...checkLevelFacts(review, settings),
+    ...checkLegacyTerms(review, settings),
+    ...checkVagueLanguage(review, settings),
+  ];
+
+  const candidates: Candidate[] = [
     ...checkRequirementsAgainstCriteria(review),
     ...checkCriteriaAgainstRequirements(review),
-    ...checkMeasures(review),
-    ...checkStructure(review),
-    ...checkLegacyTerms(review, rules),
-    ...checkVagueLanguage(review, rules),
+    ...checkCleanupItems(review),
   ];
+
+  return {
+    findings,
+    candidates,
+    stats: [measureStat(review)],
+  };
 }
 
 /** D1 — requirements that no criterion covers. */
-function checkRequirementsAgainstCriteria(review: AssessmentReview): Finding[] {
-  const findings: Finding[] = [];
+function checkRequirementsAgainstCriteria(review: AssessmentReview): Candidate[] {
+  const candidates: Candidate[] = [];
 
   for (const assessment of review.assessments) {
     const rubric = rubricOf(review, assessment);
     if (!rubric) continue;
 
-    const requirements = extractRequirements(assessment.instructions);
+    const { requirements } = extractRequirements(assessment.instructions, assessment.instructionsSource);
     if (requirements.length === 0) continue;
 
     const unmatched = requirements.filter((requirement) => !matchesAny(requirement, rubric.criteria));
-
     if (unmatched.length === 0) continue;
 
-    findings.push({
+    candidates.push({
       id: `D1-${assessment.id}`,
-      check: "D1",
-      family: "rubrics",
-      title: `${unmatched.length} requirement${unmatched.length === 1 ? " in the instructions for" : "s in the instructions for"} "${assessment.title}" ${unmatched.length === 1 ? "has" : "have"} no matching criterion`,
-      values: [
-        {
-          label: "Requirements without a criterion",
-          value: String(unmatched.length),
-          source: assessment.instructionsSource ?? "the instructions",
-        },
-        { label: "Criteria", value: String(rubric.criteria.length), source: RUBRIC_SOURCE },
-      ],
-      itemIds: [assessment.id],
-      suggestedPriority: "medium",
-      priorityReason: "Something the student is asked for may not be graded.",
-      notes: unmatched.map((requirement) => `• ${requirement.text}`),
-      needsReview: true,
+      kind: "candidate mismatch (keyword match)",
+      objectType: "assessment",
+      objectId: assessment.id,
+      objectName: assessment.title,
+      statement: `${unmatched.length} requirement${unmatched.length === 1 ? "" : "s"} in the instructions for "${assessment.title}" ${unmatched.length === 1 ? "has" : "have"} no matching criterion in "${rubric.title}".`,
+      detail: unmatched.map((requirement) => `• ${requirement.text}`).join("\n"),
+      confidence: "low",
+      source: assessment.instructionsSource ?? "the instructions",
+      affected: [assessment.id],
     });
   }
 
-  return findings;
+  return candidates;
 }
 
 /** D2 — criteria that no requirement covers. */
-function checkCriteriaAgainstRequirements(review: AssessmentReview): Finding[] {
-  const findings: Finding[] = [];
+function checkCriteriaAgainstRequirements(review: AssessmentReview): Candidate[] {
+  const candidates: Candidate[] = [];
 
-  for (const assessment of review.assessments) {
-    const rubric = rubricOf(review, assessment);
-    if (!rubric) continue;
+  for (const entry of review.rubrics) {
+    if (entry.attachedTo.length === 0) continue;
 
-    const requirements = extractRequirements(assessment.instructions);
-    if (requirements.length === 0) continue;
+    // The criteria are the same whatever the item they are attached to, so the
+    // candidate is written once and the items are listed.
+    const uncovered = new Map<string, { criterion: RubricCriterion; items: string[] }>();
 
-    const unmatched = rubric.criteria.filter((criterion) => !matchesAnyRequirement(criterion, requirements));
+    for (const assessment of entry.attachedTo) {
+      const { requirements } = extractRequirements(assessment.instructions, assessment.instructionsSource);
+      if (requirements.length === 0) continue;
 
-    if (unmatched.length === 0) continue;
+      for (const criterion of entry.rubric.criteria) {
+        if (matchesAnyRequirement(criterion, requirements)) continue;
 
-    findings.push({
-      id: `D2-${assessment.id}`,
-      check: "D2",
-      family: "rubrics",
-      title: `${unmatched.length} criterion${unmatched.length === 1 ? " of" : "s of"} "${rubric.title}" ${unmatched.length === 1 ? "has" : "have"} no matching requirement in the instructions for "${assessment.title}"`,
-      values: [
-        { label: "Criteria without a requirement", value: String(unmatched.length), source: RUBRIC_SOURCE },
-        {
-          label: "Requirements",
-          value: String(requirements.length),
-          source: assessment.instructionsSource ?? "the instructions",
-        },
-      ],
-      itemIds: [assessment.id],
-      suggestedPriority: "medium",
-      priorityReason: "Something is graded that the student was never told about.",
-      notes: unmatched.map((criterion) => `• ${criterion.description || "(no name)"}`),
-      needsReview: true,
-    });
+        const record = uncovered.get(criterion.id) ?? { criterion, items: [] };
+        record.items.push(assessment.title);
+        uncovered.set(criterion.id, record);
+      }
+    }
+
+    for (const [criterionId, record] of uncovered) {
+      candidates.push({
+        id: `D2-${entry.rubric.id}-${criterionId}`,
+        kind: "candidate mismatch (keyword match)",
+        objectType: "rubric",
+        objectId: entry.rubric.id,
+        objectName: entry.rubric.title,
+        statement: `"${record.criterion.description || "(unnamed criterion)"}" in "${entry.rubric.title}" is not matched by the instructions of the item(s) it is attached to.`,
+        detail: `Attached to: ${record.items.join("; ")}`,
+        confidence: "low",
+        source: RUBRIC_SOURCE,
+        affected: entry.attachedTo.map((assessment) => assessment.id),
+      });
+    }
   }
 
-  return findings;
+  return candidates;
+}
+
+/** The platform's leftovers and the text that is not a requirement. */
+function checkCleanupItems(review: AssessmentReview): Candidate[] {
+  const candidates: Candidate[] = [];
+
+  for (const assessment of review.assessments) {
+    if (assessment.instructions.trim() === "") continue;
+
+    const { dropped, artifacts } = extractRequirements(
+      assessment.instructions,
+      assessment.instructionsSource ?? "the instructions",
+    );
+
+    if (artifacts.length > 0) {
+      candidates.push({
+        id: `CL-${assessment.id}`,
+        kind: "cleanup item",
+        objectType: "assessment",
+        objectId: assessment.id,
+        objectName: assessment.title,
+        statement: `${artifacts.reduce((sum, artifact) => sum + artifact.count, 0)} platform leftover(s) were removed from the instructions before they were compared.`,
+        detail: artifacts
+          .map((artifact) => `• ${artifact.count} × ${artifact.kind} (e.g. ${JSON.stringify(artifact.sample)})`)
+          .join("\n"),
+        confidence: "high",
+        source: assessment.instructionsSource ?? "the instructions",
+        affected: [assessment.id],
+      });
+    }
+
+    if (dropped.length > 0) {
+      candidates.push({
+        id: `CU-${assessment.id}`,
+        kind: "cleanup item",
+        objectType: "assessment",
+        objectId: assessment.id,
+        objectName: assessment.title,
+        statement: `${dropped.length} piece(s) of the instructions were not treated as requirements.`,
+        detail: dropped.map((entry) => `• ${entry.reason}: ${entry.text}`).join("\n"),
+        confidence: "high",
+        source: assessment.instructionsSource ?? "the instructions",
+        affected: [assessment.id],
+      });
+    }
+  }
+
+  return candidates;
 }
 
 /** D3 — the numbers in the instructions against the numbers in the rubric. */
-function checkMeasures(review: AssessmentReview): Finding[] {
+function checkMeasures(review: AssessmentReview, settings: ReviewSettings): Finding[] {
   const findings: Finding[] = [];
 
   for (const assessment of review.assessments) {
     const rubric = rubricOf(review, assessment);
     if (!rubric) continue;
 
-    const fromInstructions = extractRequirements(assessment.instructions).flatMap(
-      (requirement) => requirement.measures,
-    );
+    const { requirements } = extractRequirements(assessment.instructions, assessment.instructionsSource);
+    const fromInstructions = requirements.flatMap((requirement) => requirement.measures);
     const fromRubric = rubricMeasures(rubric);
 
-    const units = new Set([
-      ...fromInstructions.map((measure) => measure.unit),
-      ...fromRubric.map((measure) => measure.unit),
+    const keys = new Set([
+      ...fromInstructions.map((measure) => measure.key),
+      ...fromRubric.map((measure) => measure.key),
     ]);
 
-    for (const unit of [...units].sort()) {
-      const inInstructions = [
-        ...new Set(fromInstructions.filter((measure) => measure.unit === unit).map((measure) => measure.value)),
-      ].sort((a, b) => a - b);
-      const inRubric = [
-        ...new Set(fromRubric.filter((measure) => measure.unit === unit).map((measure) => measure.value)),
-      ].sort((a, b) => a - b);
+    for (const key of [...keys].sort()) {
+      const inInstructions = fromInstructions.filter((measure) => measure.key === key);
+      const inRubric = fromRubric.filter((measure) => measure.key === key);
 
       if (inInstructions.length === 0 || inRubric.length === 0) continue;
 
-      const same =
-        inInstructions.length === inRubric.length && inInstructions.every((value, index) => value === inRubric[index]);
-      if (same) continue;
+      const conflict = firstConflict(inInstructions, inRubric);
+      if (!conflict) continue;
 
-      findings.push({
-        id: `D3-${assessment.id}-${unit}`,
-        check: "D3",
-        family: "rubrics",
-        title: `The instructions for "${assessment.title}" and its rubric disagree about the number of ${unit}`,
-        values: [
-          {
-            label: "In the instructions",
-            value: inInstructions.join(", "),
-            source: assessment.instructionsSource ?? "the instructions",
-          },
-          { label: "In the rubric", value: inRubric.join(", "), source: RUBRIC_SOURCE },
-        ],
-        itemIds: [assessment.id],
-        suggestedPriority: "medium",
-        priorityReason: "The two documents give different figures for the same thing.",
-        notes: [],
-        needsReview: true,
-      });
+      findings.push(
+        makeFinding({
+          id: `D3-${assessment.id}-${key}`,
+          check: "D3",
+          family: "rubrics",
+          objectType: "assessment",
+          objectId: assessment.id,
+          objectName: assessment.title,
+          statement: `The instructions for "${assessment.title}" and its rubric "${rubric.title}" give different figures for the number of ${conflict.a.unit}.`,
+          values: [
+            {
+              label: "In the instructions",
+              value: `${describeMeasure(conflict.a)} — "${conflict.a.sentence}"`,
+              source: assessment.instructionsSource ?? "the instructions",
+            },
+            {
+              label: "In the rubric",
+              value: `${describeMeasure(conflict.b)} — "${conflict.b.sentence}"`,
+              source: RUBRIC_SOURCE,
+            },
+          ],
+          suggestedPriority: priorityFor(settings, "rubrics", "medium"),
+          priorityReason: "The two documents give different figures for the same thing.",
+          notes: [],
+        }),
+      );
     }
   }
 
   return findings;
 }
 
+/** The first pair of quantities that cannot both be true. */
+function firstConflict(a: Measure[], b: Measure[]): { a: Measure; b: Measure } | undefined {
+  for (const left of a) {
+    for (const right of b) {
+      if (rangesConflict(left, right)) return { a: left, b: right };
+    }
+  }
+  return undefined;
+}
+
 /** D4 — the structural facts worth a look. */
-function checkStructure(review: AssessmentReview): Finding[] {
+function checkStructure(review: AssessmentReview, settings: ReviewSettings): Finding[] {
   const findings: Finding[] = [];
 
   for (const { rubric } of review.rubrics) {
     // Criteria with no description.
     const unnamed = rubric.criteria.filter((criterion) => criterion.description.trim() === "");
     if (unnamed.length > 0) {
-      findings.push({
-        id: `D4-${rubric.id}-no-criterion-description`,
-        check: "D4",
-        family: "rubrics",
-        title: `${unnamed.length} criterion${unnamed.length === 1 ? " of" : "s of"} "${rubric.title}" ${unnamed.length === 1 ? "has" : "have"} no name`,
-        values: [{ label: "Criteria without a name", value: String(unnamed.length), source: RUBRIC_SOURCE }],
-        itemIds: [],
-        suggestedPriority: "low",
-        priorityReason: "A criterion with no name tells the reviewer nothing about what it covers.",
-        notes: [],
-        needsReview: false,
-      });
+      findings.push(
+        makeFinding({
+          id: `D4-${rubric.id}-no-criterion-description`,
+          check: "D4",
+          family: "rubrics",
+          objectType: "rubric",
+          objectId: rubric.id,
+          objectName: rubric.title,
+          statement: `${unnamed.length} criterion${unnamed.length === 1 ? " of" : "s of"} "${rubric.title}" ${unnamed.length === 1 ? "has" : "have"} no name.`,
+          values: [{ label: "Criteria without a name", value: String(unnamed.length), source: RUBRIC_SOURCE }],
+          affected: review.assessments.filter((a) => a.rubricId === rubric.id).map((a) => a.id),
+          suggestedPriority: priorityFor(settings, "rubrics", "low"),
+          priorityReason: "A criterion with no name tells the reviewer nothing about what it covers.",
+          needsReview: false,
+        }),
+      );
     }
 
     // Levels with no description.
     const bareLevels = rubric.criteria.flatMap((criterion) =>
       criterion.ratings
         .filter((rating) => rating.longDescription.trim() === "")
-        .map((rating) => ({
-          criterion,
-          rating,
-        })),
+        .map((rating) => ({ criterion, rating })),
     );
     if (bareLevels.length > 0) {
-      findings.push({
-        id: `D4-${rubric.id}-no-level-description`,
-        check: "D4",
-        family: "rubrics",
-        title: `${bareLevels.length} rating level${bareLevels.length === 1 ? " of" : "s of"} "${rubric.title}" ${bareLevels.length === 1 ? "has" : "have"} no description`,
-        values: [{ label: "Levels without a description", value: String(bareLevels.length), source: RUBRIC_SOURCE }],
-        itemIds: [],
-        suggestedPriority: "low",
-        priorityReason: "A level with no description does not say what it means.",
-        notes: bareLevels.map(
-          (entry) =>
-            `${entry.criterion.description || "(unnamed criterion)"} → ${entry.rating.description || "(unnamed level)"}`,
-        ),
-        needsReview: false,
-      });
-    }
-
-    // Levels whose points do not run in order.
-    for (const criterion of rubric.criteria) {
-      const points = criterion.ratings
-        .map((rating) => rating.points)
-        .filter((value): value is number => value !== undefined);
-      if (points.length < 2) continue;
-
-      const descending = [...points].sort((a, b) => b - a);
-      if (points.every((value, index) => value === descending[index])) continue;
-
-      findings.push({
-        id: `D4-${rubric.id}-${criterion.id}-order`,
-        check: "D4",
-        family: "rubrics",
-        title: `The levels of "${criterion.description || "(unnamed criterion)"}" in "${rubric.title}" are not in descending order`,
-        values: [
-          { label: "Level points, as written", value: points.join(", "), source: RUBRIC_SOURCE },
-          { label: "Descending order", value: descending.join(", "), source: "the order the levels are in" },
-        ],
-        itemIds: [],
-        suggestedPriority: "low",
-        priorityReason: "The levels read out of order, which usually means one was edited.",
-        notes: criterion.ratings.map((rating) => `${rating.description}: ${formatPoints(rating.points)}`),
-        needsReview: false,
-      });
+      findings.push(
+        makeFinding({
+          id: `D4-${rubric.id}-no-level-description`,
+          check: "D4",
+          family: "rubrics",
+          objectType: "rubric",
+          objectId: rubric.id,
+          objectName: rubric.title,
+          statement: `${bareLevels.length} rating level${bareLevels.length === 1 ? " of" : "s of"} "${rubric.title}" ${bareLevels.length === 1 ? "has" : "have"} no description.`,
+          values: [{ label: "Levels without a description", value: String(bareLevels.length), source: RUBRIC_SOURCE }],
+          affected: review.assessments.filter((a) => a.rubricId === rubric.id).map((a) => a.id),
+          suggestedPriority: priorityFor(settings, "rubrics", "low"),
+          priorityReason: "A level with no description does not say what it means.",
+          notes: bareLevels.map(
+            (entry) =>
+              `${entry.criterion.description || "(unnamed criterion)"} → ${entry.rating.description || "(unnamed level)"}`,
+          ),
+          needsReview: false,
+        }),
+      );
     }
 
     // Criteria with a single level.
     const single = rubric.criteria.filter((criterion) => criterion.ratings.length === 1);
     if (single.length > 0) {
-      findings.push({
-        id: `D4-${rubric.id}-single-level`,
-        check: "D4",
-        family: "rubrics",
-        title: `${single.length} criterion${single.length === 1 ? " of" : "s of"} "${rubric.title}" ${single.length === 1 ? "has" : "have"} only one level`,
-        values: [{ label: "Criteria with one level", value: String(single.length), source: RUBRIC_SOURCE }],
-        itemIds: [],
-        suggestedPriority: "low",
-        priorityReason: "A criterion with one level gives the student no choice.",
-        notes: single.map((criterion) => criterion.description || "(unnamed criterion)"),
-        needsReview: false,
-      });
+      findings.push(
+        makeFinding({
+          id: `D4-${rubric.id}-single-level`,
+          check: "D4",
+          family: "rubrics",
+          objectType: "rubric",
+          objectId: rubric.id,
+          objectName: rubric.title,
+          statement: `${single.length} criterion${single.length === 1 ? " of" : "s of"} "${rubric.title}" ${single.length === 1 ? "has" : "have"} only one level.`,
+          values: [{ label: "Criteria with one level", value: String(single.length), source: RUBRIC_SOURCE }],
+          affected: review.assessments.filter((a) => a.rubricId === rubric.id).map((a) => a.id),
+          suggestedPriority: priorityFor(settings, "rubrics", "low"),
+          priorityReason: "A criterion with one level gives the student no choice.",
+          notes: single.map((criterion) => criterion.description || "(unnamed criterion)"),
+          needsReview: false,
+        }),
+      );
     }
 
     // Criteria with different numbers of levels.
     const levelCounts = new Set(rubric.criteria.map((criterion) => criterion.ratings.length));
     if (levelCounts.size > 1) {
-      findings.push({
-        id: `D4-${rubric.id}-level-counts`,
-        check: "D4",
-        family: "rubrics",
-        title: `The criteria of "${rubric.title}" do not all have the same number of levels`,
-        values: [
-          { label: "Level counts", value: [...levelCounts].sort((a, b) => a - b).join(", "), source: RUBRIC_SOURCE },
-        ],
-        itemIds: [],
-        suggestedPriority: "low",
-        priorityReason: "Criteria in one rubric usually share a scale.",
-        notes: rubric.criteria.map(
-          (criterion) => `${criterion.description || "(unnamed criterion)"}: ${criterion.ratings.length} levels`,
-        ),
-        needsReview: false,
-      });
+      findings.push(
+        makeFinding({
+          id: `D4-${rubric.id}-level-counts`,
+          check: "D4",
+          family: "rubrics",
+          objectType: "rubric",
+          objectId: rubric.id,
+          objectName: rubric.title,
+          statement: `The criteria of "${rubric.title}" do not all have the same number of levels.`,
+          values: [
+            { label: "Level counts", value: [...levelCounts].sort((a, b) => a - b).join(", "), source: RUBRIC_SOURCE },
+          ],
+          affected: review.assessments.filter((a) => a.rubricId === rubric.id).map((a) => a.id),
+          suggestedPriority: priorityFor(settings, "rubrics", "low"),
+          priorityReason: "Criteria in one rubric usually share a scale.",
+          notes: rubric.criteria.map(
+            (criterion) => `${criterion.description || "(unnamed criterion)"}: ${criterion.ratings.length} levels`,
+          ),
+          needsReview: false,
+        }),
+      );
     }
+  }
 
-    // The same level text used twice in one criterion.
+  return findings;
+}
+
+/**
+ * D7 — the facts about the levels of a criterion.
+ *
+ * These are countable, so they are findings rather than candidates: levels
+ * whose points do not run in order, a level below another that scores higher,
+ * a level that repeats another word for word, a scale with no zero, and bands
+ * of levels that leave a gap or overlap.
+ */
+function checkLevelFacts(review: AssessmentReview, settings: ReviewSettings): Finding[] {
+  const findings: Finding[] = [];
+
+  for (const { rubric } of review.rubrics) {
+    const attached = review.assessments.filter((a) => a.rubricId === rubric.id).map((a) => a.id);
+
     for (const criterion of rubric.criteria) {
-      const seen = new Map<string, string[]>();
+      const levels = criterion.ratings;
+      if (levels.length < 2) continue;
 
-      for (const rating of criterion.ratings) {
+      const points = levels.map((rating) => rating.points).filter((value): value is number => value !== undefined);
+
+      if (points.length >= 2) {
+        // The points do not run in descending order.
+        const descending = [...points].sort((a, b) => b - a);
+        if (!points.every((value, index) => value === descending[index])) {
+          findings.push(
+            makeFinding({
+              id: `D7-${rubric.id}-${criterion.id}-order`,
+              check: "D7",
+              family: "rubrics",
+              objectType: "rubric",
+              objectId: rubric.id,
+              objectName: rubric.title,
+              statement: `The levels of "${criterion.description || "(unnamed criterion)"}" in "${rubric.title}" do not run in descending order of points.`,
+              values: [
+                { label: "Level points, as written", value: points.join(", "), source: RUBRIC_SOURCE },
+                { label: "Descending order", value: descending.join(", "), source: "the order the levels are in" },
+              ],
+              affected: attached,
+              suggestedPriority: priorityFor(settings, "rubrics", "low"),
+              priorityReason: "The levels read out of order, which usually means one was edited.",
+              notes: levels.map((rating) => `${rating.description}: ${formatPoints(rating.points)}`),
+              needsReview: false,
+            }),
+          );
+        }
+
+        // A level below another one scores higher.
+        const inversions: string[] = [];
+        for (let index = 0; index < levels.length - 1; index++) {
+          const upper = levels[index].points;
+          const lower = levels[index + 1].points;
+          if (upper === undefined || lower === undefined) continue;
+          if (lower > upper) {
+            inversions.push(
+              `"${levels[index].description}" is worth ${formatPoints(upper)} and "${levels[index + 1].description}" below it is worth ${formatPoints(lower)}`,
+            );
+          }
+        }
+        if (inversions.length > 0) {
+          findings.push(
+            makeFinding({
+              id: `D7-${rubric.id}-${criterion.id}-inversion`,
+              check: "D7",
+              family: "rubrics",
+              objectType: "rubric",
+              objectId: rubric.id,
+              objectName: rubric.title,
+              statement: `A level below another in "${criterion.description || "(unnamed criterion)"}" of "${rubric.title}" scores higher.`,
+              values: [{ label: "Inversions", value: inversions.join("; "), source: RUBRIC_SOURCE }],
+              affected: attached,
+              suggestedPriority: priorityFor(settings, "rubrics", "medium"),
+              priorityReason: "The lower level is worth more than the one above it.",
+              needsReview: false,
+            }),
+          );
+        }
+
+        // The scale has no zero.
+        const lowest = Math.min(...points);
+        if (lowest > 0) {
+          findings.push(
+            makeFinding({
+              id: `D7-${rubric.id}-${criterion.id}-no-zero`,
+              check: "D7",
+              family: "rubrics",
+              objectType: "rubric",
+              objectId: rubric.id,
+              objectName: rubric.title,
+              statement: `The lowest level of "${criterion.description || "(unnamed criterion)"}" in "${rubric.title}" is worth ${formatPoints(lowest)} points, so the scale has no zero.`,
+              values: [
+                { label: "Lowest level", value: formatPoints(lowest), source: RUBRIC_SOURCE },
+                { label: "A zero level", value: "not in export", source: RUBRIC_SOURCE },
+              ],
+              affected: attached,
+              suggestedPriority: priorityFor(settings, "rubrics", "low"),
+              priorityReason: "A student who does none of the work still scores something.",
+              needsReview: false,
+            }),
+          );
+        }
+      }
+
+      // The same level text used twice in one criterion.
+      const seen = new Map<string, string[]>();
+      for (const rating of levels) {
         const key = `${rating.description}|${rating.longDescription}`.trim().toLowerCase();
         if (key === "|") continue;
         const list = seen.get(key) ?? [];
@@ -441,18 +462,75 @@ function checkStructure(review: AssessmentReview): Finding[] {
       for (const [key, uses] of seen) {
         if (uses.length < 2) continue;
 
-        findings.push({
-          id: `D4-${rubric.id}-${criterion.id}-repeated-${key.slice(0, 16)}`,
-          check: "D4",
-          family: "rubrics",
-          title: `The same level text is used ${uses.length} times in "${criterion.description || "(unnamed criterion)"}" of "${rubric.title}"`,
-          values: [{ label: "Uses", value: uses.join("; "), source: RUBRIC_SOURCE }],
-          itemIds: [],
-          suggestedPriority: "low",
-          priorityReason: "The same wording twice in one criterion is usually a copy-and-paste.",
-          notes: [],
-          needsReview: false,
-        });
+        findings.push(
+          makeFinding({
+            id: `D7-${rubric.id}-${criterion.id}-repeated-${key.slice(0, 16)}`,
+            check: "D7",
+            family: "rubrics",
+            objectType: "rubric",
+            objectId: rubric.id,
+            objectName: rubric.title,
+            statement: `The same level text is used ${uses.length} times in "${criterion.description || "(unnamed criterion)"}" of "${rubric.title}".`,
+            values: [{ label: "Uses", value: uses.join("; "), source: RUBRIC_SOURCE }],
+            affected: attached,
+            suggestedPriority: priorityFor(settings, "rubrics", "low"),
+            priorityReason: "The same wording twice in one criterion is usually a copy-and-paste.",
+            needsReview: false,
+          }),
+        );
+      }
+
+      // Bands of levels that leave a gap, or that overlap.
+      const bands = levelBands(levels);
+      if (bands.length >= 2) {
+        for (let index = 0; index < bands.length - 1; index++) {
+          const upper = bands[index];
+          const lower = bands[index + 1];
+
+          if (upper.min > lower.max + 1) {
+            findings.push(
+              makeFinding({
+                id: `D7-${rubric.id}-${criterion.id}-gap-${index}`,
+                check: "D7",
+                family: "rubrics",
+                objectType: "rubric",
+                objectId: rubric.id,
+                objectName: rubric.title,
+                statement: `The levels of "${criterion.description || "(unnamed criterion)"}" in "${rubric.title}" leave a gap between ${formatPoints(lower.max + 1)} and ${formatPoints(upper.min - 1)}.`,
+                values: [
+                  { label: "Upper level", value: `${upper.label}: ${describeBand(upper)}`, source: RUBRIC_SOURCE },
+                  { label: "Level below it", value: `${lower.label}: ${describeBand(lower)}`, source: RUBRIC_SOURCE },
+                ],
+                affected: attached,
+                suggestedPriority: priorityFor(settings, "rubrics", "low"),
+                priorityReason: "There is a score that no level covers.",
+                needsReview: false,
+              }),
+            );
+          }
+
+          if (upper.min <= lower.max) {
+            findings.push(
+              makeFinding({
+                id: `D7-${rubric.id}-${criterion.id}-overlap-${index}`,
+                check: "D7",
+                family: "rubrics",
+                objectType: "rubric",
+                objectId: rubric.id,
+                objectName: rubric.title,
+                statement: `The levels of "${criterion.description || "(unnamed criterion)"}" in "${rubric.title}" overlap.`,
+                values: [
+                  { label: "Upper level", value: `${upper.label}: ${describeBand(upper)}`, source: RUBRIC_SOURCE },
+                  { label: "Level below it", value: `${lower.label}: ${describeBand(lower)}`, source: RUBRIC_SOURCE },
+                ],
+                affected: attached,
+                suggestedPriority: priorityFor(settings, "rubrics", "low"),
+                priorityReason: "Two levels cover the same score, so a student could be given either.",
+                needsReview: false,
+              }),
+            );
+          }
+        }
       }
     }
   }
@@ -460,41 +538,77 @@ function checkStructure(review: AssessmentReview): Finding[] {
   return findings;
 }
 
+/** A band of scores a level covers, read from the level's own words. */
+interface LevelBand {
+  label: string;
+  min: number;
+  max: number;
+}
+
+/** The bands the levels of a criterion describe, highest first. */
+function levelBands(levels: RubricRating[]): LevelBand[] {
+  const bands: LevelBand[] = [];
+
+  for (const level of levels) {
+    const text = `${level.description} ${level.longDescription}`.trim();
+    const measures = measuresIn(text, text);
+    const measure = measures.find((entry) => entry.exact || entry.max !== Number.POSITIVE_INFINITY);
+    if (!measure) continue;
+
+    bands.push({
+      label: level.description || "(unnamed level)",
+      min: measure.min,
+      max: measure.max === Number.POSITIVE_INFINITY ? measure.min : measure.max,
+    });
+  }
+
+  return bands.sort((a, b) => b.max - a.max);
+}
+
+/** A readable description of a band. */
+function describeBand(band: LevelBand): string {
+  if (band.min === band.max) return `${band.min}`;
+  return `${band.min}-${band.max}`;
+}
+
 /** D5 — terms the institution has retired. */
-function checkLegacyTerms(review: AssessmentReview, rules: ReviewRules): Finding[] {
-  if (rules.legacyTerms.length === 0) return [];
+function checkLegacyTerms(review: AssessmentReview, settings: ReviewSettings): Finding[] {
+  if (settings.legacyTerms.length === 0) return [];
 
   const findings: Finding[] = [];
 
   for (const { rubric } of review.rubrics) {
     const text = rubricText(rubric).toLowerCase();
-    const found = rules.legacyTerms.filter((term) => text.includes(term.toLowerCase()));
+    const found = settings.legacyTerms.filter((term) => text.includes(term.toLowerCase()));
 
     if (found.length === 0) continue;
 
-    findings.push({
-      id: `D5-${rubric.id}`,
-      check: "D5",
-      family: "rubrics",
-      title: `"${rubric.title}" uses ${found.length} term${found.length === 1 ? "" : "s"} from the retired list`,
-      values: [
-        { label: "Retired terms", value: found.join(", "), source: "the institution's term list" },
-        { label: "Rubric", value: rubric.title, source: RUBRIC_SOURCE },
-      ],
-      itemIds: [],
-      suggestedPriority: "medium",
-      priorityReason: "The rubric refers to something the institution has retired.",
-      notes: [],
-      needsReview: true,
-    });
+    findings.push(
+      makeFinding({
+        id: `D5-${rubric.id}`,
+        check: "D5",
+        family: "rubrics",
+        objectType: "rubric",
+        objectId: rubric.id,
+        objectName: rubric.title,
+        statement: `"${rubric.title}" uses ${found.length} term${found.length === 1 ? "" : "s"} from the retired list.`,
+        values: [
+          { label: "Retired terms", value: found.join(", "), source: "the reviewer's retired terms list" },
+          { label: "Rubric", value: rubric.title, source: RUBRIC_SOURCE },
+        ],
+        affected: review.assessments.filter((a) => a.rubricId === rubric.id).map((a) => a.id),
+        suggestedPriority: priorityFor(settings, "rubrics", "medium"),
+        priorityReason: "The rubric refers to something the institution has retired.",
+      }),
+    );
   }
 
   return findings;
 }
 
 /** D6 — words that ask the reviewer to look harder. */
-function checkVagueLanguage(review: AssessmentReview, rules: ReviewRules): Finding[] {
-  if (rules.vagueWords.length === 0) return [];
+function checkVagueLanguage(review: AssessmentReview, settings: ReviewSettings): Finding[] {
+  if (settings.vagueWords.length === 0) return [];
 
   const findings: Finding[] = [];
 
@@ -504,7 +618,7 @@ function checkVagueLanguage(review: AssessmentReview, rules: ReviewRules): Findi
     for (const criterion of rubric.criteria) {
       for (const rating of criterion.ratings) {
         const text = `${rating.description} ${rating.longDescription}`.toLowerCase();
-        for (const word of rules.vagueWords) {
+        for (const word of settings.vagueWords) {
           if (!new RegExp(`\\b${escapeRegExp(word.toLowerCase())}\\b`).test(text)) continue;
           hits.push(`${criterion.description || "(unnamed criterion)"} → ${rating.description}: "${word}"`);
         }
@@ -513,18 +627,23 @@ function checkVagueLanguage(review: AssessmentReview, rules: ReviewRules): Findi
 
     if (hits.length === 0) continue;
 
-    findings.push({
-      id: `D6-${rubric.id}`,
-      check: "D6",
-      family: "rubrics",
-      title: `"${rubric.title}" uses ${hits.length} word${hits.length === 1 ? "" : "s"} from the list of words to look at`,
-      values: [{ label: "Words to look at", value: String(hits.length), source: "the institution's word list" }],
-      itemIds: [],
-      suggestedPriority: "low",
-      priorityReason: "These words often hide a difference between two levels.",
-      notes: hits,
-      needsReview: false,
-    });
+    findings.push(
+      makeFinding({
+        id: `D6-${rubric.id}`,
+        check: "D6",
+        family: "rubrics",
+        objectType: "rubric",
+        objectId: rubric.id,
+        objectName: rubric.title,
+        statement: `"${rubric.title}" uses ${hits.length} word${hits.length === 1 ? "" : "s"} from the list of words to look at.`,
+        values: [{ label: "Words to look at", value: String(hits.length), source: "the reviewer's word list" }],
+        affected: review.assessments.filter((a) => a.rubricId === rubric.id).map((a) => a.id),
+        suggestedPriority: priorityFor(settings, "rubrics", "low"),
+        priorityReason: "These words often hide a difference between two levels.",
+        notes: hits,
+        needsReview: false,
+      }),
+    );
   }
 
   return findings;
@@ -548,71 +667,27 @@ function rubricText(rubric: Rubric): string {
   ].join(" ");
 }
 
-/**
- * Break the instructions into discrete requirements.
- *
- * Bullets and numbered steps are requirements. So is any sentence that says
- * what to do — "must", "include", "submit", a number, a formatting rule.
- */
-export function extractRequirements(instructions: string): Requirement[] {
-  const requirements: Requirement[] = [];
-
-  for (const raw of instructionLines(instructions)) {
-    const text = raw.trim();
-    if (text === "") continue;
-
-    const isListItem = /^[-•*–—]\s+/.test(text) || /^\d+[.)]\s+/.test(text) || /^[a-z][.)]\s+/i.test(text);
-    const saysWhatToDo = REQUIREMENT_WORDS.some((word) => new RegExp(`\\b${escapeRegExp(word)}\\b`, "i").test(text));
-    const hasNumber = /\d/.test(text);
-
-    if (!isListItem && !saysWhatToDo && !hasNumber) continue;
-
-    requirements.push({
-      text,
-      keywords: keywordsOf(text),
-      numbers: [...new Set((text.match(/\d+(?:\.\d+)?/g) ?? []).map(Number))],
-      measures: measuresIn(text),
-    });
-  }
-
-  return requirements;
-}
-
-/** The lines of an instruction text. */
-function instructionLines(instructions: string): string[] {
-  return instructions
-    .split(/\n+/)
-    .flatMap((line) => line.split(/(?<=[.!?])\s+/))
-    .map((line) => line.trim())
-    .filter((line) => line !== "");
-}
-
-/** The words worth matching on. */
-function keywordsOf(text: string): string[] {
-  return [...new Set((text.toLowerCase().match(/[a-z][a-z'-]{3,}/g) ?? []).filter((word) => !STOP_WORDS.has(word)))];
-}
-
-/** The numbers in a piece of text, with what they count. */
-export function measuresIn(text: string): Measure[] {
-  const measures: Measure[] = [];
-  const units = MEASURE_UNITS.join("|");
-
-  const pattern = new RegExp(`(\\d+(?:\\.\\d+)?)\\s*(${units})\\b`, "gi");
-  for (const match of text.matchAll(pattern)) {
-    measures.push({ value: Number(match[1]), unit: match[2].toLowerCase() });
-  }
-
-  return measures;
-}
-
 /** The numbers in a rubric, with what they count. */
 function rubricMeasures(rubric: Rubric): Measure[] {
   const measures: Measure[] = [];
 
   for (const criterion of rubric.criteria) {
-    measures.push(...measuresIn(criterion.description), ...measuresIn(criterion.longDescription));
+    for (const [text, source] of [
+      [criterion.description, criterion.description],
+      [criterion.longDescription, criterion.longDescription],
+    ] as const) {
+      if (!text) continue;
+      measures.push(...measuresIn(text, source));
+    }
+
     for (const rating of criterion.ratings) {
-      measures.push(...measuresIn(rating.description), ...measuresIn(rating.longDescription));
+      for (const [text, source] of [
+        [rating.description, rating.description],
+        [rating.longDescription, rating.longDescription],
+      ] as const) {
+        if (!text) continue;
+        measures.push(...measuresIn(text, source));
+      }
     }
   }
 
@@ -636,7 +711,7 @@ function matches(criterion: RubricCriterion, requirement: Requirement): boolean 
 
   // A shared number is a strong hint on its own.
   const criterionNumbers = measuresIn(`${criterion.description} ${criterion.longDescription}`).map(
-    (measure) => measure.value,
+    (measure) => measure.min,
   );
   return requirement.numbers.some((number) => criterionNumbers.includes(number));
 }
@@ -649,4 +724,44 @@ function matchesAnyRequirement(criterion: RubricCriterion, requirements: Require
 /** Escape a string for use in a regular expression. */
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** D3 — how many items agree with the figures in their rubric. */
+function measureStat(review: AssessmentReview) {
+  let total = 0;
+  let passed = 0;
+  const exceptions: string[] = [];
+
+  for (const assessment of review.assessments) {
+    const rubric = rubricOf(review, assessment);
+    if (!rubric) continue;
+
+    const { requirements } = extractRequirements(assessment.instructions, assessment.instructionsSource);
+    const fromInstructions = requirements.flatMap((requirement) => requirement.measures);
+    const fromRubric = rubricMeasures(rubric);
+
+    const keys = new Set([...fromInstructions.map((m) => m.key), ...fromRubric.map((m) => m.key)]);
+    const conflicts = [...keys].some(
+      (key) =>
+        firstConflict(
+          fromInstructions.filter((m) => m.key === key),
+          fromRubric.filter((m) => m.key === key),
+        ) !== undefined,
+    );
+
+    if (fromInstructions.length === 0 || fromRubric.length === 0) continue;
+
+    total++;
+    if (conflicts) exceptions.push(assessment.title);
+    else passed++;
+  }
+
+  return makeStat({
+    check: "D3",
+    family: "rubrics",
+    description: "The quantities in the instructions against the quantities in the rubric",
+    total,
+    passed,
+    exceptions,
+  });
 }

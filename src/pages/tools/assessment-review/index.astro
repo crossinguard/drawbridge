@@ -84,6 +84,13 @@ const { Content: QuickStartContent } = await render(quickStartEntry);
 
     <div id="review-stats" class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"></div>
 
+    <details id="review-settings-panel" class="rounded-lg border border-border">
+      <summary class="cursor-pointer px-4 py-3 text-sm font-medium">Review settings</summary>
+      <div class="border-t border-border px-4 py-4">
+        <div id="review-settings" class="grid gap-4"></div>
+      </div>
+    </details>
+
     <div id="review-tabs" class="grid gap-4">
       <div class="flex flex-wrap items-end gap-3">
         <div class="grid min-w-56 flex-1 gap-1.5">
@@ -134,32 +141,30 @@ const { Content: QuickStartContent } = await render(quickStartEntry);
   <!-- Step 3: Export -->
   <ToolStep step={steps[2]} title="Export the review" class="gap-4">
     <Fragment slot="description">
-      One plain-text file that holds everything the review found, so it can be handed to a colleague or to an LLM
-      assistant that cannot open the archive itself.
+      A bundle of files: a short brief that says what the review found, a set of tables an assistant can query, the
+      detail of the items that need looking at, and a manifest that lists everything. Nothing leaves your browser.
     </Fragment>
 
     <div id="export-stats" class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"></div>
 
-    <div class="flex flex-wrap items-center gap-3">
-      <div class="flex items-center gap-2">
-        <input type="checkbox" id="every-assessment" checked class="size-4 rounded border-border" />
-        <Label for="every-assessment" class="text-sm font-normal">
-          Write out every assessment in full. Turn this off to keep only the ones with findings.
-        </Label>
+    <details class="rounded-lg border border-border">
+      <summary class="cursor-pointer px-4 py-3 text-sm font-medium">Export settings</summary>
+      <div class="border-t border-border px-4 py-4">
+        <div id="export-settings" class="grid gap-4"></div>
       </div>
-    </div>
+    </details>
 
     <div id="export-preview" class="max-h-128 overflow-auto rounded-lg border border-border"></div>
 
     <StepNav slot="footer">
       <div slot="actions" class="flex flex-wrap gap-2">
-        <Button id="download-prep" variant="outline">
+        <Button id="download-bundle" variant="outline">
           <Download class="size-4" aria-hidden="true" />
-          Review file (Markdown)
+          Download the bundle (ZIP)
         </Button>
-        <Button id="copy-prep" variant="outline">
+        <Button id="copy-brief" variant="outline">
           <ClipboardText class="size-4" aria-hidden="true" />
-          Copy review
+          Copy the brief
         </Button>
       </div>
     </StepNav>

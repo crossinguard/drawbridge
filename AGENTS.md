@@ -61,6 +61,13 @@ src/
 │       ├── outcome-mapper/
 │       ├── imscc-viewer/          # Canvas course export viewer
 │       └── assessment-review/     # Canvas assessment review
+│           ├── model.ts           # the review model: assessments, rubrics, groups
+│           ├── findings.ts        # what a finding is
+│           ├── settings.ts        # everything the reviewer can set
+│           ├── usage.ts           # what is in use and what is left over
+│           ├── checks/            # one module per family of checks
+│           ├── text/              # artifacts, requirements, quantities
+│           └── bundle/            # the export: brief, tables, details, manifest
 ├── content/guides/                # guide MDX (reference + quick-start)
 ├── pages/
 │   ├── index.astro                # tool directory (home)
@@ -208,9 +215,9 @@ controller needs lives in a separate, icon-free module.
 
 ## The assessment review
 
-`src/lib/tools/assessment-review/` turns a course export into a plain-text
-review of every graded item. It is a separate tool from the viewer, but it
-reads the same cartridge layer.
+`src/lib/tools/assessment-review/` turns a course export into a bundle of
+files a reviewer can hand to an assistant. It is a separate tool from the
+viewer, but it reads the same cartridge layer.
 
 ### The model
 
@@ -224,12 +231,19 @@ and the screen from disagreeing.
 | `RubricReview` | A rubric with the items that use it and the rubrics it duplicates   |
 | `GroupReview`  | An assignment group with its items, points, and share of the points |
 | `UsageMap`     | Every item in the course, and whether it looks in use or left over  |
+| `QuizFamily`   | A set of quizzes that are set up the same way                       |
+
+One piece of content can sit in more than one module. The model counts it
+once and keeps every module reference in `Assessment.moduleRefs`, so the
+gradebook totals stay right.
 
 ### The checks
 
 `checks/` holds one module per family. Every finding carries the two values it
-compared, the file each value came from, a suggested priority, and whether a
-reviewer has to resolve it.
+compared, the file each value came from, a suggested priority, how sure the
+tool is, the objects it touches, and whether a reviewer has to resolve it.
+Every check also reports how many objects it compared and how many passed, so
+the passes are counted rather than listed.
 
 | Family | Module              | What it compares                                     |
 | ------ | ------------------- | ---------------------------------------------------- |
@@ -241,30 +255,78 @@ reviewer has to resolve it.
 
 ### The rules
 
-`findings.ts` holds the `ReviewRules` — the institution's defaults for what
-to do when the instructions are silent, the list of retired terms, and the list
-of words to look at. They apply to every course the tool is pointed at.
+`settings.ts` holds the `ReviewSettings` — everything the reviewer can decide:
+what to do when the instructions are silent, the retired terms, the words to
+look at, the pattern the term is read with, how the quizzes are grouped, the
+severity suggested for each family of checks, what the export leaves out, and
+the detail level.
 
-### The prep file
+Nothing institution-specific is hard-coded anywhere. The settings travel
+inside the bundle's `manifest.json`, so a colleague can see which rules
+produced the results.
 
-`prep-file.ts` writes the plain-text file. It is the tool's primary output,
-and it has to stand on its own: whoever reads it cannot open the archive and
-cannot ask a follow-up question.
+### The bundle
 
-- The fifteen sections are in a **fixed order**, so an assistant can rely on
-  finding the module map in section 5 and the assessment details in section 10.
-- Every value is written with the file it came from.
-- The instructions are written out **in full**. They are never trimmed — a
-  requirement that was cut off is a requirement nobody can check.
-- The deliberate omissions (question text, answer keys, learner data, the live
-  state of the course) are stated in section 14, so nothing looks complete when
-  it is not.
-- The `[REVIEW REQUIRED: reason]` marker is used for anything a reviewer has
-  to resolve, and section 15 collects them all.
+`bundle/` writes the tool's primary output: a ZIP of files, not one file. It is
+built for an assistant that works best with small, non-repetitive inputs and
+with data it can query.
 
-A course with a lot of rubrics produces a very large file — PN126 comes to
-2.5 MB, most of it rubric text. The export step offers to narrow the file to
-the assessments with findings, but the complete file is the default.
+| File             | What it holds                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `00_brief.md`    | The file the reviewer uploads first. Under 20,000 chars.                                                                        |
+| `manifest.json`  | Every file with its size and row count, plus the settings.                                                                      |
+| `data_*.csv`     | One row per object: assessments, quizzes, rubrics, criteria, groups, module items, findings, candidates, banks, content, texts. |
+| `detail_<id>.md` | One file per item that needs looking at.                                                                                        |
+
+The rules the bundle follows:
+
+- **Say it once.** Quizzes that are set up the same way become one **family**,
+  so fourteen identical quizzes are one row. Instruction text that several
+  items share is stored once, in `data_texts.csv`, and referenced by its id. A
+  piece of content in two modules is counted once and given all its modules.
+- **Do not list the passes.** A check reports how many objects agreed and
+  names only the exceptions.
+- **Never repeat a fact on every item it touches.** One cause is one finding,
+  with the items it touches in an `affected` list.
+- **A keyword match is not a finding.** Instruction-to-rubric matches on words
+  are _candidate mismatches_ in `data_candidates.csv`, with a low confidence.
+  Only countable differences — two quantities that cannot both be true, a
+  level that does not descend, a scale with no zero — are findings.
+- **Every value carries its source**, and a value the export did not carry is
+  written as `not in export`, never blank.
+- **No file may exceed 60,000 characters.** The brief is capped at 20,000 and
+  gives way gracefully: the top-findings list shortens first, then the file
+  list.
+
+### The reconciliation
+
+`bundle/reconcile.ts` runs seven checks before the export is written and
+prints them in the brief. A failure goes into the brief's open questions; it
+is never dropped.
+
+1. Every graded object appears in the assessments table exactly once.
+2. Every module item with a content reference resolves to an object.
+3. No object is counted in group totals more than once.
+4. The points in the groups add up to the points of the graded items.
+5. The counts in the brief match the row counts in the tables.
+6. Every "nothing uses this" list is cross-checked against the usage data.
+7. The number of findings in the brief equals the rows in the findings table.
+
+### The text layer
+
+`text/` reads the instructions and the rubrics before anything is compared.
+
+- `artifacts.ts` takes the platform's leftovers out — zero-width characters,
+  non-breaking spaces, entities that were never decoded — and reports what it
+  removed.
+- `requirements.ts` breaks the instructions into requirements. A requirement is
+  a sentence or a bullet of **at least five words**; list numerals, headings,
+  bare links, "click here" lines, reference citations and template text are
+  dropped, and what was dropped is reported as a cleanup item.
+- `measures.ts` reads quantities as **ranges**. "6-8 pages", "5 pages or less",
+  "at least 3 sources" and "under 10 pages" each become a range, and two
+  ranges only disagree when they cannot both be true. The exact sentence from
+  each side is shown.
 
 ### What the review found in the real courses
 

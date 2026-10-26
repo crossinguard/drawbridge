@@ -274,6 +274,10 @@ await page.waitForSelector("#step-review:not([hidden])");
 check("review step visible", await page.locator("#step-review").isVisible(), true);
 check("tabs rendered", await page.locator("#review-tabs-list button").count(), 7);
 
+// The review settings are there, and they are the reviewer's to change.
+check("the settings card rendered", (await page.locator("#review-settings input[type=checkbox]").count()) >= 7, true);
+check("the term pattern is editable", await page.locator("#setting-term-pattern").count(), 1);
+
 // The overview says what the course holds and what the review found.
 const overview = (await page.textContent("#review-panel")) ?? "";
 check("overview names the course", overview.includes("Sample Course"), true);
@@ -302,8 +306,8 @@ check("quiz settings shown", quizzes.includes("Time limit"), true);
 await page.click("#review-tabs-list button[data-tab=flags]");
 await page.waitForTimeout(200);
 const flags = (await page.textContent("#review-panel")) ?? "";
-check("rubric mismatch reported", flags.includes("its rubric totals 30"), true);
-check("quiz points mismatch reported", flags.includes("add up to 5 points, not 10"), true);
+check("rubric mismatch reported", flags.includes("rubric that drives the score totals 30"), true);
+check("quiz points mismatch reported", flags.includes("add up to 5 points"), true);
 check("outlier reported", flags.includes("time limit"), true);
 
 // The reviewer can change a priority, and it sticks.
@@ -313,21 +317,34 @@ await priorityButton.click();
 await page.waitForTimeout(200);
 check("priority override recorded", priorityId !== null, true);
 
-// The export step produces the plain-text file.
+// The export step builds the bundle.
 await page.click("#step-3 [data-step-action]");
 await page.waitForSelector("#step-export:not([hidden])");
-await page.waitForTimeout(200);
+await page.waitForTimeout(400);
 
 const preview = (await page.textContent("#export-preview")) ?? "";
-check("preview starts with the title", preview.includes("Canvas course assessment review"), true);
-check("preview has the export identity", preview.includes("Export identity"), true);
-check("preview has the module map", preview.includes("Module map"), true);
-check("preview has the review summary", preview.includes("[REVIEW REQUIRED] summary"), true);
+check("preview lists the brief", preview.includes("00_brief.md"), true);
+check("preview lists the findings table", preview.includes("data_findings.csv"), true);
+check("preview lists the manifest", preview.includes("manifest.json"), true);
+check("preview shows the brief", preview.includes("Export identity"), true);
+check("preview shows the reconciliation", preview.includes("Reconciliation"), true);
+check("preview shows the quiz families", preview.includes("Quiz summary"), true);
+check("preview does not show the old module map", preview.includes("Module map"), false);
 
-const prepDownload = page.waitForEvent("download");
-await page.click("#download-prep");
-const prepFile = await prepDownload;
-check("review file name", prepFile.suggestedFilename(), "sample-course-assessment-review.md");
+// The export settings choose how much the bundle carries.
+check("the export settings rendered", await page.locator("#export-settings input[name=detail-level]").count(), 3);
+
+// Every file in the bundle can be downloaded on its own.
+const briefDownload = page.waitForEvent("download");
+await page.click('#export-preview button[data-download="00_brief.md"]');
+const briefFile = await briefDownload;
+check("brief file name", briefFile.suggestedFilename(), "00_brief.md");
+
+// The whole bundle downloads as one archive.
+const bundleDownload = page.waitForEvent("download");
+await page.click("#download-bundle");
+const bundleFile = await bundleDownload;
+check("bundle file name", bundleFile.suggestedFilename(), "sample-course-assessment-review.zip");
 
 // ---------------------------------------------------------------------------
 // Guides

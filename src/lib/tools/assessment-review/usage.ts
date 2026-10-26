@@ -10,7 +10,7 @@ import type { CourseItem, CourseExport, Rubric } from "@/lib/canvas/types";
 
 import { naturalCompare } from "@/lib/utils";
 
-import { rubricSignature } from "@/lib/tools/assessment-review/model";
+import { rubricSignature, type ModuleRef } from "@/lib/tools/assessment-review/model";
 
 /** How a piece of content seems to be used. */
 export type UsageState = "in-use" | "probably-legacy" | "unclear";
@@ -52,7 +52,7 @@ export interface UsageMap {
 export interface UsageInput {
   course: CourseExport;
   /** The graded items, with the state of their own classification. */
-  assessments: { id: string; item: CourseItem; inModule: boolean }[];
+  assessments: { id: string; item: CourseItem; inModule: boolean; moduleRefs: ModuleRef[] }[];
   /** The rubrics, with the items that attach them. */
   rubrics: { rubric: Rubric; attachedTo: string[] }[];
   /** The identifiers other items link to. */
@@ -132,8 +132,24 @@ export function classifyUsage(input: UsageInput): UsageMap {
 function assessSignals(item: CourseItem, patterns: string[], input: UsageInput): string[] {
   const signals: string[] = [];
 
-  if (item.moduleId) {
-    signals.push(item.moduleState === "active" ? "In a published module" : "In an unpublished module");
+  const placement = input.assessments.find((assessment) => assessment.id === item.id);
+  const moduleRefs = placement?.moduleRefs ?? [];
+
+  if (moduleRefs.length > 0) {
+    const published = moduleRefs.filter((ref) => ref.moduleState === "active");
+    if (published.length > 0) {
+      signals.push(
+        moduleRefs.length > 1
+          ? `In ${published.length} published module${published.length === 1 ? "" : "s"}`
+          : "In a published module",
+      );
+    } else {
+      signals.push(
+        moduleRefs.length > 1
+          ? `In ${moduleRefs.length} unpublished module${moduleRefs.length === 1 ? "" : "s"}`
+          : "In an unpublished module",
+      );
+    }
   } else {
     signals.push("No module points at it");
   }
@@ -276,7 +292,9 @@ function signalScore(signals: string[]): number {
   let total = 0;
 
   for (const signal of signals) {
-    if (signal.startsWith("In a published module")) total += 2;
+    if (/^In \d+ published module/.test(signal)) total += 2;
+    else if (/^In \d+ unpublished module/.test(signal)) total += 1;
+    else if (signal.startsWith("In a published module")) total += 2;
     else if (signal.startsWith("In an unpublished module")) total += 1;
     else if (signal.startsWith("No module points")) total -= 2;
     else if (signal.startsWith("Has a due date")) total += 1;

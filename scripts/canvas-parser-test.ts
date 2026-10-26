@@ -349,31 +349,39 @@ console.log("\nAssessment review");
 
 const { buildReview } = await import("../src/lib/tools/assessment-review/model");
 const { runChecks, suggestGroups } = await import("../src/lib/tools/assessment-review/checks/index");
-const { DEFAULT_RULES } = await import("../src/lib/tools/assessment-review/findings");
-const { toPrepFile } = await import("../src/lib/tools/assessment-review/prep-file");
+const { defaultSettings } = await import("../src/lib/tools/assessment-review/settings");
+const { buildBundle } = await import("../src/lib/tools/assessment-review/bundle");
 
 /** Run the review over a parsed course. */
-function reviewCourse(course: unknown, content: unknown, sourceName: string) {
+function reviewCourse(course: unknown, content: unknown) {
+  const settings = defaultSettings();
   const model = buildReview(course as never, content as never);
-  const groups = suggestGroups(model);
-  const { findings } = runChecks(model, groups, DEFAULT_RULES);
+  const groups = suggestGroups(model, settings);
+  const result = runChecks(model, groups, settings);
 
-  const prep = toPrepFile({
+  const bundle = buildBundle({
     review: model,
-    findings,
+    findings: result.findings,
+    candidates: result.candidates,
+    stats: result.stats,
     groups,
-    rules: DEFAULT_RULES,
-    overrides: { priorities: new Map(), quizGroups: new Map() },
-    sourceName,
+    families: result.families,
+    settings,
+    priorities: new Map(),
   });
 
-  return { model, groups, findings, prep };
+  return { model, groups, findings: result.findings, bundle };
 }
 
 /** Run the review over one export in the reference folder. */
 async function reviewExport(file: string) {
   const { export: course, content } = await readExport(file);
-  return reviewCourse(course, content, file);
+  return reviewCourse(course, content);
+}
+
+/** The text of one file in the bundle. */
+function fileIn(bundle: { files: { name: string; content: string }[] }, name: string): string {
+  return bundle.files.find((file) => file.name === name)?.content ?? "";
 }
 
 // The sample cartridge carries the cases a review should catch.
@@ -385,8 +393,8 @@ const sampleParsed = await parseCourseExport(sampleStore, { sourceName: "sample.
 const {
   model: sampleModel,
   findings: sampleFindings,
-  prep: samplePrep,
-} = reviewCourse(sampleParsed.export, sampleParsed.content, "sample.imscc");
+  bundle: sampleBundle,
+} = reviewCourse(sampleParsed.export, sampleParsed.content);
 
 check("the sample's graded items were found", sampleModel.assessments.length, 3);
 check("the sample's rubrics were found", sampleModel.rubrics.length, 3);
@@ -394,11 +402,13 @@ check("the sample's item bank was found", sampleModel.itemBanks.length, 1);
 
 ok(
   "the rubric total mismatch was reported",
-  sampleFindings.some((finding) => finding.check === "A2" && finding.title.includes("rubric totals 30")),
+  sampleFindings.some(
+    (finding) => finding.check === "A2" && finding.statement.includes("rubric that drives the score totals 30"),
+  ),
 );
 ok(
   "the quiz points mismatch was reported",
-  sampleFindings.some((finding) => finding.check === "A3" && finding.title.includes("add up to 5 points, not 10")),
+  sampleFindings.some((finding) => finding.check === "A3" && finding.statement.includes("add up to 5 points")),
 );
 ok(
   "the duplicate rubrics were reported",
@@ -410,43 +420,72 @@ ok(
 );
 ok(
   "the differing quiz setting was reported",
-  sampleFindings.some((finding) => finding.check === "C1" && finding.title.includes("time limit")),
+  sampleFindings.some((finding) => finding.check === "C1" && finding.statement.includes("time limit")),
 );
 
-// The prep file stands on its own.
+// The brief carries the sections it should, and nothing else.
 for (const heading of [
   "Export identity",
-  "About this file",
-  "What was read",
+  "What was read, and what was not",
+  "Reconciliation",
   "Gradebook structure",
-  "Module map",
-  "Assessment summary",
-  "Quizzes",
-  "Quiz consistency",
-  "Facts by review step",
-  "Assessment details",
-  "Rubric inventory",
-  "Legacy and unused content",
-  "Pages and discussions",
-  "Not readable from this export",
-  "[REVIEW REQUIRED] summary",
+  "Quiz summary",
+  "Findings summary",
+  "Open questions",
+  "The other files",
 ]) {
-  ok(`the prep file has the "${heading}" section`, samplePrep.includes(`## ${heading}`));
+  ok(`the brief has the "${heading}" section`, sampleBundle.brief.includes(`## ${heading}`));
 }
 
-ok("the prep file carries the instructions in full", samplePrep.includes("Write at least 5 complete sentences"));
-ok("the prep file carries the rubric", samplePrep.includes("Formatting and Length"));
-ok("the prep file names the source of each value", samplePrep.includes("course_settings/rubrics.xml"));
-ok("the prep file says what is not included", samplePrep.includes("answer keys"));
+ok("the brief carries no module map", !sampleBundle.brief.includes("## Module map"));
+ok("the brief names the course", sampleBundle.brief.includes("Sample Course"));
+ok("the brief does not repeat the sources", !sampleBundle.brief.includes("course_settings/rubrics.xml"));
+ok("the brief says what the export cannot carry", sampleBundle.brief.includes("answer keys"));
+ok("the brief stays inside its limit", sampleBundle.brief.length < 20_000);
+
+// The bundle carries the tables.
+for (const name of [
+  "00_brief.md",
+  "manifest.json",
+  "data_assessments.csv",
+  "data_quizzes.csv",
+  "data_rubrics.csv",
+  "data_rubric_criteria.csv",
+  "data_gradebook_groups.csv",
+  "data_modules_items.csv",
+  "data_findings.csv",
+  "data_candidates.csv",
+  "data_texts.csv",
+]) {
+  ok(
+    `the bundle carries ${name}`,
+    sampleBundle.files.some((file) => file.name === name),
+  );
+}
+
+const findingsCsv = fileIn(sampleBundle, "data_findings.csv");
+ok(
+  "the findings table has the documented columns",
+  findingsCsv.startsWith(
+    "id,check_family,check_id,severity_suggested,object_type,object_id,object_name,statement,value_a,source_a,value_b,source_b,confidence,notes,affected",
+  ),
+);
+ok("the findings table carries the source of a value", findingsCsv.includes("course_settings/rubrics.xml"));
 
 if (existsSync(join(SAMPLE_DIR, ENG120))) {
   console.log("\nAssessment review — ENG120");
 
-  const { model, findings, prep } = await reviewExport(ENG120);
+  const { model, findings, bundle } = await reviewExport(ENG120);
 
-  check("the graded items were found", model.assessments.length, 44);
+  // Two assignments sit in a second module as well. They are counted once.
+  check("the graded items were found", model.assessments.length, 42);
   check("the rubrics were found", model.rubrics.length, 40);
   check("the item banks were found", model.itemBanks.length, 64);
+  check(
+    "the assignments in two modules are counted once",
+    model.assessments.filter((assessment) => assessment.moduleRefs.length > 1).length,
+    2,
+  );
 
   // The two Grammar Review quizzes draw more questions than they are worth.
   ok("both Grammar Review quizzes were reported", findings.filter((finding) => finding.check === "A3").length === 2);
@@ -454,11 +493,12 @@ if (existsSync(join(SAMPLE_DIR, ENG120))) {
   // The GE Discussion Rubric copies are reported as duplicates.
   ok(
     "the identical rubrics were grouped",
-    findings.some((finding) => finding.check === "B2" && finding.title.includes("identical criteria")),
+    findings.some((finding) => finding.check === "B2" && finding.statement.includes("identical criteria")),
   );
 
-  ok("the prep file was written", prep.length > 10000);
-  ok("the prep file names the course", prep.includes("ENG120 MASTER (2027-1) - English Composition I"));
+  ok("the brief was written", bundle.brief.length > 1000);
+  ok("the brief names the course", bundle.brief.includes("ENG120 MASTER (2027-1) - English Composition I"));
+  ok("the brief stays inside its limit", bundle.brief.length < 20_000);
 }
 
 if (failures > 0) {
