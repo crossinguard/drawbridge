@@ -14,8 +14,8 @@ export interface QuizQuestionSummary {
   inline: number;
   /** Questions drawn from banks. Undefined when the quiz draws from none. */
   drawn?: number;
-  /** Points the questions add up to. */
-  points: number;
+  /** Points the questions add up to. Undefined when the export cannot say. */
+  points?: number;
   /** True when the export does not say how many items a selection uses. */
   countUnknown: boolean;
   /** True when the quiz presents questions at all. */
@@ -27,15 +27,10 @@ export function summariseQuestions(quiz: QuizDetails): QuizQuestionSummary {
   const inline = quiz.questionCount;
   const drawn = quiz.drawnCount;
 
-  // The selections say what each group of questions is worth. When the quiz
-  // has no selections, the points on the questions themselves are the only
-  // figure there is.
-  const points = quiz.selections.length > 0 ? quiz.selectionPoints : quiz.inlinePoints;
-
   return {
     inline,
     drawn,
-    points,
+    points: quiz.pointsTotal,
     countUnknown: quiz.selectionCountUnknown,
     hasQuestions: inline > 0 || (drawn ?? 0) > 0,
   };

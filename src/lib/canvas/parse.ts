@@ -347,6 +347,8 @@ interface AssessmentData {
   selections: QuizSelection[];
   /** How many items the bank holds. */
   bankItemCount: number;
+  /** Passages of text shown to the student, which are not graded. */
+  textBlockCount: number;
   /** The settings read from the settings file. */
   settings?: RawQuizSettings;
   /** Path of the settings file. */
@@ -475,6 +477,7 @@ async function readAssessment(
     questionTypes: {},
     questionCount: 0,
     inlinePoints: 0,
+    textBlockCount: 0,
     selections: [],
     bankItemCount: 0,
   };
@@ -522,6 +525,7 @@ async function readAssessment(
       data.questionTypes = questions.types;
       data.questionCount = questions.count;
       data.inlinePoints = questions.points;
+      data.textBlockCount = questions.textBlocks;
       data.selections = questions.selections;
     }
   }
@@ -544,17 +548,28 @@ function readBankTitle(bank: Element): string | undefined {
 /** The questions stored inside a quiz, and the selections it makes. */
 function readQuestions(assessment: Element): {
   count: number;
+  textBlocks: number;
   types: Record<string, number>;
   points: number;
   selections: QuizSelection[];
 } {
   const types: Record<string, number> = {};
   let count = 0;
+  let textBlocks = 0;
   let points = 0;
 
   for (const item of descendantElements(assessment, "item")) {
-    count++;
     const type = readQuestionType(item);
+
+    // A text-only question is a passage shown to the student, not something
+    // they answer. It carries a placeholder point value in the export but is
+    // not graded, so it is counted apart and left out of the points.
+    if (type === "text_only_question") {
+      textBlocks++;
+      continue;
+    }
+
+    count++;
     if (type) types[type] = (types[type] ?? 0) + 1;
     points += readItemPoints(item) ?? 0;
   }
@@ -565,18 +580,19 @@ function readQuestions(assessment: Element): {
     const extension = childElement(selection, "selection_extension");
     const pointsPerItem = extension ? childNumber(extension, "points_per_item") : undefined;
     const bankId = childText(selection, "sourcebank_ref");
+    const count = childNumber(selection, "selection_number");
 
     selections.push({
       bankId: bankId || undefined,
-      count: childNumber(selection, "selection_number"),
+      count,
       pointsPerItem,
       bankFilePresent: false,
-      // A selection with no number takes every item in the bank.
-      drawsAll: Boolean(bankId) && childNumber(selection, "selection_number") === undefined,
+      // A selection with no number does not say how many questions it takes.
+      drawsAll: Boolean(bankId) && count === undefined,
     });
   }
 
-  return { count, types, points, selections };
+  return { count, textBlocks, types, points, selections };
 }
 
 /** The points one QTI item is worth. */
@@ -1246,6 +1262,7 @@ function emptyQuizDetails(): QuizDetails {
     questionCount: 0,
     questionTypes: {},
     inlinePoints: 0,
+    textBlockCount: 0,
     selectionPoints: 0,
     selectionCountUnknown: false,
     engine: "new",
@@ -1271,27 +1288,46 @@ function buildQuizDetails(
     const bank = selection.bankId ? banks.get(selection.bankId) : undefined;
     if (!bank) return { ...selection };
 
+    // A selection with no number takes every item in the bank. The bank file
+    // says how many items there are, so the count can be worked out.
+    if (selection.count === undefined) {
+      return {
+        ...selection,
+        bankTitle: bank.title,
+        bankFilePresent: true,
+        count: bank.itemCount,
+        drawsAll: true,
+      };
+    }
+
     return {
       ...selection,
       bankTitle: bank.title,
       bankFilePresent: true,
-      // A selection with no number takes every item in the bank.
-      count: selection.count ?? bank.itemCount,
     };
   });
 
   const bankSelections = selections.filter((selection) => selection.bankId);
+  const ownSelections = selections.filter((selection) => !selection.bankId);
 
   const drawnCount = bankSelections.reduce((total, selection) => total + (selection.count ?? 0), 0);
   const bankPoints = bankSelections.reduce(
     (total, selection) => total + (selection.count ?? 0) * (selection.pointsPerItem ?? 0),
     0,
   );
-  const selectionPoints = selections.reduce(
-    (total, selection) => total + (selection.count ?? 0) * (selection.pointsPerItem ?? 0),
-    0,
-  );
+
+  // A selection of the quiz's own questions says what each of them is worth,
+  // which the questions' own metadata does not always agree with.
+  const ownPoints =
+    ownSelections.length > 0
+      ? ownSelections.reduce((total, selection) => total + (selection.count ?? 0) * (selection.pointsPerItem ?? 0), 0)
+      : assessment.inlinePoints;
+
   const selectionCountUnknown = selections.some((selection) => selection.count === undefined);
+
+  // The total can only be worked out when every selection says how many
+  // questions it takes.
+  const pointsTotal = selectionCountUnknown ? undefined : ownPoints + bankPoints;
 
   const contentSource: QuizDetails["contentSource"] =
     assessment.questionCount > 0 && bankSelections.length > 0
@@ -1326,9 +1362,11 @@ function buildQuizDetails(
     questionCount: assessment.questionCount,
     questionTypes: assessment.questionTypes,
     inlinePoints: assessment.inlinePoints,
+    textBlockCount: assessment.textBlockCount,
     drawnCount: drawnCount > 0 ? drawnCount : undefined,
     bankPoints: bankPoints > 0 ? bankPoints : undefined,
-    selectionPoints,
+    selectionPoints: ownPoints + bankPoints,
+    pointsTotal,
     selectionCountUnknown,
     engine,
     contentSource,

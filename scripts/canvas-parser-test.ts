@@ -341,6 +341,126 @@ if (existsSync(join(SAMPLE_DIR, PN126))) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// The assessment review
+// ---------------------------------------------------------------------------
+
+console.log("\nAssessment review");
+
+const { buildReview } = await import("../src/lib/tools/assessment-review/model");
+const { runChecks, suggestGroups } = await import("../src/lib/tools/assessment-review/checks/index");
+const { DEFAULT_RULES } = await import("../src/lib/tools/assessment-review/findings");
+const { toPrepFile } = await import("../src/lib/tools/assessment-review/prep-file");
+
+/** Run the review over a parsed course. */
+function reviewCourse(course: unknown, content: unknown, sourceName: string) {
+  const model = buildReview(course as never, content as never);
+  const groups = suggestGroups(model);
+  const { findings } = runChecks(model, groups, DEFAULT_RULES);
+
+  const prep = toPrepFile({
+    review: model,
+    findings,
+    groups,
+    rules: DEFAULT_RULES,
+    overrides: { priorities: new Map(), quizGroups: new Map() },
+    sourceName,
+  });
+
+  return { model, groups, findings, prep };
+}
+
+/** Run the review over one export in the reference folder. */
+async function reviewExport(file: string) {
+  const { export: course, content } = await readExport(file);
+  return reviewCourse(course, content, file);
+}
+
+// The sample cartridge carries the cases a review should catch.
+const { buildSampleCartridge } = await import("./make-sample-cartridge");
+
+const sampleBytes = await buildSampleCartridge();
+const sampleStore = await openCartridge(new File([new Uint8Array(sampleBytes)], "sample.imscc"));
+const sampleParsed = await parseCourseExport(sampleStore, { sourceName: "sample.imscc" });
+const {
+  model: sampleModel,
+  findings: sampleFindings,
+  prep: samplePrep,
+} = reviewCourse(sampleParsed.export, sampleParsed.content, "sample.imscc");
+
+check("the sample's graded items were found", sampleModel.assessments.length, 3);
+check("the sample's rubrics were found", sampleModel.rubrics.length, 3);
+check("the sample's item bank was found", sampleModel.itemBanks.length, 1);
+
+ok(
+  "the rubric total mismatch was reported",
+  sampleFindings.some((finding) => finding.check === "A2" && finding.title.includes("rubric totals 30")),
+);
+ok(
+  "the quiz points mismatch was reported",
+  sampleFindings.some((finding) => finding.check === "A3" && finding.title.includes("add up to 5 points, not 10")),
+);
+ok(
+  "the duplicate rubrics were reported",
+  sampleFindings.some((finding) => finding.check === "B2"),
+);
+ok(
+  "the rubric with no attachment was reported",
+  sampleFindings.some((finding) => finding.check === "B1"),
+);
+ok(
+  "the differing quiz setting was reported",
+  sampleFindings.some((finding) => finding.check === "C1" && finding.title.includes("time limit")),
+);
+
+// The prep file stands on its own.
+for (const heading of [
+  "Export identity",
+  "About this file",
+  "What was read",
+  "Gradebook structure",
+  "Module map",
+  "Assessment summary",
+  "Quizzes",
+  "Quiz consistency",
+  "Facts by review step",
+  "Assessment details",
+  "Rubric inventory",
+  "Legacy and unused content",
+  "Pages and discussions",
+  "Not readable from this export",
+  "[REVIEW REQUIRED] summary",
+]) {
+  ok(`the prep file has the "${heading}" section`, samplePrep.includes(`## ${heading}`));
+}
+
+ok("the prep file carries the instructions in full", samplePrep.includes("Write at least 5 complete sentences"));
+ok("the prep file carries the rubric", samplePrep.includes("Formatting and Length"));
+ok("the prep file names the source of each value", samplePrep.includes("course_settings/rubrics.xml"));
+ok("the prep file says what is not included", samplePrep.includes("answer keys"));
+
+if (existsSync(join(SAMPLE_DIR, ENG120))) {
+  console.log("\nAssessment review — ENG120");
+
+  const { model, findings, prep } = await reviewExport(ENG120);
+
+  check("the graded items were found", model.assessments.length, 44);
+  check("the rubrics were found", model.rubrics.length, 40);
+  check("the item banks were found", model.itemBanks.length, 64);
+
+  // The two Grammar Review quizzes draw more questions than they are worth.
+  ok("both Grammar Review quizzes were reported", findings.filter((finding) => finding.check === "A3").length === 2);
+
+  // The GE Discussion Rubric copies are reported as duplicates.
+  ok(
+    "the identical rubrics were grouped",
+    findings.some((finding) => finding.check === "B2" && finding.title.includes("identical criteria")),
+  );
+
+  ok("the prep file was written", prep.length > 10000);
+  ok("the prep file names the course", prep.includes("ENG120 MASTER (2027-1) - English Composition I"));
+}
+
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed.`);
   process.exit(1);

@@ -334,7 +334,7 @@ function renderMeta(state: AppState, item: CourseItem): void {
     if (quiz.pointsPossible !== undefined) rows.push(["Points", String(quiz.pointsPossible)]);
     rows.push(["Questions", describeQuestionCount(summary)]);
     rows.push(["Question source", describeQuestionSource(quiz)]);
-    if (summary.points > 0) rows.push(["Points from questions", String(summary.points)]);
+    if (summary.points !== undefined) rows.push(["Points from questions", String(summary.points)]);
     if (Object.keys(quiz.questionTypes).length > 0) {
       rows.push([
         "Question types",

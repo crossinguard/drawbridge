@@ -152,7 +152,7 @@ export interface QuizSelection {
   pointsPerItem?: number;
   /** True when the export carries the bank file itself. */
   bankFilePresent: boolean;
-  /** True when the selection takes every item in the bank. */
+  /** True when the selection does not say how many items it takes. */
   drawsAll?: boolean;
 }
 
@@ -179,14 +179,23 @@ export interface QuizDetails {
   questionCount: number;
   /** Canvas question types, with how many of each were found. */
   questionTypes: Record<string, number>;
-  /** Points of the questions stored inside the quiz, from their own metadata. */
+  /** Points of the graded questions stored inside the quiz. */
   inlinePoints: number;
+  /** Passages of text shown to the student, which are not graded. */
+  textBlockCount: number;
   /** How many questions the quiz draws from its banks. */
   drawnCount?: number;
   /** Points the questions drawn from banks are worth. */
   bankPoints?: number;
-  /** Points every selection in the quiz adds up to. */
+  /** Points the quiz's selections add up to. */
   selectionPoints: number;
+  /**
+   * Points the quiz's questions are worth in total.
+   *
+   * Undefined when the export does not say how many questions a selection
+   * takes, which makes the total impossible to work out.
+   */
+  pointsTotal?: number;
   /** True when a selection does not say how many items it uses. */
   selectionCountUnknown: boolean;
   /** Which Canvas quiz engine the quiz uses. */

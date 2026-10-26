@@ -43,11 +43,33 @@ export interface ProcessedContent {
   html: string;
   /** Plain text, used for search. */
   text: string;
+  /** The text in blocks, so a reader can tell one point from the next. */
+  blocks: string[];
   links: ContentLink[];
   images: ContentImage[];
   /** How many references to the source Canvas instance were found. */
   apiReferenceCount: number;
 }
+
+/** The tags whose text stands on its own line. */
+const BLOCK_TAGS = new Set([
+  "p",
+  "li",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "blockquote",
+  "pre",
+  "figcaption",
+  "dt",
+  "dd",
+  "summary",
+  "caption",
+  "address",
+]);
 
 /** Tags that survive sanitising. */
 const ALLOWED_TAGS = new Set([
@@ -185,13 +207,72 @@ export function processContent(html: string, courseDomain?: string): ProcessedCo
     }
   }
 
+  const blocks: string[] = [];
+  collectBlocks(target.body, blocks);
+
   return {
     html: target.body.innerHTML,
     text: (target.body.textContent ?? "").replace(/\s+/g, " ").trim(),
+    blocks,
     links: context.links,
     images: context.images,
     apiReferenceCount: context.apiReferenceCount,
   };
+}
+
+/**
+ * Collect the text of the content, one block at a time.
+ *
+ * A reviewer reading a list of requirements needs to see the list, not one
+ * long run of words, so each block keeps its own line.
+ */
+function collectBlocks(node: Node, out: string[]): void {
+  if (node.nodeType === 3) {
+    const text = (node.textContent ?? "").replace(/\s+/g, " ").trim();
+    if (text) out.push(text);
+    return;
+  }
+
+  if (node.nodeType !== 1) return;
+
+  const element = node as Element;
+  const name = element.localName.toLowerCase();
+
+  if (name === "tr") {
+    const cells = Array.from(element.children)
+      .map((cell) => (cell.textContent ?? "").replace(/\s+/g, " ").trim())
+      .filter((cell) => cell !== "");
+    if (cells.length > 0) out.push(cells.join(" | "));
+    return;
+  }
+
+  if (name === "ul" || name === "ol") {
+    for (const child of Array.from(element.children)) {
+      const before = out.length;
+      collectBlocks(child, out);
+      for (let index = before; index < out.length; index++) {
+        out[index] = `- ${out[index]}`;
+      }
+    }
+    return;
+  }
+
+  if (name === "div" || name === "section" || name === "article") {
+    // A wrapper only carries text of its own when it holds no blocks.
+    const hasBlocks = Array.from(element.children).some((child) => BLOCK_TAGS.has(child.localName.toLowerCase()));
+    if (hasBlocks) {
+      for (const child of Array.from(element.childNodes)) collectBlocks(child, out);
+      return;
+    }
+  }
+
+  if (BLOCK_TAGS.has(name)) {
+    const text = (element.textContent ?? "").replace(/\s+/g, " ").trim();
+    if (text) out.push(text);
+    return;
+  }
+
+  for (const child of Array.from(element.childNodes)) collectBlocks(child, out);
 }
 
 /** Rebuild the children of `source` into safe nodes. */

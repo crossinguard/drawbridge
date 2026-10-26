@@ -59,7 +59,8 @@ src/
 │       ├── steps.ts               # the shared ToolStep contract
 │       ├── rubric-csv/
 │       ├── outcome-mapper/
-│       └── imscc-viewer/          # Canvas course export viewer
+│       ├── imscc-viewer/          # Canvas course export viewer
+│       └── assessment-review/     # Canvas assessment review
 ├── content/guides/                # guide MDX (reference + quick-start)
 ├── pages/
 │   ├── index.astro                # tool directory (home)
@@ -68,7 +69,8 @@ src/
 │   ├── tools/
 │   │   ├── rubric-csv/
 │   │   ├── outcome-mapper/
-│   │   └── imscc-viewer/
+│   │   ├── imscc-viewer/
+│   │   └── assessment-review/
 │   └── guides/
 │       ├── index.astro
 │       └── [tool]/index.astro     # one route for every guide
@@ -81,7 +83,8 @@ src/
 │   │   └── stepper.ts             # shared step navigation
 │   └── tools/
 │       ├── outcome-mapper/
-│       └── imscc-viewer/
+│       ├── imscc-viewer/
+│       └── assessment-review/
 └── components/
     ├── drawbridge/                # site-wide components (Header, Footer, PageHeader)
     │   └── tools/                 # tool-page components (ToolLayout, ToolStep…)
@@ -203,6 +206,82 @@ imported from `.astro` files. Importing it from a client script under
 `src/scripts/` would degrade the icons to plain asset metadata. Anything a
 controller needs lives in a separate, icon-free module.
 
+## The assessment review
+
+`src/lib/tools/assessment-review/` turns a course export into a plain-text
+review of every graded item. It is a separate tool from the viewer, but it
+reads the same cartridge layer.
+
+### The model
+
+`model.ts` builds one model from the parsed course, and everything else reads
+from it — the checks, the screen, and the export. That is what keeps the file
+and the screen from disagreeing.
+
+| Type           | What it is                                                          |
+| -------------- | ------------------------------------------------------------------- |
+| `Assessment`   | One graded item: assignment, quiz, or graded discussion             |
+| `RubricReview` | A rubric with the items that use it and the rubrics it duplicates   |
+| `GroupReview`  | An assignment group with its items, points, and share of the points |
+| `UsageMap`     | Every item in the course, and whether it looks in use or left over  |
+
+### The checks
+
+`checks/` holds one module per family. Every finding carries the two values it
+compared, the file each value came from, a suggested priority, and whether a
+reviewer has to resolve it.
+
+| Family | Module              | What it compares                                     |
+| ------ | ------------------- | ---------------------------------------------------- |
+| A      | `checks/scoring.ts` | The three scoring layers: items, assignments, groups |
+| B      | `checks/legacy.ts`  | What is in use and what is left over                 |
+| C      | `checks/quizzes.ts` | The quizzes: classification, settings, instructions  |
+| D      | `checks/rubrics.ts` | The rubrics against the instructions                 |
+| E      | `checks/naming.ts`  | Whether the names agree                              |
+
+### The rules
+
+`findings.ts` holds the `ReviewRules` — the institution's defaults for what
+to do when the instructions are silent, the list of retired terms, and the list
+of words to look at. They apply to every course the tool is pointed at.
+
+### The prep file
+
+`prep-file.ts` writes the plain-text file. It is the tool's primary output,
+and it has to stand on its own: whoever reads it cannot open the archive and
+cannot ask a follow-up question.
+
+- The fifteen sections are in a **fixed order**, so an assistant can rely on
+  finding the module map in section 5 and the assessment details in section 10.
+- Every value is written with the file it came from.
+- The instructions are written out **in full**. They are never trimmed — a
+  requirement that was cut off is a requirement nobody can check.
+- The deliberate omissions (question text, answer keys, learner data, the live
+  state of the course) are stated in section 14, so nothing looks complete when
+  it is not.
+- The `[REVIEW REQUIRED: reason]` marker is used for anything a reviewer has
+  to resolve, and section 15 collects them all.
+
+A course with a lot of rubrics produces a very large file — PN126 comes to
+2.5 MB, most of it rubric text. The export step offers to narrow the file to
+the assessments with findings, but the complete file is the default.
+
+### What the review found in the real courses
+
+Both live exports carry things worth finding, which is the point of the tool:
+
+- ENG120 has two **Grammar Review quizzes** whose questions are worth more than
+  the quiz: one draws 11 questions worth 1 point each for a quiz worth 10, and
+  the other adds an essay worth 25 to a bank draw worth 11 for a quiz worth 25.
+- ENG120 has 40 rubrics, of which 12 are attached to anything, and **15 of them
+  are identical copies** of _GE Discussion Rubric_.
+- ENG120 has **two different rubrics called "ENG120 Week 2 Assignment:
+  Punctuation Paragraph"** — one with 3 criteria worth 25 points and one with
+  4 worth 30. Canvas' own rubric export merges them, because it groups by
+  name.
+- PN126 has **15 quizzes with access codes** that the instructions do not
+  mention.
+
 ## The Canvas Common Cartridge
 
 The Canvas Course Export Viewer and the Canvas Assessment Review both read an
@@ -289,7 +368,12 @@ makes them 2.0 points each — 100 points, matching the quiz. Summing the item
 metadata would have reported a mismatch that does not exist.
 
 A selection with no `<sourcebank_ref>` selects the quiz's **own** items. One
-with no `<selection_number>` takes **every** item in the bank.
+with no `<selection_number>` takes **every** item in the bank — and the bank
+file says how many items there are, so the count can be worked out.
+
+A `text_only_question` is a passage shown to the student, not something they
+answer. It carries a placeholder point value in the export but is not graded,
+so it is counted apart and left out of the points.
 
 ### Rubrics
 

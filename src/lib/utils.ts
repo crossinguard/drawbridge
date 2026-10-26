@@ -12,3 +12,22 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
+
+/**
+ * A collator that sorts embedded numbers the way people read them.
+ *
+ * Course content is full of names like "Week 2" and "Week 10". A plain string
+ * sort puts "Week 10" before "Week 2", which is wrong in every list a reviewer
+ * reads.
+ */
+const naturalCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+/** Compare two strings the way people read numbers in them. */
+export function naturalCompare(a: string, b: string): number {
+  return naturalCollator.compare(a, b);
+}
+
+/** Sort a list of strings the way people read numbers in them. */
+export function naturalSort(values: readonly string[]): string[] {
+  return [...values].sort(naturalCompare);
+}

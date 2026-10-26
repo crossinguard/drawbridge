@@ -11,6 +11,7 @@ The homepage is the tool directory. Tools are grouped by how finished they are:
 - **Rubric → Canvas CSV** — Convert a Word rubric table into a Canvas import CSV. _Experimental._
 - **Outcome Mapper** — Map program, course, and assessment outcomes and export the alignment table. _Under development._
 - **Canvas Course Export Viewer** — Open a Canvas course export and browse everything in it, with a QA report. _Experimental._
+- **Canvas Assessment Review** — Turn a Canvas course export into a plain-text review of every graded item. _Under development._
 
 ### Statuses
 

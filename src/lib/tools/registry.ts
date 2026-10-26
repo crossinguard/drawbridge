@@ -124,6 +124,19 @@ export const TOOLS: readonly ToolEntry[] = [
     guideHref: "/guides/imscc-viewer",
   },
   {
+    slug: "assessment-review",
+    title: "Canvas Assessment Review",
+    description:
+      "Read a Canvas course export and produce a plain-text review of every graded item — points, rubrics, quiz settings, and what does not line up.",
+    metaDescription:
+      "Turn a Canvas course export into a plain-text assessment review — points, rubrics, quiz settings, and what does not line up. Nothing is uploaded.",
+    heading: ["Canvas Assessment", "Review"],
+    status: "under-development",
+    icon: ClipboardCheck,
+    href: "/tools/assessment-review",
+    guideHref: "/guides/assessment-review",
+  },
+  {
     slug: "assessment-plan-builder",
     title: "Assessment Plan Builder",
     description:

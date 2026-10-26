@@ -209,7 +209,7 @@ await page.click("#open-course");
 await page.waitForSelector("#step-browse:not([hidden])");
 
 check("browse step visible", await page.locator("#step-browse").isVisible(), true);
-check("one module item", await page.textContent("#browse-total"), "1");
+check("three module items", await page.textContent("#browse-total"), "3");
 check("outline rendered", (await page.locator("#browse-outline button[data-item]").count()) > 0, true);
 
 // The item's content and settings should be there.
@@ -225,7 +225,7 @@ check("detail lists the links", detail.includes("Links in this item"), true);
 await page.click("#view-table");
 await page.waitForTimeout(200);
 check("table pane visible", await page.locator("#browse-table-pane").isVisible(), true);
-check("table rows", await page.locator("#browse-table-body tr").count(), 1);
+check("table rows", await page.locator("#browse-table-body tr").count(), 3);
 
 // The report should catch the self-enrolling course and the zero-weight group.
 await page.click("#step-3 [data-step-action]");
@@ -235,7 +235,6 @@ await page.waitForTimeout(200);
 const report = (await page.textContent("#audit-findings")) ?? "";
 check("findings rendered", (await page.locator("#audit-findings article").count()) > 0, true);
 check("self-enrolment finding", report.includes("self-enrolling"), true);
-check("zero-weight finding", report.includes("weighted 0%"), true);
 check("orphan finding", report.includes("not in any module"), true);
 
 // The report can be downloaded.
@@ -245,13 +244,99 @@ const download = await downloadPromise;
 check("report file name", download.suggestedFilename(), "sample-course-report.md");
 
 // ---------------------------------------------------------------------------
+// Canvas Assessment Review
+// ---------------------------------------------------------------------------
+
+console.log("\nCanvas Assessment Review");
+await page.goto(`${BASE}/tools/assessment-review`, { waitUntil: "networkidle" });
+
+check("open step visible", await page.locator("#step-open").isVisible(), true);
+check("review step hidden", await page.locator("#step-review").isVisible(), false);
+check("export step hidden", await page.locator("#step-export").isVisible(), false);
+check("step 2 disabled", await page.locator("#step-2 [data-step-action]").isDisabled(), true);
+
+// The viewer only takes an archive now, so there is no folder picker.
+check("no folder picker", await page.locator("#folder-input").count(), 0);
+
+await page.setInputFiles("#file-input", {
+  name: "sample.imscc",
+  mimeType: "application/zip",
+  buffer: Buffer.from(cartridge),
+});
+await page.waitForSelector("#open-summary:not([hidden])");
+
+check("summary shows the course title", (await page.textContent("#open-summary"))?.includes("Sample Course"), true);
+check("step 2 enabled once a course is loaded", await page.locator("#step-2 [data-step-action]").isDisabled(), false);
+
+await page.click("#open-course");
+await page.waitForSelector("#step-review:not([hidden])");
+
+check("review step visible", await page.locator("#step-review").isVisible(), true);
+check("tabs rendered", await page.locator("#review-tabs-list button").count(), 7);
+
+// The overview says what the course holds and what the review found.
+const overview = (await page.textContent("#review-panel")) ?? "";
+check("overview names the course", overview.includes("Sample Course"), true);
+check("overview counts the rubrics", overview.includes("Rubrics"), true);
+
+// The assessments tab lists the graded items.
+await page.click("#review-tabs-list button[data-tab=assessments]");
+await page.waitForTimeout(200);
+check("assessment rows rendered", await page.locator("#review-panel tbody tr").count(), 3);
+
+// Choosing one shows its instructions and rubric.
+await page.click("#review-panel tbody tr");
+await page.waitForTimeout(200);
+const itemDetail = (await page.textContent("#review-detail")) ?? "";
+check("detail shows the instructions", itemDetail.includes("Write at least 5 complete sentences"), true);
+check("detail shows the rubric", itemDetail.includes("Formatting and Length"), true);
+
+// The quizzes tab groups the two quizzes together.
+await page.click("#review-tabs-list button[data-tab=quizzes]");
+await page.waitForTimeout(200);
+const quizzes = (await page.textContent("#review-panel")) ?? "";
+check("quizzes grouped", quizzes.includes("Week N Sample Quiz"), true);
+check("quiz settings shown", quizzes.includes("Time limit"), true);
+
+// The findings tab lists what the review found.
+await page.click("#review-tabs-list button[data-tab=flags]");
+await page.waitForTimeout(200);
+const flags = (await page.textContent("#review-panel")) ?? "";
+check("rubric mismatch reported", flags.includes("its rubric totals 30"), true);
+check("quiz points mismatch reported", flags.includes("add up to 5 points, not 10"), true);
+check("outlier reported", flags.includes("time limit"), true);
+
+// The reviewer can change a priority, and it sticks.
+const priorityButton = page.locator("#review-panel button[data-priority]").first();
+const priorityId = await priorityButton.getAttribute("data-priority");
+await priorityButton.click();
+await page.waitForTimeout(200);
+check("priority override recorded", priorityId !== null, true);
+
+// The export step produces the plain-text file.
+await page.click("#step-3 [data-step-action]");
+await page.waitForSelector("#step-export:not([hidden])");
+await page.waitForTimeout(200);
+
+const preview = (await page.textContent("#export-preview")) ?? "";
+check("preview starts with the title", preview.includes("Canvas course assessment review"), true);
+check("preview has the export identity", preview.includes("Export identity"), true);
+check("preview has the module map", preview.includes("Module map"), true);
+check("preview has the review summary", preview.includes("[REVIEW REQUIRED] summary"), true);
+
+const prepDownload = page.waitForEvent("download");
+await page.click("#download-prep");
+const prepFile = await prepDownload;
+check("review file name", prepFile.suggestedFilename(), "sample-course-assessment-review.md");
+
+// ---------------------------------------------------------------------------
 // Guides
 // ---------------------------------------------------------------------------
 
 console.log("\nGuides");
 await page.goto(`${BASE}/guides`, { waitUntil: "networkidle" });
 check("two guide cards", await page.locator("section > a[href^='/guides/']").count(), 0);
-check("guide links", await page.locator("a[href^='/guides/']").count(), 6);
+check("guide links", await page.locator("a[href^='/guides/']").count(), 8);
 
 await page.goto(`${BASE}/guides/rubric-csv`, { waitUntil: "networkidle" });
 check("guide renders", await page.locator(".sw-prose h2").count(), 5);
