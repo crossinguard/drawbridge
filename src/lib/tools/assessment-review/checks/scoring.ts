@@ -196,7 +196,7 @@ function checkQuizTotals(review: AssessmentReview): Finding[] {
       itemIds: [assessment.id],
       suggestedPriority: "high",
       priorityReason: "The quiz's own points do not match what its questions are worth.",
-      notes: [arithmetic(quiz), ...describeSelections(quiz)],
+      notes: [arithmetic(quiz)],
       needsReview: true,
     });
   }
@@ -224,20 +224,6 @@ function arithmetic(quiz: NonNullable<Assessment["quiz"]>): string {
   return parts.length > 0
     ? `The export records: ${parts.join("; ")}.`
     : "The export does not record what the questions are worth.";
-}
-
-/** A readable line for each of a quiz's selections. */
-function describeSelections(quiz: NonNullable<Assessment["quiz"]>): string[] {
-  return quiz.selections.map((selection) => {
-    const source = selection.bankTitle
-      ? `bank "${selection.bankTitle}"`
-      : selection.bankId
-        ? `bank ${selection.bankId}`
-        : "the quiz's own questions";
-    const count_ = selection.count === undefined ? "an unknown number of" : String(selection.count);
-    const worth = selection.pointsPerItem === undefined ? "an unknown number of" : String(selection.pointsPerItem);
-    return `${count_} question${selection.count === 1 ? "" : "s"} from ${source} at ${worth} point${selection.pointsPerItem === 1 ? "" : "s"} each`;
-  });
 }
 
 /**
