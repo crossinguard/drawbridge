@@ -4,6 +4,9 @@ dist/
 .vercel/
 .output/
 
+# Reference material — input for building the tools, not part of the app.
+reference/
+
 # Dependencies
 node_modules/
 

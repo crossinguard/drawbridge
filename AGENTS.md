@@ -11,21 +11,38 @@ Manage the background server with `astro dev stop`, `astro dev status`, and `ast
 ### Checks
 
 ```bash
-bun run check        # astro check — types
-bun run format       # prettier --write .
-bun run build        # astro build
-bun run test         # integration test for the .docx import path
-bun run verify       # CSV serializer/parser checks
-bun run test:e2e     # browser smoke test — builds nothing, run `bun run build` first
+bun run check           # astro check — types
+bun run check:isolation # the app must not depend on the reference material
+bun run format          # prettier --write .
+bun run build           # astro build
+bun run test            # integration test for the .docx import path
+bun run verify          # CSV serializer/parser checks
+bun run test:canvas     # parser checks for the Canvas course export viewer
+bun run test:e2e        # browser smoke test — builds nothing, run `bun run build` first
 ```
 
 Prettier formats everything, including Tailwind class order. It is configured in
 `.prettierrc` with `prettier-plugin-tailwindcss` pointing at
 `src/styles/starwind.css` (required for Tailwind v4).
 
+## The reference material
+
+`reference/` holds the real course exports the tools were built against, and the
+requirements they were read against. It is git-ignored, and **nothing in `src/`
+or `public/` may depend on it**. Deleting the folder must change nothing about
+how the app builds, runs, or tests — `bun run check:isolation` enforces that.
+
+The exports are real courses with real student work in them. They are input for
+building the tools, never an output of them: never bundle one into the site,
+never quote one in a guide, never commit one.
+
 ## Project structure
 
 ```text
+reference/                            # git-ignored input material, not part of the app
+├── canvas/course/                    # real .imscc course exports
+├── canvas/rubric/                    # a Canvas rubric export, for comparison
+└── canvas-assessment-review-reference.md
 src/
 ├── layouts/
 │   └── DrawbridgeLayout.astro     # shared site shell (nav, footer, CSP, theme)
@@ -34,6 +51,7 @@ src/
 │   ├── copy.ts                    # shared site copy
 │   ├── nav.ts                     # primary navigation links
 │   ├── utils.ts                   # `cn()` class-name helper
+│   ├── canvas/                    # the shared Canvas cartridge layer
 │   ├── parse/                     # file/text parsers
 │   ├── rubric/                    # rubric model, points, Canvas CSV
 │   └── tools/
@@ -187,10 +205,10 @@ controller needs lives in a separate, icon-free module.
 
 ## The Canvas Common Cartridge
 
-The Canvas Course Export Viewer reads an IMS Common Cartridge. The format is
-not documented anywhere obvious, and it has sharp edges. What follows was
-worked out from a real export and is the reference for
-`src/lib/tools/imscc-viewer/`.
+The Canvas Course Export Viewer and the Canvas Assessment Review both read an
+IMS Common Cartridge. The format is not documented anywhere obvious, and it has
+sharp edges. What follows was worked out from real exports and is the
+reference for `src/lib/canvas/`.
 
 ### The join
 
@@ -210,26 +228,82 @@ organization is the reliable path.
 
 ### What is where
 
-| Path                       | Holds                                           |
-| -------------------------- | ----------------------------------------------- |
-| `imsmanifest.xml`          | The resource list and the module organization   |
-| `course_settings/`         | Course settings, modules, groups, late policy   |
-| `wiki_content/*.html`      | One file per page                               |
-| `g<id>/`                   | One folder per assignment, quiz, or discussion  |
-| `g<id>.xml`                | `webLink`, `topicMeta`, and LTI sidecars        |
-| `non_cc_assessments/*.qti` | The questions for quizzes using the bank layout |
-| `web_resources/`           | The files the course owns                       |
+| Path                          | Holds                                          |
+| ----------------------------- | ---------------------------------------------- |
+| `imsmanifest.xml`             | The resource list and the module organization  |
+| `course_settings/`            | Course settings, modules, groups, late policy  |
+| `course_settings/rubrics.xml` | Every rubric in the course                     |
+| `wiki_content/*.html`         | One file per page                              |
+| `g<id>/`                      | One folder per assignment, quiz, or discussion |
+| `g<id>.xml`                   | `webLink`, `topicMeta`, and LTI sidecars       |
+| `non_cc_assessments/*.qti`    | The questions for quizzes, and the item banks  |
+| `web_resources/`              | The files the course owns                      |
 
-A quiz's settings are in `g<id>/assessment_meta.xml`; its questions are in
-`non_cc_assessments/<id>.xml.qti`, or beside the settings. A discussion's
-settings are in a separate `topicMeta` file, named by the resource's
-`<dependency>`.
+### A quiz is two resources
+
+This is the sharpest edge, and it is why assessments are indexed by folder
+rather than by path. Canvas writes **two** manifest resources for one classic
+quiz:
+
+```text
+resource  g<folder>   type imsqti…/assessment        file g<folder>/assessment_qti.xml
+           └─ dependency ──▶ resource  i<hash>       file g<folder>/assessment_meta.xml
+                                                    file non_cc_assessments/<folder>.xml.qti
+```
+
+The module points at the **first** resource. The settings live in the
+**second** one, reached through the dependency. The two identifiers are
+different, so matching on the resource id alone finds the settings file in the
+wrong place — or not at all.
+
+The parser therefore indexes assessments by the **folder** they live in. The
+folder name is the same in all three paths — `g<folder>/assessment_meta.xml`,
+`g<folder>/assessment_qti.xml`, and `non_cc_assessments/<folder>.xml.qti` —
+and that is what makes the join possible.
+
+### Item banks are not quizzes
+
+A QTI file is a **question bank** when its root element is `<objectbank>`, and
+a **quiz** when it holds an `<assessment>`. The two look alike and are easy to
+confuse. In the ENG120 export, 64 of the 94 QTI files are banks, and they are
+not in any module — reporting them as orphaned quizzes would be badly wrong.
+
+A quiz draws from a bank with a `<selection>`:
+
+```xml
+<selection>
+  <sourcebank_ref>g6368989…</sourcebank_ref>
+  <selection_number>5</selection_number>
+  <selection_extension><points_per_item>1.0</points_per_item></selection_extension>
+</selection>
+```
+
+### The points a quiz is worth
+
+Canvas records two different figures for the same questions, and they can
+disagree. The `<item>` elements carry a `points_possible` in their metadata;
+the `<selection>` says what each question is _actually_ worth. **The selection
+is the figure that applies.** In the AP_Calculus export the "Formulas Quiz"
+has 50 questions worth 1.0 point each in their metadata, but a selection that
+makes them 2.0 points each — 100 points, matching the quiz. Summing the item
+metadata would have reported a mismatch that does not exist.
+
+A selection with no `<sourcebank_ref>` selects the quiz's **own** items. One
+with no `<selection_number>` takes **every** item in the bank.
+
+### Rubrics
+
+`course_settings/rubrics.xml` holds every rubric in the course, including the
+ones nothing uses. An assignment links to one with `<rubric_identifierref>`,
+and `<rubric_use_for_grading>` says whether the rubric drives the score or is
+attached for reference only. A rubric is not a module item and never appears
+in one — it is a separate layer.
 
 ### Sharp edges
 
 - **The namespace declaration can be broken.** Some exports write `xmlns:xsi`
   with two URIs separated by a space. No XML parser accepts that, and browsers
-  refuse the whole document. `src/lib/tools/imscc-viewer/xml.ts` repairs it.
+  refuse the whole document. `src/lib/canvas/xml.ts` repairs it.
 - **Some resources have no `href`.** Their title has to come from the file
   itself, not from the manifest.
 - **The document element often is the element being looked for.** A quiz's
@@ -237,10 +311,14 @@ settings are in a separate `topicMeta` file, named by the resource's
   document root; `allElements` matches it too.
 - **The file listing is not a reliable index.** `files_meta.xml` only records
   the files Canvas considers hidden, not all of them.
+- **`ContextModuleSubHeader` is not content.** It is a heading in a module,
+  and it has no resource in the manifest.
+- **Some settings are empty elements.** `<hide_results/>` means the setting
+  is _on_; reading its text gives an empty string. Presence is the signal.
 
 ### Content handling
 
-Course content is not trusted. `src/lib/tools/imscc-viewer/content.ts` rebuilds
+Course content is not trusted. `src/lib/canvas/content.ts` rebuilds
 it against an allowlist of tags and attributes — no scripts, no event handlers,
 no inline styles, no `javascript:` URLs — and rewrites Canvas' placeholders:
 

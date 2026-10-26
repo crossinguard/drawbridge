@@ -1,15 +1,14 @@
 /**
  * Parser checks for the Canvas course export viewer (run with: bun run test:canvas).
  *
- * The sample export lives in `src/assets/reference/canvas/course/`, which is git-ignored — it
+ * The sample export lives in `reference/canvas/course/`, which is git-ignored — it
  * is a local fixture, not part of the repository. When it is not there the
  * test says so and exits successfully, so it never breaks a clean checkout.
  *
  * The export is read through the same code the browser uses: the `.imscc` is
- * opened with JSZip and the extracted folder is read through the folder
- * store, so both input paths are covered.
+ * opened with JSZip and parsed by the shared Canvas parser.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { JSDOM } from "jsdom";
@@ -18,12 +17,11 @@ import { JSDOM } from "jsdom";
 const dom = new JSDOM("<!doctype html><html><body></body></html>");
 (globalThis as Record<string, unknown>).DOMParser = dom.window.DOMParser;
 
-const { openCartridge } = await import("../src/lib/tools/imscc-viewer/store");
-const { parseCourseExport } = await import("../src/lib/tools/imscc-viewer/parse");
+const { openCartridge } = await import("../src/lib/canvas/store");
+const { parseCourseExport } = await import("../src/lib/canvas/parse");
 
-const SAMPLE_DIR = new URL("../src/assets/reference/canvas/course/", import.meta.url).pathname;
+const SAMPLE_DIR = new URL("../reference/canvas/course/", import.meta.url).pathname;
 const SAMPLE_FILE = join(SAMPLE_DIR, "AP_Calculus_AB.imscc");
-const SAMPLE_FOLDER = join(SAMPLE_DIR, "AP_Calculus_AB");
 
 let failures = 0;
 function check(name: string, actual: unknown, expected: unknown): void {
@@ -41,38 +39,25 @@ function ok(name: string, condition: boolean): void {
   check(name, condition, true);
 }
 
-/** Every file under a folder, as paths relative to it. */
-function walkFolder(root: string, prefix = ""): { path: string; file: File }[] {
-  const out: { path: string; file: File }[] = [];
-
-  for (const entry of readdirSync(join(root, prefix))) {
-    const relative = prefix ? `${prefix}/${entry}` : entry;
-    const absolute = join(root, relative);
-
-    if (statSync(absolute).isDirectory()) {
-      out.push(...walkFolder(root, relative));
-    } else {
-      const bytes = new Uint8Array(readFileSync(absolute));
-      out.push({ path: relative, file: new File([bytes], entry) });
-    }
-  }
-
-  return out;
+/** Read an export from the reference folder. */
+async function readExport(file: string) {
+  const path = join(SAMPLE_DIR, file);
+  const store = await openCartridge(new File([new Uint8Array(readFileSync(path))], file));
+  return parseCourseExport(store, { sourceName: file });
 }
 
-if (!existsSync(SAMPLE_FILE) || !existsSync(SAMPLE_FOLDER)) {
-  console.log("No Canvas sample export found in src/assets/canvas — skipping the parser checks.");
+if (!existsSync(SAMPLE_FILE)) {
+  console.log("No Canvas sample export found in reference/canvas/course — skipping the parser checks.");
   process.exit(0);
 }
 
 // ---------------------------------------------------------------------------
-// The ZIP and the extracted folder should describe the same course
+// The archive should describe the course
 // ---------------------------------------------------------------------------
 
 console.log("\nCanvas course export — .imscc archive");
 
-const zipStore = await openCartridge(new File([new Uint8Array(readFileSync(SAMPLE_FILE))], "AP_Calculus_AB.imscc"));
-const fromZip = await parseCourseExport(zipStore, { sourceName: "AP_Calculus_AB.imscc" });
+const fromZip = await readExport("AP_Calculus_AB.imscc");
 const course = fromZip.export;
 
 check("course title", course.meta.title, "Calc AB Sandbox");
@@ -188,7 +173,7 @@ ok(
   "the repaired file was reported",
   course.warnings.some((warning) => warning.includes("assessment_meta.xml")),
 );
-const { hasBrokenNamespace, parseXml: parseXmlDirect } = await import("../src/lib/tools/imscc-viewer/xml");
+const { hasBrokenNamespace, parseXml: parseXmlDirect } = await import("../src/lib/canvas/xml");
 const broken = `<?xml version="1.0"?>
 <quiz xmlns="http://canvas.instructure.com/xsd/cccv1p0" xmlns:xsi="http://canvas.instructure.com/xsd/cccv1p0 https://canvas.instructure.com/xsd/cccv1p0.xsd" identifier="x">
   <title>Broken</title>
@@ -197,29 +182,38 @@ check("broken namespace detected", hasBrokenNamespace(broken), true);
 check("broken namespace repaired", parseXmlDirect(broken, "broken.xml").documentElement.localName, "quiz");
 
 // ---------------------------------------------------------------------------
-// The extracted folder should describe the same course
+// Quizzes, item banks and rubrics
 // ---------------------------------------------------------------------------
 
-console.log("\nCanvas course export — extracted folder");
+console.log("\nQuizzes, item banks and rubrics");
 
-const folderStore = await openCartridge(walkFolder(SAMPLE_FOLDER));
-const fromFolder = await parseCourseExport(folderStore, { sourceName: "AP_Calculus_AB" });
-const folderCourse = fromFolder.export;
+// The formulas quiz is in the export but no module points at it.
+const formulas = course.orphans.find((item) => item.title === "Formulas Quiz");
+ok("the formulas quiz was found", Boolean(formulas));
+ok("the formulas quiz has settings", Boolean(formulas?.quiz?.settingsSource));
+check("the formulas quiz is a classic quiz", formulas?.quiz?.engine, "classic");
+check("the formulas quiz keeps its own questions", formulas?.quiz?.contentSource, "items");
+check("the formulas quiz has 50 questions", formulas?.quiz?.questionCount, 50);
 
-check("folder: module count", folderCourse.modules.length, course.modules.length);
-check("folder: item count", folderCourse.items.length, course.items.length);
-check("folder: file count", folderCourse.files.length, course.files.length);
-check("folder: course title", folderCourse.meta.title, course.meta.title);
-check(
-  "folder: same module titles",
-  folderCourse.modules.map((module) => module.title),
-  course.modules.map((module) => module.title),
-);
-check(
-  "folder: same item titles",
-  folderCourse.items.map((item) => item.title),
-  course.items.map((item) => item.title),
-);
+// Canvas records what a selection is worth separately from the points on the
+// questions themselves. The selection is the figure that applies.
+check("the formulas quiz records one selection", formulas?.quiz?.selections.length, 1);
+check("the selection takes 50 questions", formulas?.quiz?.selections[0]?.count, 50);
+check("the selection is worth 2 points each", formulas?.quiz?.selections[0]?.pointsPerItem, 2);
+check("the selection adds up to the quiz's points", formulas?.quiz?.selectionPoints, formulas?.quiz?.pointsPossible);
+
+// The item bank in this export is not used by any quiz.
+check("one item bank was found", course.itemBanks.length, 1);
+check("the item bank has a title", course.itemBanks[0]?.title, "Unfiled Questions");
+ok("the item bank holds items", (course.itemBanks[0]?.itemCount ?? 0) > 0);
+check("no quiz draws from it", course.itemBanks[0]?.usedBy.length, 0);
+
+// This export has no rubrics.
+check("no rubrics were found", course.rubrics.length, 0);
+
+// Every file the parser read is recorded, and nothing failed.
+ok("files were read", course.filesRead.length > 0);
+check("no file failed to parse", course.unreadable.length, 0);
 
 // ---------------------------------------------------------------------------
 // Sanitising
@@ -227,7 +221,7 @@ check(
 
 console.log("\nContent sanitising");
 
-const { processContent } = await import("../src/lib/tools/imscc-viewer/content");
+const { processContent } = await import("../src/lib/canvas/content");
 
 const nasty = processContent(
   `<p onclick="steal()">Hello</p>
@@ -262,6 +256,90 @@ ok(
   "file image collected",
   internal.images.some((image) => image.path === "web_resources/icons/book.png"),
 );
+
+// ---------------------------------------------------------------------------
+// Live course exports
+// ---------------------------------------------------------------------------
+
+const ENG120 = "eng120-master-2027-1-english-composition-i-export.imscc";
+const PN126 = "pn126-master-2027-1-concepts-of-practical-nursing-health-promotion-export.imscc";
+
+if (existsSync(join(SAMPLE_DIR, ENG120))) {
+  console.log("\nLive course export — ENG120");
+
+  const { export: eng } = await readExport(ENG120);
+  const engAll = [...eng.items, ...eng.orphans];
+
+  check("course title", eng.meta.title, "ENG120 MASTER (2027-1) - English Composition I");
+  check("module count", eng.modules.length, 18);
+  check("rubrics were read", eng.rubrics.length, 40);
+
+  // The item banks are not quizzes. They are pools of questions that the
+  // quizzes draw from, and they are not in any module.
+  const engQuizzes = engAll.filter((item) => item.kind === "quiz");
+  check("quiz count", engQuizzes.length, 30);
+  check("every quiz has settings", engQuizzes.filter((quiz) => quiz.quiz?.settingsSource).length, 30);
+  check("item banks were found", eng.itemBanks.length, 64);
+  ok(
+    "no item bank is counted as a quiz",
+    eng.itemBanks.every((bank) => !engQuizzes.some((quiz) => quiz.id === bank.id)),
+  );
+
+  // The quizzes draw their questions from banks, and the arithmetic adds up.
+  const webinar = engQuizzes.find((item) => item.title === "Week 1 Webinar Quiz");
+  check("the webinar quiz draws from banks", webinar?.quiz?.contentSource, "banks");
+  check("the webinar quiz draws 10 questions", webinar?.quiz?.drawnCount, 10);
+  check(
+    "the webinar quiz's questions are worth its points",
+    webinar?.quiz?.selectionPoints,
+    webinar?.quiz?.pointsPossible,
+  );
+  ok("the webinar quiz names the banks it uses", (webinar?.quiz?.selections.length ?? 0) > 0);
+  ok(
+    "the banks the webinar quiz names are in the export",
+    (webinar?.quiz?.selections ?? []).every((selection) => selection.bankFilePresent),
+  );
+
+  // The rubric links resolve.
+  const rubricRefs = engAll.filter((item) => item.assignment?.rubricId);
+  ok("assignments carry rubric references", rubricRefs.length > 0);
+  const rubricIds = new Set(eng.rubrics.map((rubric) => rubric.id));
+  ok(
+    "every rubric reference resolves",
+    rubricRefs.every((item) => rubricIds.has(item.assignment!.rubricId!)),
+  );
+
+  // Section headings are not content.
+  check("section headings were recognised", engAll.filter((item) => item.kind === "heading").length, 4);
+}
+
+if (existsSync(join(SAMPLE_DIR, PN126))) {
+  console.log("\nLive course export — PN126");
+
+  const { export: pn } = await readExport(PN126);
+  const pnAll = [...pn.items, ...pn.orphans];
+
+  check("rubrics were read", pn.rubrics.length, 89);
+  check("module count", pn.modules.length, 34);
+  check("section headings were recognised", pnAll.filter((item) => item.kind === "heading").length, 61);
+
+  const pnQuizzes = pnAll.filter((item) => item.kind === "quiz");
+  check("quiz count", pnQuizzes.length, 24);
+  check("every quiz has settings", pnQuizzes.filter((quiz) => quiz.quiz?.settingsSource).length, 24);
+  check("item banks were found", pn.itemBanks.length, 1);
+
+  // A rubric's criteria add up to the rubric's own total.
+  const mismatched = pn.rubrics.filter((rubric) => {
+    if (rubric.pointsPossible === undefined) return false;
+    const sum = rubric.criteria.reduce((total, criterion) => total + (criterion.points ?? 0), 0);
+    return Math.abs(sum - rubric.pointsPossible) > 0.001;
+  });
+  check(
+    "every rubric's criteria add up to its total",
+    mismatched.map((rubric) => rubric.title),
+    [],
+  );
+}
 
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed.`);

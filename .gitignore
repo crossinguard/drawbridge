@@ -1,8 +1,9 @@
 # build output
 dist/
-# Canvas sample course export — a real course, kept out of the repository.
-# The small rubric reference template next to it is tracked.
-src/assets/reference/canvas/course/
+# Reference material — input for building the tools, not part of the app.
+# Real course exports and the requirements they were read against live here.
+# Nothing in `src/` may depend on this folder; deleting it changes nothing.
+reference/
 # generated types
 .astro/
 

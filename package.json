@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "astro check",
+    "check:isolation": "bun ./scripts/check-isolation.ts",
     "verify": "bun ./scripts/verify-serializer.ts",
     "test": "bun ./scripts/integration-test.ts",
     "test:canvas": "bun ./scripts/canvas-parser-test.ts",

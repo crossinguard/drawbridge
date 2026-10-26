@@ -4,8 +4,9 @@
  */
 import type { Finding } from "./audit";
 import { FINDING_CATEGORIES } from "./audit";
-import type { ProcessedContent } from "./content";
-import { KIND_LABELS, type ContentType, type CourseExport, type CourseItem } from "./types";
+import type { ProcessedContent } from "@/lib/canvas/content";
+import { describeQuestionCount, summariseQuestions } from "@/lib/canvas/quiz";
+import { KIND_LABELS, type ContentType, type CourseExport, type CourseItem } from "@/lib/canvas/types";
 
 /** Escape a value for a CSV cell. */
 function csvCell(value: string | number | undefined): string {
@@ -94,7 +95,8 @@ function itemNotes(item: CourseItem): string {
   if (item.unresolved) notes.push(item.unresolvedReason ?? "Not resolved");
   if (item.url) notes.push(item.url);
   if (item.quiz) {
-    if (item.quiz.questionCount) notes.push(`${item.quiz.questionCount} questions`);
+    const summary = summariseQuestions(item.quiz);
+    if (summary.hasQuestions) notes.push(describeQuestionCount(summary));
     if (item.quiz.accessCode) notes.push("Has an access code");
   }
   if (item.kind === "page" && item.page?.frontPage) notes.push("Course front page");

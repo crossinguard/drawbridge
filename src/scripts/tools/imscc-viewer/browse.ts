@@ -12,8 +12,15 @@ import { tableCell, tableRow } from "@/components/starwind/table/variants";
 
 import { byId, esc, escAttr } from "@/scripts/lib/dom";
 
-import type { ContentLink } from "@/lib/tools/imscc-viewer/content";
-import { KIND_LABELS, type CourseItem } from "@/lib/tools/imscc-viewer/types";
+import type { ContentLink } from "@/lib/canvas/content";
+import {
+  bankSelections,
+  describeQuestionCount,
+  describeQuestionSource,
+  describeSelection,
+  summariseQuestions,
+} from "@/lib/canvas/quiz";
+import { KIND_LABELS, type CourseItem } from "@/lib/canvas/types";
 import type { AppState } from "./state";
 
 /** Object URLs handed to images, so they can be released later. */
@@ -323,8 +330,11 @@ function renderMeta(state: AppState, item: CourseItem): void {
 
   if (item.quiz) {
     const quiz = item.quiz;
+    const summary = summariseQuestions(quiz);
     if (quiz.pointsPossible !== undefined) rows.push(["Points", String(quiz.pointsPossible)]);
-    rows.push(["Questions", String(quiz.questionCount)]);
+    rows.push(["Questions", describeQuestionCount(summary)]);
+    rows.push(["Question source", describeQuestionSource(quiz)]);
+    if (summary.points > 0) rows.push(["Points from questions", String(summary.points)]);
     if (Object.keys(quiz.questionTypes).length > 0) {
       rows.push([
         "Question types",
@@ -344,6 +354,11 @@ function renderMeta(state: AppState, item: CourseItem): void {
     if (quiz.lockdownBrowser) rows.push(["Lockdown browser", "Required"]);
     if (quiz.showCorrectAnswers) rows.push(["Correct answers", "Shown"]);
     if (quiz.accessCode) rows.push(["Access code", "Set — this travels with the export"]);
+
+    const banks = bankSelections(quiz);
+    if (banks.length > 0) {
+      rows.push(["Item banks", banks.map((selection) => describeSelection(selection)).join("; ")]);
+    }
   }
 
   if (item.discussion) {

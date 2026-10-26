@@ -11,16 +11,10 @@ import { copyToClipboard, download } from "@/scripts/lib/io";
 import { createStepper } from "@/scripts/lib/stepper";
 
 import { auditCourse } from "@/lib/tools/imscc-viewer/audit";
-import { parseCourseExport } from "@/lib/tools/imscc-viewer/parse";
+import { parseCourseExport } from "@/lib/canvas/parse";
 import { toFindingsCsv, toInventoryCsv, toMarkdownReport } from "@/lib/tools/imscc-viewer/report";
-import {
-  filesFromDrop,
-  filesFromInput,
-  openCartridge,
-  type CollectedFile,
-  type FileStore,
-} from "@/lib/tools/imscc-viewer/store";
-import type { CourseExport } from "@/lib/tools/imscc-viewer/types";
+import { openCartridge, type FileStore } from "@/lib/canvas/store";
+import type { CourseExport } from "@/lib/canvas/types";
 
 import { renderAudit } from "./audit-view";
 import { renderBrowse, renderDetail } from "./browse";
@@ -51,7 +45,6 @@ const stepper = createStepper({
 // ---------------------------------------------------------------------------
 
 const fileInput = byId<HTMLInputElement>("file-input");
-const folderInput = byId<HTMLInputElement>("folder-input");
 const dropZone = byId("drop-zone");
 
 fileInput.addEventListener("change", () => {
@@ -60,14 +53,7 @@ fileInput.addEventListener("change", () => {
   fileInput.value = "";
 });
 
-folderInput.addEventListener("change", () => {
-  const files = filesFromInput(folderInput);
-  if (files.length > 0) void loadFolder(files);
-  folderInput.value = "";
-});
-
 byId("choose-file").addEventListener("click", () => fileInput.click());
-byId("choose-folder").addEventListener("click", () => folderInput.click());
 
 dropZone.addEventListener("dragover", (event) => {
   event.preventDefault();
@@ -84,35 +70,22 @@ dropZone.addEventListener("drop", (event) => {
 
 /** Open whatever was dropped onto the drop zone. */
 async function handleDrop(event: DragEvent): Promise<void> {
-  const dropped = await filesFromDrop(event);
-  if (dropped.length === 0) {
+  const dropped = Array.from(event.dataTransfer?.files ?? []);
+  const archive = dropped.find((file) => /\.(imscc|zip)$/i.test(file.name));
+
+  if (!archive) {
     toast.error("Nothing usable was dropped", {
-      description: "Drop a .imscc or .zip file, or an extracted course folder.",
+      description: "Drop a .imscc or .zip file — the course export itself, not a folder.",
     });
     return;
   }
 
-  const looksLikeArchive = dropped.some((entry) => /\.(imscc|zip)$/i.test(entry.path));
-  if (looksLikeArchive) {
-    const archive = dropped.find((entry) => /\.(imscc|zip)$/i.test(entry.path));
-    if (archive) {
-      await loadArchive(archive.file);
-      return;
-    }
-  }
-
-  await loadFolder(dropped);
+  await loadArchive(archive);
 }
 
 /** Read a course out of a ZIP archive. */
 async function loadArchive(file: File): Promise<void> {
   await loadCourse(() => openCartridge(file), file.name);
-}
-
-/** Read a course out of an extracted folder. */
-async function loadFolder(files: CollectedFile[]): Promise<void> {
-  const name = files[0]?.path.split("/")[0] ?? "course";
-  await loadCourse(() => openCartridge(files), name);
 }
 
 /** Open a cartridge, parse it, and show what was found. */

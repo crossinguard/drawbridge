@@ -5,9 +5,9 @@
  * anywhere.
  */
 import type { Finding } from "@/lib/tools/imscc-viewer/audit";
-import type { ProcessedContent } from "@/lib/tools/imscc-viewer/content";
-import type { FileStore } from "@/lib/tools/imscc-viewer/store";
-import type { ContentType, CourseExport } from "@/lib/tools/imscc-viewer/types";
+import type { ProcessedContent } from "@/lib/canvas/content";
+import type { FileStore } from "@/lib/canvas/store";
+import type { ContentType, CourseExport } from "@/lib/canvas/types";
 
 /** Which list the browse step shows on the left. */
 export type BrowseView = "outline" | "table";

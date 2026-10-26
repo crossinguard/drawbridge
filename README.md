@@ -44,17 +44,25 @@ bun run build
 ### Checks
 
 ```bash
-bun run check        # astro check — types
-bun run format       # prettier --write . (also sorts Tailwind classes)
-bun run test         # integration test for the .docx import path
-bun run test:canvas  # parser checks for the Canvas course export viewer
-bun run verify       # CSV serializer/parser checks
-bun run test:e2e     # browser smoke test (needs `bun run build` first)
+bun run check           # astro check — types
+bun run check:isolation # the app must not depend on the reference material
+bun run format          # prettier --write . (also sorts Tailwind classes)
+bun run test            # integration test for the .docx import path
+bun run test:canvas     # parser checks for the Canvas course export viewer
+bun run verify          # CSV serializer/parser checks
+bun run test:e2e        # browser smoke test (needs `bun run build` first)
 ```
 
-`bun run test:canvas` uses the sample export in `src/assets/reference/canvas/course/`, which is
-git-ignored — it is a local fixture, not part of the repository. The test skips
-itself when the sample is not there, so it never breaks a clean checkout.
+### Reference material
+
+`reference/` holds the real course exports the tools were built against, and
+the requirements they were read against. It is git-ignored and nothing in
+`src/` depends on it: deleting the folder changes nothing about how the app
+builds or runs. `bun run check:isolation` enforces that.
+
+`bun run test:canvas` uses the sample export in `reference/canvas/course/`. The
+test skips itself when the sample is not there, so it never breaks a clean
+checkout.
 
 ## Deployment (Netlify)
 
@@ -63,6 +71,10 @@ itself when the sample is not there, so it never breaks a clean checkout.
 ## Structure
 
 ```text
+reference/                            # git-ignored input material, not part of the app
+├── canvas/course/                    # real .imscc course exports
+├── canvas/rubric/                    # a Canvas rubric export, for comparison
+└── canvas-assessment-review-reference.md
 src/
 ├── layouts/
 │   └── DrawbridgeLayout.astro     # shared site shell
@@ -71,6 +83,7 @@ src/
 │   ├── copy.ts                    # shared site copy
 │   ├── nav.ts                     # primary navigation links
 │   ├── utils.ts                   # `cn()` class-name helper
+│   ├── canvas/                    # the shared Canvas cartridge layer
 │   ├── parse/                     # file/text parsers
 │   ├── rubric/                    # rubric model, points, Canvas CSV
 │   └── tools/

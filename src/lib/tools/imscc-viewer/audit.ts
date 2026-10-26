@@ -4,8 +4,9 @@
  * Every check reads only from the parsed course, so the findings are the same
  * whether the export arrived as an archive or as a folder.
  */
-import type { ProcessedContent } from "./content";
-import type { CourseExport, CourseItem } from "./types";
+import { bankSelections, summariseQuestions } from "@/lib/canvas/quiz";
+import type { ProcessedContent } from "@/lib/canvas/content";
+import type { CourseExport, CourseItem } from "@/lib/canvas/types";
 
 /** How serious a finding is. */
 export type FindingSeverity = "info" | "warning" | "error";
@@ -399,16 +400,51 @@ function auditQuizzes(course: CourseExport): Finding[] {
     });
   }
 
-  const empty = quizzes.filter((item) => (item.quiz?.questionCount ?? 0) === 0);
+  // A quiz with no questions of its own may still draw them from a bank.
+  const empty = quizzes.filter((item) => item.quiz && !summariseQuestions(item.quiz).hasQuestions);
   if (empty.length > 0) {
     findings.push({
       id: "quizzes-without-questions",
       category: "quizzes",
       title: `${empty.length} quiz${empty.length === 1 ? " has" : "s have"} no questions`,
       severity: "error",
-      detail: "The quiz settings were exported, but no question content came with them.",
+      detail:
+        "The quiz settings were exported, but no question content came with them — neither questions inside the quiz nor a draw from an item bank.",
       itemIds: empty.map((item) => item.id),
       notes: empty.map((item) => item.title),
+    });
+  }
+
+  const drawn = quizzes.filter((item) => (item.quiz?.drawnCount ?? 0) > 0);
+  if (drawn.length > 0) {
+    findings.push({
+      id: "quizzes-drawn-from-banks",
+      category: "quizzes",
+      title: `${drawn.length} quiz${drawn.length === 1 ? " draws" : " draw"} its questions from item banks`,
+      severity: "info",
+      detail:
+        "These quizzes have no questions of their own. The export records which bank each group of questions comes from and what each question is worth, but the questions themselves live in the bank.",
+      itemIds: drawn.map((item) => item.id),
+      notes: drawn.map((item) => {
+        const quiz = item.quiz!;
+        const banks = bankSelections(quiz);
+        const total = banks.reduce((sum, selection) => sum + (selection.count ?? 0), 0);
+        return `${item.title} — ${total} question${total === 1 ? "" : "s"} from ${banks.length} bank${banks.length === 1 ? "" : "s"}`;
+      }),
+    });
+  }
+
+  const unknownCount = quizzes.filter((item) => item.quiz?.selectionCountUnknown);
+  if (unknownCount.length > 0) {
+    findings.push({
+      id: "quizzes-with-unknown-question-count",
+      category: "quizzes",
+      title: `${unknownCount.length} quiz${unknownCount.length === 1 ? " does" : "s do"} not say how many questions are drawn`,
+      severity: "info",
+      detail:
+        "The export records a draw from a bank without saying how many questions it takes, so the quiz's points cannot be worked out from the export alone.",
+      itemIds: unknownCount.map((item) => item.id),
+      notes: unknownCount.map((item) => item.title),
     });
   }
 

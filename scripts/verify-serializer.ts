@@ -1,6 +1,6 @@
 /**
  * Serializer + parser sanity checks, run with: bun ./scripts/verify-serializer.ts
- * Validates output shape against src/assets/reference/canvas/rubric/import_rubric_template.csv.
+ * Validates output shape against scripts/fixtures/import_rubric_template.csv.
  */
 import { readFileSync } from "node:fs";
 
@@ -24,10 +24,7 @@ function check(name: string, actual: unknown, expected: unknown): void {
 }
 
 // 1) Round-trip against the Canvas reference template.
-const reference = readFileSync(
-  new URL("../src/assets/reference/canvas/rubric/import_rubric_template.csv", import.meta.url),
-  "utf8",
-);
+const reference = readFileSync(new URL("./fixtures/import_rubric_template.csv", import.meta.url), "utf8");
 
 const referenceRubric: Rubric = {
   name: "Rubric 1",

@@ -1,5 +1,5 @@
 ---
-import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import Tool from "@tabler/icons/outline/tool.svg";
 import Book from "@tabler/icons/outline/book.svg";
 
 import { Card, CardContent } from "@/components/starwind/card";
@@ -28,8 +28,8 @@ const isPlanned = tool.status === "planned";
           href={tool.href}
           class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-accent"
         >
+          <Tool class="size-4" aria-hidden="true" />
           Open tool
-          <ArrowRight class="size-4" aria-hidden="true" />
         </a>
         {tool.guideHref && (
           <a

@@ -12,14 +12,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 In the course, go to **Settings → Export Course Content** and choose **Common Cartridge (.imscc)**. Canvas also writes
 some extra files alongside the archive:
 
-- **`course_settings/`** — the course settings, the modules, the assignment groups, the late policy, and the file list.
+- **`course_settings/`** — the course settings, the modules, the assignment groups, the late policy, the rubrics, and the
+  file list.
 - **`wiki_content/`** — one HTML file per page.
 - **`g<id>/`** — one folder per assignment, quiz, or discussion, holding the content and its settings.
-- **`non_cc_assessments/`** — the questions for quizzes that do not use the standard QTI layout.
+- **`non_cc_assessments/`** — the questions for quizzes that use the standard QTI layout, and the item banks.
 - **`web_resources/`** — the files the course owns.
 
-The viewer accepts the `.imscc` archive, the same archive renamed to `.zip`, or an already-extracted folder. All three
-produce the same result.
+The viewer accepts the `.imscc` archive, or the same archive renamed to `.zip`.
 
 ## How content is matched to modules
 

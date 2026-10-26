@@ -4,7 +4,6 @@ import { getEntry, render } from "astro:content";
 import ClipboardText from "@tabler/icons/outline/clipboard-text.svg";
 import Download from "@tabler/icons/outline/download.svg";
 import FileZip from "@tabler/icons/outline/file-zip.svg";
-import Folder from "@tabler/icons/outline/folder.svg";
 
 // The course content is rendered as prose; this pulls in the typography.
 import "@/components/starwind/prose/styles.css";
@@ -25,10 +24,6 @@ import { steps } from "@/lib/tools/imscc-viewer/steps";
 
 const tool = requireToolBySlug("imscc-viewer");
 
-// `webkitdirectory` is not part of Astro's attribute types, but the browser
-// needs it as a real attribute for the folder picker to work.
-const folderInputProps = { webkitdirectory: true };
-
 const quickStartEntry = await getEntry("guides", "imscc-viewer-quick-start");
 if (!quickStartEntry) throw new Error('Missing guide entry "imscc-viewer-quick-start".');
 const { Content: QuickStartContent } = await render(quickStartEntry);
@@ -43,8 +38,7 @@ const { Content: QuickStartContent } = await render(quickStartEntry);
   <ToolStep step={steps[0]} title="Open a course export" hidden={false} class="gap-6">
     <Fragment slot="description">
       Choose a Canvas course export — the <code>.imscc</code> file from <em>Settings → Export Course Content</em>, or
-      the same file renamed to <code>.zip</code>. An already-extracted course folder works too. The file is read in your
-      browser and never uploaded.
+      the same file renamed to <code>.zip</code>. The file is read in your browser and never uploaded.
     </Fragment>
 
     <div
@@ -54,7 +48,7 @@ const { Content: QuickStartContent } = await render(quickStartEntry);
       <div class="grid gap-1">
         <p class="text-sm font-medium">Drop the export here</p>
         <p class="text-xs text-muted-foreground">
-          A <code>.imscc</code> or <code>.zip</code> archive, or an extracted course folder.
+          A <code>.imscc</code> or <code>.zip</code> archive — the course export itself, not a folder.
         </p>
       </div>
 
@@ -63,14 +57,9 @@ const { Content: QuickStartContent } = await render(quickStartEntry);
           <FileZip class="size-4" aria-hidden="true" />
           Choose an archive
         </Button>
-        <Button id="choose-folder" variant="outline">
-          <Folder class="size-4" aria-hidden="true" />
-          Choose an extracted folder
-        </Button>
       </div>
 
       <input type="file" id="file-input" accept=".imscc,.zip" class="sr-only" />
-      <input type="file" id="folder-input" class="sr-only" {...folderInputProps} />
 
       <p id="open-status" class="text-xs text-muted-foreground" role="status"></p>
     </div>
@@ -96,7 +85,7 @@ const { Content: QuickStartContent } = await render(quickStartEntry);
 
     <div class="grid gap-3">
       <div class="flex flex-wrap items-end gap-3">
-        <div class="grid min-w-[14rem] flex-1 gap-1.5">
+        <div class="grid min-w-56 flex-1 gap-1.5">
           <Label for="search-input">Search</Label>
           <Input id="search-input" type="search" placeholder="Titles, body text, links…" autocomplete="off" />
         </div>
@@ -111,6 +100,7 @@ const { Content: QuickStartContent } = await render(quickStartEntry);
             <NativeSelectOption value="discussion">Discussions</NativeSelectOption>
             <NativeSelectOption value="external-url">External links</NativeSelectOption>
             <NativeSelectOption value="external-tool">External tools</NativeSelectOption>
+            <NativeSelectOption value="heading">Section headings</NativeSelectOption>
           </NativeSelect>
         </div>
 
@@ -161,13 +151,13 @@ const { Content: QuickStartContent } = await render(quickStartEntry);
     <div id="browse-grid" class="grid gap-4 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
       <div
         id="browse-outline-pane"
-        class="max-h-[32rem] min-w-0 overflow-y-auto rounded-lg border border-border p-2 lg:max-h-[38rem]"
+        class="max-h-128 min-w-0 overflow-y-auto rounded-lg border border-border p-2 lg:max-h-152"
       >
         <div id="browse-outline" class="grid min-w-0 gap-3"></div>
       </div>
 
-      <div id="browse-table-pane" class="overflow-auto rounded-lg border border-border lg:max-h-[38rem]" hidden>
-        <table class="w-full min-w-[46rem] caption-bottom text-sm">
+      <div id="browse-table-pane" class="overflow-auto rounded-lg border border-border lg:max-h-152" hidden>
+        <table class="w-full min-w-184 caption-bottom text-sm">
           <thead class="[&_tr]:border-b">
             <tr class="hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors">
               <th class="text-muted-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap">Item</th>
@@ -191,7 +181,7 @@ const { Content: QuickStartContent } = await render(quickStartEntry);
         </table>
       </div>
 
-      <div id="browse-detail" class="min-h-[20rem] rounded-lg border border-border"></div>
+      <div id="browse-detail" class="min-h-80 rounded-lg border border-border"></div>
     </div>
 
     <p id="browse-empty" class="text-sm text-muted-foreground" hidden>
