@@ -189,7 +189,10 @@ README.md.
 
 Course Explorer and future Canvas tools share `src/lib/canvas/`. These format
 rules were learned from real exports and must remain intact when the model is
-extended.
+extended. Canvas permits selective Common Cartridge exports, so absence always
+means “not in this export,” never proof that the original course lacks content.
+QTI-only and files-only ZIP exports are separate formats, not supported IMSCC
+input.
 
 ### The join
 
@@ -274,6 +277,11 @@ Canvas placeholders become internal navigation or cartridge files:
 | `$WIKI_REFERENCE$/pages/<id>` | A jump to that page in the tool   |
 | `$IMS-CC-FILEBASE$/<path>`    | A file/image inside the cartridge |
 | `$CANVAS_COURSE_REFERENCE$/…` | A jump to the module outline      |
+| `$CANVAS_OBJECT_REFERENCE$/…` | A jump to that content or module  |
+
+Canvas equation images become accessible equation text when the export carries
+LaTeX in its attributes. Iframes become explicit outbound links; neither remote
+images nor third-party thumbnails or frames are loaded.
 
 `src/scripts/canvas/content-view.ts` resolves cartridge images to object URLs
 and releases them on rerender and unmount. Preserve that cleanup.

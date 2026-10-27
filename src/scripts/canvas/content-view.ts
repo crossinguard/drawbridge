@@ -3,7 +3,8 @@ import type { FileStore } from "@/lib/canvas/store";
 
 interface ContentViewOptions {
   archive: FileStore;
-  onTarget: (target: string) => void;
+  /** Return true when the tool handled navigation; false preserves an ordinary anchor. */
+  onTarget: (target: string) => boolean;
 }
 
 /**
@@ -56,8 +57,8 @@ export function createCanvasContentView({ archive, onTarget }: ContentViewOption
 
       container.querySelectorAll<HTMLAnchorElement>("a[data-canvas-target]").forEach((anchor) => {
         anchor.addEventListener("click", (event) => {
-          event.preventDefault();
-          onTarget(anchor.dataset.canvasTarget ?? "");
+          const handled = onTarget(anchor.dataset.canvasTarget ?? "");
+          if (handled) event.preventDefault();
         });
       });
 

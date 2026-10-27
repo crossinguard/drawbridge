@@ -12,7 +12,7 @@ It only reads the export. It does not change the course in Canvas, grade or asse
 
 ## What you need
 
-You need a Canvas course export with an **.imscc** filename. The same archive renamed to **.zip** also works.
+You need a Canvas **Common Cartridge** course export with an **.imscc** filename. The same archive renamed to **.zip** also works. Canvas's QTI-only and files-only ZIP exports are different formats and are not supported.
 
 The export is a snapshot of the course. Some Canvas features and content may not be included in that snapshot.
 
@@ -21,9 +21,11 @@ The export is a snapshot of the course. Some Canvas features and content may not
 1. Open the course in Canvas.
 2. Go to **Settings → Export Course Content**.
 3. Choose **Common Cartridge (.imscc)** and create the export.
-4. When Canvas finishes, download the export file to your device.
+4. When Canvas finishes, download the export file to your device. If an older download is no longer available, create a fresh export.
 
 You need permission to export the course. If you do not see this option, contact someone who manages the course.
+
+Canvas may also let you select particular content to export. Drawbridge can only show the selections included in that file; it cannot tell whether an export was selective or complete.
 
 ## Open and explore the course
 
@@ -59,9 +61,9 @@ The Drawbridge site itself is cached for offline use after its first load. That 
 
 ## Troubleshooting
 
-### “This archive does not look like a Canvas course export”
+### “This is not a Canvas Common Cartridge course export”
 
-Check that you chose the course's **.imscc** export, not a different Canvas report or an export from another tool.
+Check that you chose the course's **.imscc** export, not a QTI-only export, a files-only ZIP, a different Canvas report, or an export from another tool.
 
 ### The export will not open
 
@@ -69,8 +71,8 @@ Try creating and downloading a fresh export from Canvas. If the file was interru
 
 ### Something from Canvas is missing
 
-Canvas does not include every course feature or setting in an export. Course Explorer can only show what is present in the file. It cannot retrieve missing content from Canvas.
+Canvas does not include every course feature or setting in an export, and you may have chosen only selected content. Course Explorer can only show what is present in the file. It cannot retrieve missing content from Canvas.
 
 ### Images or media do not appear
 
-Files included in the export can be shown when Drawbridge supports them. Externally hosted images are not loaded. Embedded media and some external tools may appear only as links or not at all.
+Files included in the export can be shown when Drawbridge supports them. Externally hosted images are not loaded. Canvas equations may appear as equation text instead. Embedded media becomes an outbound link when a safe destination is available; some external tools may not be available in the export.

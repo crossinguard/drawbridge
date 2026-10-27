@@ -122,6 +122,10 @@ ok("script removed", !nasty.html.includes("<script"));
 ok("event handler removed", !nasty.html.includes("onclick"));
 ok("javascript URL removed", !nasty.html.includes("javascript:"));
 ok("iframe removed", !nasty.html.includes("<iframe"));
+ok(
+  "iframe becomes a deliberate external link",
+  nasty.html.includes('href="https://evil.example"') && nasty.html.includes("Open embedded content on evil.example"),
+);
 ok("inline style removed", !nasty.html.includes("style="));
 ok("external image not embedded", !nasty.html.includes("tracker.example"));
 ok(
@@ -135,6 +139,38 @@ const internal = processContent(
 ok("wiki link rewritten", internal.html.includes('data-canvas-target="page:g123"'));
 ok("file image rewritten", internal.html.includes('data-canvas-image="web_resources/icons/book.png"'));
 check("file image collected", internal.images[0]?.path, "web_resources/icons/book.png");
+
+const objects = processContent(`
+  <a href="$CANVAS_OBJECT_REFERENCE$/assignments/g123">Assignment</a>
+  <a href="$CANVAS_OBJECT_REFERENCE$/quizzes/g456">Quiz</a>
+  <a href="$CANVAS_OBJECT_REFERENCE$/discussion_topics/g789">Discussion</a>
+  <a href="$CANVAS_OBJECT_REFERENCE$/modules/g_module">Module</a>
+  <a href="#gaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">Object anchor</a>
+  <a href="#ordinary">Ordinary anchor</a>
+`);
+check(
+  "object references become internal targets",
+  ["object:g123", "object:g456", "object:g789", "module:g_module", "candidate:gaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"].map(
+    (target) => objects.html.includes(`data-canvas-target="${target}"`),
+  ),
+  [true, true, true, true, true],
+);
+ok(
+  "ordinary anchors are preserved",
+  objects.html.includes('href="#ordinary"') && !objects.html.includes("candidate:ordinary"),
+);
+
+const equation = processContent(
+  `<img class="equation_image" data-equation-content="\\frac{1}{2} &lt; 1" src="https://canvas.example.edu/equation.png" alt="LaTeX: fallback">`,
+);
+ok(
+  "equation image becomes accessible text",
+  equation.html.includes('role="math"') && equation.html.includes("\\frac{1}{2} &lt; 1"),
+);
+ok(
+  "equation does not load its remote image",
+  !equation.html.includes("<img") && !equation.html.includes("canvas.example.edu"),
+);
 
 // Private exports provide additional regression coverage when available, but
 // are never required by the app or by clean-checkout tests.

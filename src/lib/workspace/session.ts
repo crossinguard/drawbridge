@@ -32,7 +32,7 @@ export function subscribeToWorkspace(listener: (state: WorkspaceState) => void):
 function describeImportError(error: unknown): string {
   const message = error instanceof Error ? error.message : "";
   if (message.includes("imsmanifest.xml")) {
-    return "This archive does not look like a Canvas course export. Choose the .imscc file created by Canvas.";
+    return "This is not a Canvas Common Cartridge course export. Choose the .imscc file, not a QTI or files-only ZIP export.";
   }
   if (message.includes("ZIP")) {
     return "This file could not be opened as a course archive. Choose an .imscc or .zip file and try again.";

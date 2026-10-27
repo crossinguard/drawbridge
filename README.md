@@ -12,7 +12,9 @@ Drawbridge is a collection of small, focused tools that can share one opened sou
 - A searchable module outline
 - A unique-content inventory with type filters
 - Readable item details and sanitised course content
+- Internal Canvas object navigation and accessible equation text
 - Images loaded from the cartridge, never from external hosts
+- Safe outbound links for embedded content without loading third-party frames
 - A plain-language guide available directly from the tool
 
 It does not produce QA findings, audit reports, or exports.

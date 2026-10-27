@@ -47,4 +47,8 @@
   .module-group[open] > summary {
     @apply border-b border-border/80;
   }
+
+  .sw-prose [data-canvas-equation] {
+    @apply inline-block max-w-full font-mono break-words whitespace-pre-wrap;
+  }
 }

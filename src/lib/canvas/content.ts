@@ -11,7 +11,16 @@
 
 /** How a link found in course content should be treated. */
 export type LinkKind =
-  "internal-page" | "internal-file" | "canvas-course" | "external" | "canvas-api" | "mailto" | "anchor" | "other";
+  | "internal-page"
+  | "internal-file"
+  | "internal-object"
+  | "internal-module"
+  | "canvas-course"
+  | "external"
+  | "canvas-api"
+  | "mailto"
+  | "anchor"
+  | "other";
 
 /** A link found in course content. */
 export interface ContentLink {
@@ -177,6 +186,8 @@ const DROP_WITH_CONTENT = new Set([
 const FILE_BASE_PREFIX = "$IMS-CC-FILEBASE$/";
 /** The placeholder Canvas writes in front of a link to another page. */
 const WIKI_REFERENCE_PREFIX = "$WIKI_REFERENCE$/pages/";
+/** The placeholder Canvas writes for assignments, quizzes, discussions, and modules. */
+const CANVAS_OBJECT_REFERENCE_PREFIX = "$CANVAS_OBJECT_REFERENCE$/";
 /** The placeholder Canvas writes in front of a link into the Canvas UI. */
 const CANVAS_REFERENCE_PREFIX = "$CANVAS_COURSE_REFERENCE$/";
 
@@ -296,6 +307,14 @@ function rebuild(source: Element, target: Document, context: WalkContext, course
       context.apiReferenceCount++;
     }
 
+    if (name === "iframe") {
+      // Keep the destination without loading the embed or its third-party
+      // trackers. Non-HTTP frames retain the existing drop-and-report path.
+      const embed = rebuildEmbed(element, target, context, courseDomain);
+      if (embed) nodes.push(embed);
+      continue;
+    }
+
     if (DROP_WITH_CONTENT.has(name)) {
       // Media and frames still point somewhere worth reporting.
       harvestSources(element, context, courseDomain);
@@ -343,8 +362,53 @@ function copyAttributes(source: Element, target: Element, tagName: string): void
   }
 }
 
+/** Replace an iframe with a deliberate, privacy-preserving external link. */
+function rebuildEmbed(source: Element, target: Document, context: WalkContext, courseDomain?: string): Element | null {
+  const src = (source.getAttribute("src") ?? "").trim();
+  if (!/^https?:\/\//i.test(src)) {
+    harvestSources(source, context, courseDomain);
+    return null;
+  }
+
+  const host = hostOf(src);
+  const label = `Open embedded content${host ? ` on ${host}` : ""}`;
+  const link = target.createElement("a");
+  link.setAttribute("href", src);
+  link.setAttribute("target", "_blank");
+  link.setAttribute("rel", "noopener noreferrer nofollow");
+  link.textContent = label;
+
+  const wrapper = target.createElement("p");
+  wrapper.setAttribute("data-canvas-embed", "");
+  wrapper.appendChild(link);
+  context.links.push({ href: src, label, kind: classifyUrl(src, courseDomain), host });
+  return wrapper;
+}
+
+/** Preserve an equation's meaning without fetching its remote image. */
+function rebuildEquationImage(source: Element, target: Document): Element | null {
+  const isEquation = source.classList.contains("equation_image") || source.hasAttribute("data-equation-content");
+  if (!isEquation) return null;
+
+  const alt = (source.getAttribute("alt") ?? "").trim().replace(/^LaTeX:\s*/i, "");
+  const equation =
+    (source.getAttribute("data-equation-content") ?? "").trim() || alt || (source.getAttribute("title") ?? "").trim();
+  if (!equation) return null;
+
+  const clean = target.createElement("span");
+  clean.setAttribute("data-canvas-equation", "");
+  clean.setAttribute("role", "math");
+  clean.setAttribute("aria-label", `Equation: ${equation}`);
+  clean.setAttribute("title", equation);
+  clean.textContent = equation;
+  return clean;
+}
+
 /** Rebuild an image, resolving it to a file inside the cartridge when possible. */
 function rebuildImage(source: Element, target: Document, context: WalkContext, courseDomain?: string): Element | null {
+  const equation = rebuildEquationImage(source, target);
+  if (equation) return equation;
+
   const src = (source.getAttribute("src") ?? "").trim();
   const alt = (source.getAttribute("alt") ?? "").trim();
 
@@ -402,6 +466,21 @@ function rebuildLink(source: Element, target: Element, context: WalkContext, cou
     return;
   }
 
+  if (href.startsWith(CANVAS_OBJECT_REFERENCE_PREFIX)) {
+    const reference = href.slice(CANVAS_OBJECT_REFERENCE_PREFIX.length).split(/[?#]/)[0];
+    const [objectType, ...idParts] = reference.split("/");
+    const targetId = idParts.join("/");
+    const isModule = objectType === "modules";
+    const isContent = ["assignments", "quizzes", "discussion_topics"].includes(objectType);
+
+    if (targetId && (isModule || isContent)) {
+      context.links.push({ href, label, kind: isModule ? "internal-module" : "internal-object", targetId });
+      target.setAttribute("href", "#");
+      target.setAttribute("data-canvas-target", `${isModule ? "module" : "object"}:${targetId}`);
+      return;
+    }
+  }
+
   if (href.startsWith(CANVAS_REFERENCE_PREFIX)) {
     context.links.push({ href, label, kind: "canvas-course" });
     target.setAttribute("href", "#");
@@ -414,6 +493,14 @@ function rebuildLink(source: Element, target: Element, context: WalkContext, cou
     context.links.push({ href, label, kind: "internal-file", path });
     target.setAttribute("href", "#");
     target.setAttribute("data-canvas-target", `file:${path}`);
+    return;
+  }
+
+  if (/^#g[0-9a-f]{30,}$/i.test(href)) {
+    const targetId = href.slice(1);
+    context.links.push({ href, label, kind: "internal-object", targetId });
+    target.setAttribute("href", href);
+    target.setAttribute("data-canvas-target", `candidate:${targetId}`);
     return;
   }
 
@@ -465,8 +552,14 @@ export function fileBasePath(rest: string): string {
 export function classifyUrl(url: string, courseDomain?: string): LinkKind {
   if (url.startsWith(FILE_BASE_PREFIX)) return "internal-file";
   if (url.startsWith(WIKI_REFERENCE_PREFIX)) return "internal-page";
+  if (url.startsWith(CANVAS_OBJECT_REFERENCE_PREFIX)) {
+    return url.slice(CANVAS_OBJECT_REFERENCE_PREFIX.length).startsWith("modules/")
+      ? "internal-module"
+      : "internal-object";
+  }
   if (url.startsWith(CANVAS_REFERENCE_PREFIX)) return "canvas-course";
   if (url.startsWith("mailto:")) return "mailto";
+  if (/^#g[0-9a-f]{30,}$/i.test(url)) return "internal-object";
   if (url.startsWith("#")) return "anchor";
   if (/^https?:\/\//i.test(url)) {
     const host = hostOf(url);

@@ -50,6 +50,7 @@ mountToolController("course-explorer", (root) => {
 
   let source: CanvasCourseSource | null = null;
   let selectedId: string | null = null;
+  let navigationNote = "";
   let view: "modules" | "inventory" = "modules";
   let contentView: ReturnType<typeof createCanvasContentView> | null = null;
 
@@ -73,14 +74,39 @@ mountToolController("course-explorer", (root) => {
   const scrollBehavior = () => (window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
 
   const selectEntity = (id: string, scrollOnSmallScreens = true) => {
-    if (!source?.model.entitiesById.has(id)) return;
+    if (!source?.model.entitiesById.has(id)) return false;
     selectedId = id;
+    navigationNote = "";
     renderLists();
     renderDetail();
 
     if (scrollOnSmallScreens && window.matchMedia("(width < 64rem)").matches) {
       detail.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     }
+    return true;
+  };
+
+  const showMissingTarget = () => {
+    navigationNote = "The linked content is not included in this export.";
+    renderDetail();
+    return true;
+  };
+
+  const revealModule = (id: string) => {
+    if (!source?.model.export.modules.some((module) => module.id === id)) return showMissingTarget();
+
+    search.value = "";
+    typeFilter.value = "all";
+    setView("modules");
+    const moduleElement = Array.from(moduleList.querySelectorAll<HTMLDetailsElement>("[data-module-id]")).find(
+      (candidate) => candidate.dataset.moduleId === id,
+    );
+    if (!moduleElement) return showMissingTarget();
+
+    navigationNote = "";
+    moduleElement.open = true;
+    moduleElement.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+    return true;
   };
 
   const renderSummary = () => {
@@ -135,7 +161,7 @@ mountToolController("course-explorer", (root) => {
           .join("");
 
         return `
-          <details class="module-group" ${hasFilter || moduleIndex === 0 ? "open" : ""}>
+          <details class="module-group" data-module-id="${escAttr(module.id)}" ${hasFilter || moduleIndex === 0 ? "open" : ""}>
             <summary>${esc(module.title)} <span class="text-xs font-normal text-muted-foreground">(${items.length})</span></summary>
             <div class="grid gap-1 p-1.5">${buttons}</div>
           </details>`;
@@ -205,6 +231,8 @@ mountToolController("course-explorer", (root) => {
         </div>
         <h3 class="font-heading text-2xl font-semibold break-words">${esc(entity.title)}</h3>
       </header>
+
+      ${navigationNote ? `<p role="status" class="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">${esc(navigationNote)}</p>` : ""}
 
       ${entity.item.unresolved && entity.kind !== "heading" ? `<p class="text-sm text-muted-foreground">${esc(entity.item.unresolvedReason ?? "The matching content is not included in this export.")}</p>` : ""}
 
@@ -280,6 +308,7 @@ mountToolController("course-explorer", (root) => {
       contentView = null;
       source = null;
       selectedId = null;
+      navigationNote = "";
       return;
     }
 
@@ -290,19 +319,35 @@ mountToolController("course-explorer", (root) => {
       contentView?.destroy();
       source = opened;
       selectedId = null;
+      navigationNote = "";
       contentView = createCanvasContentView({
         archive: opened.archive,
         onTarget: (target) => {
           if (target.startsWith("page:")) {
-            selectEntity(target.slice("page:".length));
-          } else if (target.startsWith("file:")) {
+            return selectEntity(target.slice("page:".length)) || showMissingTarget();
+          }
+          if (target.startsWith("file:")) {
             const path = target.slice("file:".length);
             const file = source?.model.entities.find((entity) => entity.item.bodyPath === path);
-            if (file) selectEntity(file.id);
-          } else if (target === "outline") {
+            return (file ? selectEntity(file.id) : false) || showMissingTarget();
+          }
+          if (target.startsWith("object:")) {
+            return selectEntity(target.slice("object:".length)) || showMissingTarget();
+          }
+          if (target.startsWith("candidate:")) {
+            // A matching Canvas ID is internal navigation. Otherwise preserve
+            // the anchor because it may refer to ordinary course HTML.
+            return selectEntity(target.slice("candidate:".length));
+          }
+          if (target.startsWith("module:")) {
+            return revealModule(target.slice("module:".length));
+          }
+          if (target === "outline") {
             setView("modules");
             moduleList.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+            return true;
           }
+          return false;
         },
       });
     }

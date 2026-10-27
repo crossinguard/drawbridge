@@ -324,6 +324,10 @@ const ASSIGNMENT_BODY = `<html>
       <li>Submit a Word document of 2 pages.</li>
     </ul>
     <p><a href="https://example.edu/notes">Notes</a></p>
+    <p><a href="$CANVAS_OBJECT_REFERENCE$/quizzes/g_quiz_1">Open the first quiz</a></p>
+    <p><a href="$CANVAS_OBJECT_REFERENCE$/modules/g_module_1">Open the module</a></p>
+    <p>Equation: <img class="equation_image" data-equation-content="x^2 + y^2 = z^2" src="https://canvas.example.edu/equation.png" alt="LaTeX: fallback"></p>
+    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
   </body>
 </html>
 `;

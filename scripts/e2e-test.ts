@@ -119,6 +119,19 @@ try {
   check("detail shows points", assignmentDetail.includes("25"), true);
   check("detail shows the rubric", assignmentDetail.includes("Sample Rubric"), true);
   check("detail shows readable content", assignmentDetail.includes("Complete the sample assignment"), true);
+  check("equation text is preserved", assignmentDetail.includes("x^2 + y^2 = z^2"), true);
+  check("embed becomes an outbound link", assignmentDetail.includes("Open embedded content on youtube.com"), true);
+  check("no iframe is rendered", await page.locator("[data-course-body] iframe").count(), 0);
+  await page.click('[data-course-body] [data-canvas-target="module:g_module_1"]');
+  check("module links reveal their module", await page.locator('[data-module-id="g_module_1"][open]').count(), 1);
+  await assignmentButton.focus();
+  await page.keyboard.press("Enter");
+  await page.click('[data-course-body] [data-canvas-target="object:g_quiz_1"]');
+  check(
+    "Canvas object links open their content",
+    (await page.textContent("[data-course-detail]"))?.includes("Week 1 Sample Quiz"),
+    true,
+  );
 
   await page.click('[data-course-view="inventory"]');
   check(
