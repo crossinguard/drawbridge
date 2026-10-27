@@ -4,50 +4,47 @@ import PageHeader from "@/components/drawbridge/PageHeader.astro";
 import { Prose } from "@/components/starwind/prose";
 ---
 
-<DrawbridgeLayout title="Privacy" description="Drawbridge privacy details: nothing leaves your device.">
+<DrawbridgeLayout title="Privacy" description="Drawbridge privacy: imported files stay in your browser session.">
   <div class="mx-auto grid max-w-3xl gap-8">
-    <PageHeader title="Privacy" description="Drawbridge is built so that nothing leaves your device." />
+    <PageHeader title="Privacy" description="Your course files stay on your device and are never uploaded." />
 
     <Prose class="max-w-none text-foreground" style="--sw-prose-h2-size: 1.125rem;">
-      <h2>What we do not do</h2>
+      <h2>What Drawbridge does not do</h2>
       <ul>
-        <li>No server-side processing.</li>
+        <li>No server-side processing of imported files.</li>
         <li>No analytics or tracking.</li>
         <li>No cookies.</li>
         <li>No account or login.</li>
-        <li>No network requests after the page is loaded.</li>
+        <li>No database or browser storage for imported course data.</li>
       </ul>
 
-      <h2>How it works</h2>
+      <h2>How course imports work</h2>
       <p>
-        Drawbridge is a static site. When you open a tool, the page and its code are served to your browser. Any file
-        you import or text you paste is processed in memory by JavaScript running on your own device.
+        Drawbridge is a static site. Your browser downloads the site's pages and code, then processes any file you
+        choose locally and in memory. Course content is not sent over the network.
       </p>
       <p>
-        The production site sends a Content Security Policy header that blocks external requests (
-        <code>default-src 'self'</code>). This means even if malicious code were somehow introduced, it could not send
-        your data to another server.
+        Moving between connected tools keeps the opened course in the current browser session. Refreshing the page,
+        opening a separate tab, closing the tab, or choosing <strong>Close course</strong> forgets the imported data.
       </p>
-
-      <h2>Local preferences</h2>
       <p>
-        Drawbridge stores a few small preferences in your browser’s localStorage so your choices persist between visits.
-        This currently includes your selected color theme and whether the quick-start guide is open on each tool page.
-        These values never leave your device and are not transmitted anywhere.
+        A restrictive Content Security Policy limits connections to the Drawbridge site itself. Course HTML is also
+        rebuilt against a safe allowlist, and externally hosted course images are not loaded.
       </p>
 
       <h2>Offline use</h2>
       <p>
-        Drawbridge is an installable progressive web app. After the first load, a service worker caches the site so it
-        works without a network connection. You can verify this by turning off Wi-Fi after the initial load.
+        Drawbridge is an installable progressive web app. After the first load, a service worker caches the Drawbridge
+        site so it can work without a network connection. This cache contains the application, not your imported
+        courses. Clearing the site's cached data does not affect the privacy of a course session.
       </p>
 
       <h2>Recommendations for sensitive data</h2>
       <ul>
-        <li>Use a private or incognito browser window.</li>
+        <li>Use a private or incognito browser window when appropriate.</li>
         <li>Disable browser extensions you do not trust.</li>
-        <li>Turn off your network connection after loading the site.</li>
-        <li>Close the tab when you are finished.</li>
+        <li>Turn off your network connection after loading the site for an extra layer of assurance.</li>
+        <li>Close the course or the tab when you are finished.</li>
       </ul>
     </Prose>
   </div>

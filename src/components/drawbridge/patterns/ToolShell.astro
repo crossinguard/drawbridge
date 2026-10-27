@@ -1,0 +1,35 @@
+---
+import Book from "@tabler/icons/outline/book.svg";
+import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
+import { Button } from "@/components/starwind/button";
+import LocalBadge from "./LocalBadge.astro";
+import type { ToolEntry } from "@/lib/tools/registry";
+
+interface Props {
+  tool: ToolEntry;
+}
+
+const { tool } = Astro.props;
+---
+
+<DrawbridgeLayout title={tool.title} description={tool.metaDescription ?? tool.description} fullWidth>
+  <div data-tool-root={tool.slug} class="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 sm:py-8">
+    <header class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+      <div class="grid gap-2">
+        <p class="text-sm font-medium text-primary">{tool.sourceLabel}</p>
+        <h1 class="page-title">{tool.title}</h1>
+        <p class="lede">{tool.description}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+        <LocalBadge />
+        <Button as="a" href={tool.guideHref} variant="outline" size="sm">
+          <Book class="size-4" aria-hidden="true" />
+          Guide
+        </Button>
+      </div>
+    </header>
+
+    <slot name="source" />
+    <slot />
+  </div>
+</DrawbridgeLayout>

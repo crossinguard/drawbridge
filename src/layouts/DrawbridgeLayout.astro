@@ -1,11 +1,11 @@
 ---
 import { Font } from "astro:assets";
+import { ClientRouter } from "astro:transitions";
 import "@/styles/starwind.css";
-import { ThemeInitScript } from "@starwind-ui/astro/theme";
 
 import Header from "@/components/drawbridge/Header.astro";
 import Footer from "@/components/drawbridge/Footer.astro";
-import { Toaster } from "@/components/starwind/toast";
+import UpdateNotice from "@/components/drawbridge/UpdateNotice.astro";
 
 interface Props {
   title: string;
@@ -29,7 +29,8 @@ const pageTitle = title === "Drawbridge" ? title : `${title} · Drawbridge`;
     <meta name="generator" content={Astro.generator} />
     {description && <meta name="description" content={description} />}
     <title>{pageTitle}</title>
-    <ThemeInitScript />
+    <meta name="color-scheme" content="light" />
+    <ClientRouter />
     <Font cssVariable="--font-hyperlegible-next" preload />
     <Font cssVariable="--font-hyperlegible-mono" />
     <Font cssVariable="--font-paintfactory" preload />
@@ -50,6 +51,9 @@ const pageTitle = title === "Drawbridge" ? title : `${title} · Drawbridge`;
 
     <Footer />
 
-    <Toaster position="bottom-right" />
+    <UpdateNotice />
+    <script>
+      import "@/scripts/lib/pwa";
+    </script>
   </body>
 </html>

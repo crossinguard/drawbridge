@@ -1,0 +1,50 @@
+---
+import FileZip from "@tabler/icons/outline/file-zip.svg";
+import { Button } from "@/components/starwind/button";
+import { Alert, AlertDescription } from "@/components/starwind/alert";
+
+interface Props {
+  inputId: string;
+  accept: string;
+  title: string;
+  description: string;
+  formats: string;
+  chooseLabel?: string;
+  guideHref?: string;
+}
+
+const { inputId, accept, title, description, formats, chooseLabel = "Choose a file", guideHref } = Astro.props;
+---
+
+<div data-source-region class="grid gap-3">
+  <div data-source-picker class="source-picker">
+    <div class="grid gap-1">
+      <h2 class="section-title">{title}</h2>
+      <p class="supporting-text mx-auto max-w-xl">{description}</p>
+    </div>
+
+    <div>
+      <Button type="button" data-source-choose variant="outline">
+        <FileZip class="size-4" aria-hidden="true" />
+        {chooseLabel}
+      </Button>
+      <input data-source-input id={inputId} type="file" accept={accept} class="sr-only" />
+    </div>
+
+    <p class="metadata-text">{formats}</p>
+    <p data-source-status class="metadata-text" role="status" aria-live="polite"></p>
+  </div>
+
+  <Alert data-source-error variant="error" hidden>
+    <AlertDescription data-source-error-message />
+  </Alert>
+
+  <div class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-sm text-muted-foreground">
+    <span>Your file stays in this browser tab and is never uploaded.</span>
+    {guideHref && (
+      <a href={guideHref} class="font-medium text-primary underline underline-offset-4">
+        How to get an export
+      </a>
+    )}
+  </div>
+</div>

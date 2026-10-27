@@ -58,14 +58,15 @@ export default defineConfig({
   integrations: [
     mdx(),
     // Static site + service worker: installable and fully offline after first load.
+    // Updates wait for the user so an open course session is never reloaded away.
     vitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       includeAssets: ["favicon.svg", "favicon.ico"],
       manifest: {
         name: "Drawbridge — Private assessment tools",
         short_name: "Drawbridge",
         description:
-          "Free, private tools for assessment work. No login, no tracking — everything stays on your device.",
+          "Free, private tools for exploring course content. No login, no tracking — imported files stay on your device.",
         theme_color: "#ffffff",
         background_color: "#ffffff",
         display: "standalone",
@@ -77,7 +78,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{css,js,html,svg,png,ico,woff2,webmanifest,docx}"],
+        globPatterns: ["**/*.{css,js,html,svg,png,ico,woff2,webmanifest}"],
       },
     }),
   ],

@@ -12,6 +12,13 @@ export function byId<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
 
+/** Find a required element inside one tool's root. */
+export function within<T extends HTMLElement>(root: HTMLElement, selector: string): T {
+  const element = root.querySelector<T>(selector);
+  if (!element) throw new Error(`Missing required element: ${selector}`);
+  return element;
+}
+
 /** Inline an SVG icon with a size class. */
 export function icon(raw: string, cls = "size-4"): string {
   return raw.replace("<svg", `<svg class="${cls}" aria-hidden="true"`);

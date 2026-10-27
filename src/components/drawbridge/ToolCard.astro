@@ -1,9 +1,8 @@
 ---
-import Tool from "@tabler/icons/outline/tool.svg";
+import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
 import Book from "@tabler/icons/outline/book.svg";
-
-import { Card, CardContent } from "@/components/starwind/card";
-import ToolCardHeader from "@/components/drawbridge/ToolCardHeader.astro";
+import { Button } from "@/components/starwind/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/starwind/card";
 import type { ToolEntry } from "@/lib/tools/registry";
 
 interface Props {
@@ -11,36 +10,26 @@ interface Props {
 }
 
 const { tool } = Astro.props;
-
 const { icon: Icon } = tool;
-const isPlanned = tool.status === "planned";
 ---
 
 <Card class="flex h-full flex-col text-left transition-shadow hover:shadow-sm">
-  <ToolCardHeader icon={Icon} status={tool.status} title={tool.title} href={tool.href} description={tool.description} />
-
-  <CardContent class="mt-auto grid gap-3">
-    {isPlanned ? (
-      <p class="text-sm text-muted-foreground">Nothing here yet — this is an idea for a future tool.</p>
-    ) : (
-      <>
-        <a
-          href={tool.href}
-          class="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-accent"
-        >
-          <Tool class="size-4" aria-hidden="true" />
-          Open tool
-        </a>
-        {tool.guideHref && (
-          <a
-            href={tool.guideHref}
-            class="inline-flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <Book class="size-4" aria-hidden="true" />
-            Guide
-          </a>
-        )}
-      </>
-    )}
+  <CardHeader>
+    <div class="mb-3 flex size-11 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+      <Icon class="size-6" aria-hidden="true" />
+    </div>
+    <p class="text-xs font-medium tracking-wide text-primary uppercase">{tool.sourceLabel}</p>
+    <CardTitle class="text-xl">{tool.title}</CardTitle>
+    <CardDescription>{tool.description}</CardDescription>
+  </CardHeader>
+  <CardContent class="mt-auto flex flex-wrap items-center gap-2">
+    <Button as="a" href={tool.href}>
+      Open tool
+      <ArrowRight class="size-4" aria-hidden="true" />
+    </Button>
+    <Button as="a" href={tool.guideHref} variant="ghost">
+      <Book class="size-4" aria-hidden="true" />
+      Read the guide
+    </Button>
   </CardContent>
 </Card>

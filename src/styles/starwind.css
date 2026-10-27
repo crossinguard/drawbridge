@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./base/index.css";
+@import "./components/index.css";
 @plugin "@tailwindcss/forms";
-@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --animate-accordion-down: accordion-down 0.2s ease-out;
@@ -28,8 +29,8 @@
 
 @theme inline {
   --font-sans: var(--font-hyperlegible-next);
-  --font-mono: var(--font-hyperlegible-mono);
   --font-heading: var(--font-paintfactory);
+  --font-mono: var(--font-hyperlegible-mono);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -78,102 +79,42 @@
 }
 
 :root {
-  --background: #f8f9e8;
-  --foreground: #1f1300;
-  --card: #f8f9e8;
-  --card-foreground: #1f1300;
-  --popover: #f8f9e8;
-  --popover-foreground: #1f1300;
-  --primary: #006a34;
-  --primary-foreground: #f8f9e8;
-  --primary-accent: #0f3e1a;
-  --secondary: #fbdc74;
-  --secondary-foreground: #1f1300;
-  --secondary-accent: #8f6900;
-  --muted: #e8e9d8;
-  --muted-foreground: #4f540d;
-  --accent: #7cb18e;
-  --accent-foreground: #1f1300;
-  --info: #7cb18e;
-  --info-foreground: #0f3e1a;
-  --success: #006a34;
-  --success-foreground: #f8f9e8;
-  --warning: #ffc000;
-  --warning-foreground: #1f1300;
-  --error: #8f6900;
-  --error-foreground: #f8f9e8;
-  --border: #bdb847;
-  --input: #bdb847;
-  --outline: #7f951a;
-  --radius: 0.625rem;
+  --background: var(--color-stone-50);
+  --foreground: var(--color-stone-950);
+  --card: var(--color-stone-50);
+  --card-foreground: var(--color-stone-950);
+  --popover: var(--color-stone-50);
+  --popover-foreground: var(--color-stone-950);
+  --primary: var(--color-green-700);
+  --primary-foreground: var(--color-white);
+  --primary-accent: var(--color-green-700);
+  --secondary: var(--color-green-100);
+  --secondary-foreground: var(--color-green-950);
+  --secondary-accent: var(--color-green-700);
+  --muted: var(--color-stone-100);
+  --muted-foreground: var(--color-stone-600);
+  --accent: var(--color-green-100);
+  --accent-foreground: var(--color-green-800);
+  --info: var(--color-sky-300);
+  --info-foreground: var(--color-sky-950);
+  --success: var(--color-green-300);
+  --success-foreground: var(--color-green-950);
+  --warning: var(--color-amber-300);
+  --warning-foreground: var(--color-amber-950);
+  --error: var(--color-red-700);
+  --error-foreground: var(--color-stone-50);
+  --border: var(--color-stone-200);
+  --input: var(--color-stone-200);
+  --outline: var(--color-green-400);
+  --radius: 0.5rem;
+  --spacing: 0.25rem;
 
-  /* sidebar variables */
-  --sidebar-background: #f0f1d8;
-  --sidebar-foreground: #1f1300;
-  --sidebar-primary: #006a34;
-  --sidebar-primary-foreground: #f8f9e8;
-  --sidebar-accent: #fbdc74;
-  --sidebar-accent-foreground: #1f1300;
-  --sidebar-border: #bdb847;
-  --sidebar-outline: #7f951a;
-}
-
-.dark {
-  --background: #12150a;
-  --foreground: #f1f3e2;
-  --card: #1a1e0e;
-  --card-foreground: #f1f3e2;
-  --popover: #1a1e0e;
-  --popover-foreground: #f1f3e2;
-  --primary: #a4bd35;
-  --primary-foreground: #161a08;
-  --primary-accent: #c1d552;
-  --secondary: #2a3112;
-  --secondary-foreground: #f1f3e2;
-  --secondary-accent: #a4bd35;
-  --muted: #242a15;
-  --muted-foreground: #a9b489;
-  --accent: #4a5a17;
-  --accent-foreground: #f1f3e2;
-  --info: #a4bd35;
-  --info-foreground: #161a08;
-  --success: #a4bd35;
-  --success-foreground: #161a08;
-  --warning: #ffc000;
-  --warning-foreground: #161a08;
-  --error: #f87171;
-  --error-foreground: #161a08;
-  --border: rgba(241, 243, 226, 0.14);
-  --input: rgba(241, 243, 226, 0.18);
-  --outline: #a4bd35;
-
-  /* sidebars variables */
-  --sidebar-background: #1b1f10;
-  --sidebar-foreground: #f1f3e2;
-  --sidebar-primary: #a4bd35;
-  --sidebar-primary-foreground: #161a08;
-  --sidebar-accent: #2a3112;
-  --sidebar-accent-foreground: #f1f3e2;
-  --sidebar-border: rgba(241, 243, 226, 0.14);
-  --sidebar-outline: #a4bd35;
-}
-
-@layer base {
-  * {
-    @apply border-border outline-outline/50;
-  }
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-heading;
-  }
-  body {
-    @apply bg-background text-foreground scheme-light dark:scheme-dark;
-  }
-  button {
-    @apply cursor-pointer;
-  }
+  --sidebar-background: var(--color-stone-50);
+  --sidebar-foreground: var(--color-stone-950);
+  --sidebar-primary: var(--color-indigo-700);
+  --sidebar-primary-foreground: var(--color-stone-50);
+  --sidebar-accent: var(--color-green-700);
+  --sidebar-accent-foreground: var(--color-stone-50);
+  --sidebar-border: var(--color-stone-200);
+  --sidebar-outline: var(--color-green-400);
 }

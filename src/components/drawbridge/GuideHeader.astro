@@ -8,9 +8,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/starwind/breadcrumb";
 
-import ToolStatusBadge from "@/components/drawbridge/ToolStatusBadge.astro";
-import { getToolBySlug } from "@/lib/tools/registry";
-
 interface Props {
   toolName: string;
   toolSlug: string;
@@ -18,16 +15,14 @@ interface Props {
 }
 
 const { toolName, toolSlug, description } = Astro.props;
-
 const toolHref = `/tools/${toolSlug}`;
-const status = getToolBySlug(toolSlug)?.status;
 ---
 
 <div class="mx-auto grid min-w-0 max-w-3xl gap-4">
   <Breadcrumb>
     <BreadcrumbList>
       <BreadcrumbItem>
-        <BreadcrumbLink href="/#tools">Tools</BreadcrumbLink>
+        <BreadcrumbLink href="/guides">Guides</BreadcrumbLink>
       </BreadcrumbItem>
       <BreadcrumbSeparator />
       <BreadcrumbItem>
@@ -35,14 +30,13 @@ const status = getToolBySlug(toolSlug)?.status;
       </BreadcrumbItem>
       <BreadcrumbSeparator />
       <BreadcrumbItem>
-        <BreadcrumbPage>Reference</BreadcrumbPage>
+        <BreadcrumbPage>Guide</BreadcrumbPage>
       </BreadcrumbItem>
     </BreadcrumbList>
   </Breadcrumb>
 
   <div class="grid gap-2">
-    <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{toolName}: Reference</h1>
-    {description && <p class="text-muted-foreground">{description}</p>}
-    {status && <ToolStatusBadge status={status} size="md" />}
+    <h1 class="page-title">{toolName} guide</h1>
+    {description && <p class="lede">{description}</p>}
   </div>
 </div>

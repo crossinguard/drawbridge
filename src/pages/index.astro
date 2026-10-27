@@ -1,49 +1,41 @@
 ---
 import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
-
 import drawbridgeLogo from "@/assets/branding/drawbridge-logo.svg";
-import drawbridgeLogoDark from "@/assets/branding/drawbridge-logo-dark.svg";
-
-import LocalBadge from "@/components/drawbridge/tools/LocalBadge.astro";
+import LocalBadge from "@/components/drawbridge/patterns/LocalBadge.astro";
 import PageHeader from "@/components/drawbridge/PageHeader.astro";
 import ToolDirectory from "@/components/drawbridge/ToolDirectory.astro";
 ---
 
 <DrawbridgeLayout
   title="Drawbridge"
-  description="Free, private tools for assessment work. No login, no tracking — everything stays on your device."
+  description="Free, private tools for exploring course content. No login, no tracking — everything stays on your device."
 >
-  <div class="mx-auto grid max-w-3xl gap-8 text-center">
-    <section class="grid gap-4">
+  <div class="mx-auto grid max-w-3xl gap-10 text-center">
+    <section class="grid justify-items-center gap-5">
       <h1>
-        <img src={drawbridgeLogo.src} alt="Drawbridge" class="mx-auto h-24 w-auto sm:h-32 dark:hidden" />
-        <img src={drawbridgeLogoDark.src} alt="Drawbridge" class="mx-auto hidden h-24 w-auto sm:h-32 dark:block" />
+        <img src={drawbridgeLogo.src} alt="Drawbridge" class="mx-auto h-24 w-auto sm:h-32" />
       </h1>
-      <p class="mx-auto max-w-2xl text-lg text-muted-foreground">
-        Free, private tools for assessment work. No login, no fee, no tracking — everything stays on your device.
-      </p>
-      <div class="flex justify-center">
-        <LocalBadge />
-      </div>
+      <p class="lede mx-auto">Small, focused tools that help you understand course files without uploading them.</p>
+      <LocalBadge />
     </section>
 
-    <section id="tools" class="grid gap-6 scroll-mt-8 text-left">
+    <section id="tools" class="grid scroll-mt-8 gap-6 text-left">
       <PageHeader
         level="h2"
         title="Tools"
-        description="Each tool runs in your browser. No data leaves your device. Tools are grouped by how finished they are."
+        align="left"
+        description="Open a source once, explore one kind of content at a time, and move between tools without losing your place."
       />
-
       <ToolDirectory />
     </section>
 
-    <section class="rounded-lg border border-border bg-muted/30 p-6 text-left">
-      <h2 class="text-lg font-semibold text-foreground">Privacy first</h2>
-      <p class="mt-2 text-sm text-muted-foreground">
-        Drawbridge has no server, no analytics, and no persistence. Files and pasted content are processed in your
-        browser and never transmitted. Once loaded, the site works fully offline and can be installed as an app.
+    <section class="grid gap-3 rounded-lg border border-border bg-muted/40 p-6 text-left">
+      <h2 class="section-title">Private by design</h2>
+      <p class="supporting-text">
+        Drawbridge has no server, no analytics, and no imported-course storage. Files are processed in your browser.
+        Closing or refreshing the tab forgets the course. After the first load, the site itself also works offline.
       </p>
-      <div class="mt-4">
+      <div>
         <a
           href="/privacy"
           class="text-sm font-medium text-primary underline underline-offset-4 hover:text-primary-accent"

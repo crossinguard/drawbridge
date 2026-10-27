@@ -1,0 +1,20 @@
+---
+import X from "@tabler/icons/outline/x.svg";
+import { Button } from "@/components/starwind/button";
+---
+
+<section
+  data-workspace-bar
+  class="flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between"
+  aria-label="Opened course"
+  hidden
+>
+  <div class="grid min-w-0 gap-0.5">
+    <h2 data-workspace-title class="truncate font-semibold"></h2>
+    <p data-workspace-meta class="metadata-text"></p>
+  </div>
+  <Button type="button" data-workspace-close variant="outline" size="sm" class="shrink-0">
+    <X class="size-4" aria-hidden="true" />
+    Close course
+  </Button>
+</section>

@@ -87,12 +87,6 @@
       "registry": "default"
     },
     {
-      "name": "theme-toggle",
-      "version": "2.0.0",
-      "framework": "astro",
-      "registry": "default"
-    },
-    {
       "name": "sheet",
       "version": "2.0.3",
       "framework": "astro",

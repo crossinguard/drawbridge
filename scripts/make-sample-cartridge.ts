@@ -4,14 +4,11 @@
  * The real sample exports in `reference/canvas/course/` are git-ignored, so
  * the test cannot rely on them. This cartridge has the same shape — a
  * manifest, a `course_settings` folder, a page, assignments, rubrics, and
- * classic quizzes that draw from an item bank — which is enough to exercise
- * the whole open → browse → audit flow and the assessment review.
+ * classic quizzes that draw from an item bank — enough to exercise Course
+ * Explorer and the shared Canvas model without any private course data.
  *
- * It is built to contain the things a reviewer looks for: a rubric whose
- * total does not match the assignment it is attached to, a quiz whose
- * questions are worth less than the quiz, two rubrics that are copies of each
- * other, a rubric nothing uses, and two quizzes of the same kind with a
- * setting that differs.
+ * It also includes several rubrics, an unplaced page, and quizzes with
+ * different settings so focused tools can reuse the same fixture later.
  */
 import JSZip from "jszip";
 
@@ -469,14 +466,12 @@ export async function buildSampleCartridge(): Promise<Uint8Array> {
   zip.file("g_assignment_1/assignment_settings.xml", ASSIGNMENT_SETTINGS);
   zip.file("g_assignment_1/sample-assignment.html", ASSIGNMENT_BODY);
 
-  // The first quiz draws five questions worth one point each, but the quiz is
-  // worth ten — a mismatch the review should report.
+  // The first quiz draws five questions worth one point each.
   zip.file("g_quiz_1/assessment_meta.xml", quizSettings("g_quiz_1", "Week 1 Sample Quiz", 10, 10, 1));
   zip.file("g_quiz_1/assessment_qti.xml", quizStub("g_quiz_1", "Week 1 Sample Quiz"));
   zip.file("non_cc_assessments/g_quiz_1.xml.qti", quizQuestions("g_quiz_1", "Week 1 Sample Quiz", 5, 1));
 
-  // The second quiz draws five questions worth two points each, which is ten
-  // — matching the quiz — but its time limit differs.
+  // The second quiz draws five questions worth two points each.
   zip.file("g_quiz_2/assessment_meta.xml", quizSettings("g_quiz_2", "Week 2 Sample Quiz", 10, 20, 2));
   zip.file("g_quiz_2/assessment_qti.xml", quizStub("g_quiz_2", "Week 2 Sample Quiz"));
   zip.file("non_cc_assessments/g_quiz_2.xml.qti", quizQuestions("g_quiz_2", "Week 2 Sample Quiz", 5, 2));

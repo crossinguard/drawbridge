@@ -1,0 +1,9 @@
+@layer components {
+  .source-picker {
+    @apply grid gap-4 rounded-lg border-2 border-dashed border-border bg-muted/30 p-6 text-center transition-colors sm:p-8;
+  }
+
+  .source-picker[data-dragging="true"] {
+    @apply border-primary bg-accent/50;
+  }
+}

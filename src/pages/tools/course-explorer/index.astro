@@ -1,0 +1,124 @@
+---
+import ToolShell from "@/components/drawbridge/patterns/ToolShell.astro";
+import SourcePicker from "@/components/drawbridge/patterns/SourcePicker.astro";
+import WorkspaceBar from "@/components/drawbridge/patterns/WorkspaceBar.astro";
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import { NativeSelect, NativeSelectOption } from "@/components/starwind/native-select";
+import { requireToolBySlug } from "@/lib/tools/registry";
+import "@/components/starwind/prose/styles.css";
+
+const tool = requireToolBySlug("course-explorer");
+---
+
+<ToolShell tool={tool}>
+  <Fragment slot="source">
+    <SourcePicker
+      inputId="course-file-input"
+      accept=".imscc,.zip"
+      title="Open a Canvas course export"
+      description="Choose the export file to see a clear overview of the course and browse what it contains."
+      formats="Accepts .imscc files, or the same archive renamed to .zip."
+      chooseLabel="Choose a course export"
+      guideHref="/guides/course-explorer#getting-an-export-from-canvas"
+    />
+    <WorkspaceBar />
+  </Fragment>
+
+  <div data-course-content class="grid gap-6" hidden>
+    <section aria-labelledby="course-overview-heading" class="grid gap-3">
+      <div>
+        <h2 id="course-overview-heading" class="section-title">
+          Course overview
+        </h2>
+        <p class="metadata-text">A count of the content included in this export.</p>
+      </div>
+      <dl data-course-summary class="summary-grid"></dl>
+      <details data-import-notes class="rounded-lg border border-border bg-muted/30 p-4 text-sm" hidden>
+        <summary class="cursor-pointer font-medium">Import notes</summary>
+        <ul data-import-notes-list class="mt-3 grid gap-2 text-muted-foreground"></ul>
+      </details>
+    </section>
+
+    <section aria-labelledby="course-browser-heading" class="grid gap-4">
+      <div>
+        <h2 id="course-browser-heading" class="section-title">
+          Browse the course
+        </h2>
+        <p class="supporting-text">Follow the module structure or look through every unique item in the export.</p>
+      </div>
+
+      <div class="flex flex-col gap-3 md:flex-row md:items-end">
+        <div class="grid min-w-0 flex-1 gap-1.5">
+          <Label for="course-search">Search this course</Label>
+          <Input
+            id="course-search"
+            data-course-search
+            type="search"
+            placeholder="Titles and content"
+            autocomplete="off"
+          />
+        </div>
+        <div class="grid gap-1.5 md:w-52">
+          <Label for="course-type-filter">Content type</Label>
+          <NativeSelect id="course-type-filter" data-course-type-filter>
+            <NativeSelectOption value="all">All types</NativeSelectOption>
+            <NativeSelectOption value="page">Pages</NativeSelectOption>
+            <NativeSelectOption value="assignment">Assignments</NativeSelectOption>
+            <NativeSelectOption value="quiz">Quizzes</NativeSelectOption>
+            <NativeSelectOption value="discussion">Discussions</NativeSelectOption>
+            <NativeSelectOption value="file">Files</NativeSelectOption>
+            <NativeSelectOption value="external-url">External links</NativeSelectOption>
+            <NativeSelectOption value="external-tool">External tools</NativeSelectOption>
+            <NativeSelectOption value="heading">Section headings</NativeSelectOption>
+            <NativeSelectOption value="unknown">Unknown</NativeSelectOption>
+          </NativeSelect>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-1 rounded-md border border-border p-1" role="group" aria-label="Course view">
+          <button
+            type="button"
+            data-course-view="modules"
+            aria-pressed="true"
+            class="rounded bg-accent px-3 py-1.5 text-sm font-medium"
+          >
+            Modules
+          </button>
+          <button
+            type="button"
+            data-course-view="inventory"
+            aria-pressed="false"
+            class="rounded px-3 py-1.5 text-sm font-medium"
+          >
+            All content
+          </button>
+        </div>
+        <p data-course-results class="metadata-text" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="master-detail">
+        <div class="master-detail-list">
+          <div data-module-list class="record-list"></div>
+          <div data-inventory-list class="record-list" hidden></div>
+          <p data-course-empty class="p-5 text-center text-sm text-muted-foreground" hidden>
+            No items match your search and filters.
+          </p>
+        </div>
+        <article data-course-detail class="detail-panel" aria-label="Content details">
+          <div class="grid gap-2 py-8 text-center">
+            <h3 class="font-semibold">Choose something to explore</h3>
+            <p class="text-sm text-muted-foreground">
+              Select an item to read its content and see the details included in the export.
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import "@/scripts/tools/course-explorer/app";
+  </script>
+</ToolShell>

@@ -1,19 +1,16 @@
 ---
 interface Props {
-  /** Heading level for the page title. */
   level?: "h1" | "h2";
-  /** The title text. */
   title: string;
-  /** Supporting copy under the title. */
   description?: string;
+  align?: "left" | "center";
 }
 
-const { level = "h1", title, description } = Astro.props;
-
+const { level = "h1", title, description, align = "center" } = Astro.props;
 const Heading = level;
 ---
 
-<div class="grid gap-2 text-center">
-  <Heading class="text-2xl font-bold tracking-tight sm:text-3xl">{title}</Heading>
-  {description && <p class="text-muted-foreground">{description}</p>}
+<div class:list={["grid gap-2", align === "center" ? "text-center" : "text-left"]}>
+  <Heading class={level === "h1" ? "page-title" : "section-title"}>{title}</Heading>
+  {description && <p class="supporting-text">{description}</p>}
 </div>

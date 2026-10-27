@@ -14,12 +14,8 @@
     "format:check": "prettier --check .",
     "check": "astro check",
     "check:isolation": "bun ./scripts/check-isolation.ts",
-    "verify": "bun ./scripts/verify-serializer.ts",
-    "test": "bun ./scripts/integration-test.ts",
     "test:canvas": "bun ./scripts/canvas-parser-test.ts",
-    "test:e2e": "bun ./scripts/e2e-test.ts",
-    "sample": "bun ./scripts/make-sample-docx.ts",
-    "test:bundle": "bun ./scripts/review-bundle-test.ts"
+    "test:e2e": "bun ./scripts/e2e-test.ts"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.1.0",
@@ -30,7 +26,6 @@
     "astro": "^7.4.0",
     "clsx": "^2.1.1",
     "jszip": "^3.10.2",
-    "mammoth": "^1.13.0",
     "tailwind-merge": "^3.7.0",
     "tailwind-variants": "^3.3.1",
     "tailwindcss": "^4.3.3",

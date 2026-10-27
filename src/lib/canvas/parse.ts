@@ -1496,6 +1496,7 @@ async function buildOrphans(
       if (source) {
         const title = htmlTitle(source);
         if (title) item.title = title;
+        if (kind === "page") item.page = readPageDetails(source);
       }
     }
 

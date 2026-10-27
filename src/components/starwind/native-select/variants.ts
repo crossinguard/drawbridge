@@ -8,7 +8,7 @@ export const nativeSelectWrapper = tv({
 
 export const nativeSelect = tv({
   base: [
-    "border-input dark:bg-input/30 text-foreground ring-offset-background w-full rounded-md border bg-transparent shadow-xs",
+    "border-input text-foreground ring-offset-background w-full rounded-md border bg-transparent shadow-xs",
     "placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground appearance-none bg-none select-none",
     "focus-visible:border-outline focus-visible:ring-outline/50 transition-[color,box-shadow] outline-none focus-visible:ring-3 focus-visible:transition-none",
     "disabled:pointer-events-none disabled:cursor-not-allowed",

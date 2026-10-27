@@ -10,14 +10,14 @@ import GuideHeader from "@/components/drawbridge/GuideHeader.astro";
 import { requireToolBySlug } from "@/lib/tools/registry";
 
 /**
- * One page per tool's reference guide.
+ * One page per tool's plain-language guide.
  *
  * The guides live in the `guides` content collection, so adding a guide is a
  * matter of dropping an MDX file into `src/content/guides/` — no route
  * changes needed.
  */
 export async function getStaticPaths() {
-  const entries = await getCollection("guides", ({ data }) => data.kind === "reference");
+  const entries = await getCollection("guides");
   return entries.map((entry) => ({
     params: { tool: entry.data.toolSlug },
     props: { entry },
@@ -41,7 +41,7 @@ const tool = requireToolBySlug(entry.data.toolSlug);
     <div class="min-w-0">
       <Button as="a" href={`/tools/${tool.slug}`} variant="outline" class="inline-flex items-center gap-2">
         <Book class="size-4" aria-hidden="true" />
-        Back to tool
+        Back to {tool.title}
       </Button>
     </div>
   </article>
