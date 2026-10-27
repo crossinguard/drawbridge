@@ -1,35 +1,35 @@
 # Drawbridge
 
-Free, private tools for assessment work. No login, no fee, no tracking — everything stays on your device.
+Free, private tools for exploring course content. No login, no fee, no tracking — imported files stay on your device.
 
-Drawbridge is a collection of small, single-purpose utilities for people who work with rubrics, outcomes, and other assessment data. Each tool runs entirely in your browser. There is no server, no analytics, and no persistence: once the site is loaded, it works offline as an installable PWA.
+Drawbridge is a collection of small, focused tools that can share one opened source. Each tool runs entirely in the browser. The current rebuild begins with Canvas course exports and establishes the source, session, UI, and guide patterns that later tools will reuse.
 
-## Tools
+## Current tool
 
-The homepage is the tool directory. Tools are grouped by how finished they are:
+**Course Explorer** opens a Canvas `.imscc` export (or the same archive renamed to `.zip`) and provides:
 
-- **Rubric → Canvas CSV** — Convert a Word rubric table into a Canvas import CSV. _Experimental._
-- **Outcome Mapper** — Map program, course, and assessment outcomes and export the alignment table. _Under development._
-- **Canvas Course Export Viewer** — Open a Canvas course export and browse everything in it, with a QA report. _Experimental._
-- **Canvas Assessment Review** — Turn a Canvas course export into a plain-text review of every graded item. _Under development._
+- A high-level count of the course's modules, pages, assignments, quizzes, discussions, files, and rubrics
+- A searchable module outline
+- A unique-content inventory with type filters
+- Readable item details and sanitised course content
+- Images loaded from the cartridge, never from external hosts
+- A plain-language guide available directly from the tool
 
-### Statuses
+It does not produce QA findings, audit reports, or exports.
 
-| Status                | Meaning                                                             |
-| --------------------- | ------------------------------------------------------------------- |
-| **Stable**            | Confirmed working. Any issues are bugs that need to be fixed.       |
-| **Experimental**      | Should do what we want it to do, but use with caution.              |
-| **Under development** | Somewhat functional, but probably broken in some way or incomplete. |
-| **Planned**           | An idea for a tool. Nothing is functional yet.                      |
+## Privacy and sessions
 
-## Privacy
-
-- No server, no API, no analytics, no cookies.
-- State lives only in memory and is lost when you close the tab.
-- A production Content Security Policy (`default-src 'self'`) prevents external requests.
-- The PWA service worker serves everything locally after the first load.
+- No server, API, analytics, cookies, or accounts
+- Imported course data lives only in memory
+- Astro client-side navigation keeps the opened course when moving between tools and guides
+- Refreshing, opening a new tab, closing the tab, or choosing **Close course** forgets the imported data
+- A restrictive Content Security Policy prevents third-party connections
+- The PWA caches the Drawbridge application for offline use, not imported courses
+- Application updates wait for user confirmation so they cannot unexpectedly reload an open course
 
 ## Development
+
+Requires Node.js 22 and Bun.
 
 ```bash
 bun install
@@ -45,91 +45,63 @@ bun run build
 ### Checks
 
 ```bash
-bun run check           # astro check — types
-bun run check:isolation # the app must not depend on the reference material
-bun run format          # prettier --write . (also sorts Tailwind classes)
-bun run test            # integration test for the .docx import path
-bun run test:canvas     # parser checks for the Canvas course export viewer
-bun run verify          # CSV serializer/parser checks
-bun run test:e2e        # browser smoke test (needs `bun run build` first)
+bun run check           # Astro and TypeScript checks
+bun run check:isolation # the app must not depend on private reference material
+bun run format          # Prettier, including Tailwind class ordering
+bun run test:canvas     # synthetic parser/model tests plus optional private regressions
+bun run test:e2e        # browser smoke test; run bun run build first
 ```
+
+The Canvas tests always generate a synthetic cartridge, so a clean checkout needs no course data. When files exist under `reference/canvas/course/`, selected real-export regressions run as well.
 
 ### Reference material
 
-`reference/` holds the real course exports the tools were built against, and
-the requirements they were read against. It is git-ignored and nothing in
-`src/` depends on it: deleting the folder changes nothing about how the app
-builds or runs. `bun run check:isolation` enforces that.
+`reference/` holds real course exports used only as development input. It is git-ignored, and nothing in `src/` or `public/` may depend on it. Real course content must never be bundled, quoted in a guide, or committed. `bun run check:isolation` enforces the application boundary.
 
-`bun run test:canvas` uses the sample export in `reference/canvas/course/`. The
-test skips itself when the sample is not there, so it never breaks a clean
-checkout.
-
-## Deployment (Netlify)
-
-`netlify.toml` is preconfigured (`bun run build`, publish `dist/`). Connect the repo in Netlify and deploy — no environment variables needed.
-
-## Structure
+## Project structure
 
 ```text
-reference/                            # git-ignored input material, not part of the app
-├── canvas/course/                    # real .imscc course exports
-├── canvas/rubric/                    # a Canvas rubric export, for comparison
-└── canvas-assessment-review-reference.md
 src/
 ├── layouts/
-│   └── DrawbridgeLayout.astro     # shared site shell
-├── content.config.ts              # the `guides` content collection
+│   └── DrawbridgeLayout.astro       # shared site shell and Astro ClientRouter
+├── content.config.ts                # one-guide-per-tool content collection
 ├── lib/
-│   ├── copy.ts                    # shared site copy
-│   ├── nav.ts                     # primary navigation links
-│   ├── utils.ts                   # `cn()` class-name helper
-│   ├── canvas/                    # the shared Canvas cartridge layer
-│   ├── parse/                     # file/text parsers
-│   ├── rubric/                    # rubric model, points, Canvas CSV
-│   └── tools/
-│       ├── registry.ts            # tool list + status metadata
-│       ├── steps.ts               # the shared ToolStep contract
-│       ├── rubric-csv/
-│       ├── outcome-mapper/
-│       └── imscc-viewer/          # Canvas course export viewer
-├── content/guides/                # guide MDX (reference + quick-start)
+│   ├── canvas/                      # cartridge parsing, normalized model, selectors
+│   │   ├── model.ts                 # unique entities and all module placements
+│   │   └── selectors/               # shared summaries, filters, and details
+│   ├── workspace/                   # source-agnostic in-memory session
+│   └── tools/registry.ts            # metadata for working tools only
+├── content/guides/                  # one plain-language MDX guide per tool
 ├── pages/
-│   ├── index.astro                # tool directory
-│   ├── about.astro
-│   ├── privacy.astro
-│   ├── tools/
-│   │   ├── rubric-csv/
-│   │   ├── outcome-mapper/
-│   │   └── imscc-viewer/
-│   └── guides/
-│       ├── index.astro
-│       └── [tool]/index.astro     # one route for every guide
+│   ├── tools/course-explorer/
+│   └── guides/                      # guide index and dynamic guide route
 ├── scripts/
-│   ├── app.ts                     # rubric-csv controller
-│   ├── lib/                       # shared client runtime
-│   │   ├── alerts.ts              # Starwind alerts from client code
-│   │   ├── dom.ts                 # byId, esc, icon, slugify
-│   │   ├── io.ts                  # download, copyToClipboard
-│   │   └── stepper.ts             # shared step navigation
-│   └── tools/
-│       ├── outcome-mapper/
-│       └── imscc-viewer/
+│   ├── canvas/                      # reusable Canvas content rendering
+│   ├── lib/                         # DOM, lifecycle, and PWA helpers
+│   └── tools/course-explorer/       # thin browser controller
+├── styles/
+│   ├── starwind.css                 # Tailwind entry and light Starwind tokens
+│   ├── base/                        # global defaults and typography
+│   └── components/                  # shared CSS component patterns
 └── components/
-    ├── drawbridge/                # site-wide components
-    │   └── tools/                 # tool-page components
-    └── starwind/                  # Starwind UI components
+    ├── drawbridge/
+    │   └── patterns/                # ToolShell, SourcePicker, WorkspaceBar…
+    ├── tools/                       # domain-specific tool components, as needed
+    └── starwind/                    # vendored Starwind UI primitives
 ```
 
 ## Adding a tool
 
-1. Add an entry to `src/lib/tools/registry.ts` with its title, description, heading, icon, and status.
-2. Add `src/lib/tools/<slug>/steps.ts` describing the tool's steps.
-3. Add the tool's logic under `src/lib/tools/<slug>/`.
-4. Add the tool page at `src/pages/tools/<slug>/index.astro`, built from `ToolLayout` and `ToolStep`.
-5. Add the tool's controller at `src/scripts/tools/<slug>/app.ts`.
-6. Add guide MDX at `src/content/guides/<slug>.mdx` (reference) and `src/content/guides/<slug>-quick-start.mdx` (quick-start).
+1. Register the working tool in `src/lib/tools/registry.ts` with its source label and guide URL.
+2. Add pure tool logic under `src/lib/tools/<slug>/`, or add reusable Canvas selectors under `src/lib/canvas/selectors/`.
+3. Build the page from `ToolShell`; do not introduce a universal stepper.
+4. Compose Starwind primitives and Drawbridge patterns before creating tool-specific UI.
+5. Add a thin controller under `src/scripts/tools/<slug>/` and mount it with `mountToolController()`.
+6. Add exactly one plain-language guide at `src/content/guides/<slug>.mdx`.
+7. Add synthetic parser/selector fixtures and browser coverage, including mobile and session handoffs.
 
-The directory, status badges, and guides index are all derived from the registry and the guides collection, so no other file needs editing.
+See `AGENTS.md` for the detailed architecture, styling, Canvas, and privacy conventions.
 
-See `AGENTS.md` for the conventions behind these files.
+## Deployment
+
+`netlify.toml` is configured to run `bun run build` and publish `dist/`. No environment variables are required.
