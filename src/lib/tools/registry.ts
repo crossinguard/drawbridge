@@ -1,5 +1,6 @@
 import type { SvgComponent } from "astro/types";
 import PackageExport from "@tabler/icons/outline/package-export.svg";
+import ListDetails from "@tabler/icons/outline/list-details.svg";
 
 /** Public metadata for one focused Drawbridge tool. */
 export interface ToolEntry {
@@ -28,6 +29,17 @@ export const TOOLS: readonly ToolEntry[] = [
     icon: PackageExport,
     href: "/tools/course-explorer",
     guideHref: "/guides/course-explorer",
+  },
+  {
+    slug: "rubric-explorer",
+    title: "Rubric Explorer",
+    description: "Read the rubrics in a Canvas export, see their linked activities, and compare rubric content.",
+    metaDescription:
+      "Explore Canvas rubrics, criteria, ratings, linked activities, exact-content copies, same-name variations, and two-rubric comparisons in your browser.",
+    sourceLabel: "Canvas course export",
+    icon: ListDetails,
+    href: "/tools/rubric-explorer",
+    guideHref: "/guides/rubric-explorer",
   },
 ];
 

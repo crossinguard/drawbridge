@@ -205,6 +205,8 @@ mountToolController("course-explorer", (root) => {
     const rows = getEntityDetailRows(source.model, entity);
     const processed = source.model.content.get(entity.id);
     const externalUrl = safeExternalUrl(entity.item.url);
+    const rubricId = entity.item.assignment?.rubricId ?? entity.item.quiz?.rubricId ?? entity.item.discussion?.rubricId;
+    const linkedRubric = source.model.export.rubrics.find((rubric) => rubric.id === rubricId);
     const kindBadge = `<span class="${badgeClasses({ variant: "outline", size: "sm" })}">${esc(KIND_LABELS[entity.kind])}</span>`;
     const outsideBadge =
       entity.placements.length === 0 && entity.kind !== "file"
@@ -251,6 +253,16 @@ mountToolController("course-explorer", (root) => {
           <ul class="grid gap-1 text-sm text-muted-foreground">
             ${entity.placements.map((placement) => `<li>${esc(placement.moduleTitle)}</li>`).join("")}
           </ul>
+        </section>`
+          : ""
+      }
+
+      ${
+        linkedRubric
+          ? `
+        <section class="grid gap-1">
+          <h4 class="text-sm font-semibold">Rubric</h4>
+          <a href="${escAttr(`/tools/rubric-explorer?rubric=${encodeURIComponent(linkedRubric.id)}`)}" class="text-sm font-medium text-primary underline underline-offset-4">Open ${esc(linkedRubric.title)} in Rubric Explorer</a>
         </section>`
           : ""
       }

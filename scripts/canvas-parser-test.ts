@@ -263,7 +263,13 @@ const SAMPLE_DIR = new URL("../reference/canvas/course/", import.meta.url).pathn
 const AP_FILE = join(SAMPLE_DIR, "AP_Calculus_AB.imscc");
 if (existsSync(AP_FILE)) {
   console.log("\nPrivate reference export — AP Calculus");
-  const { export: course } = await readExport(AP_FILE);
+  const parsed = await readExport(AP_FILE);
+  const { export: course } = parsed;
+  check(
+    "rubric index covers every rubric",
+    buildRubricIndex(buildCanvasCourseModel(parsed)).entries.length,
+    course.rubrics.length,
+  );
   check("course title", course.meta.title, "Calc AB Sandbox");
   check("module count", course.modules.length, 15);
   check("module item count", course.items.length, 95);
@@ -277,7 +283,13 @@ if (existsSync(AP_FILE)) {
 const ENG_FILE = join(SAMPLE_DIR, "eng120-master-2027-1-english-composition-i-export.imscc");
 if (existsSync(ENG_FILE)) {
   console.log("\nPrivate reference export — ENG120");
-  const { export: course } = await readExport(ENG_FILE);
+  const parsed = await readExport(ENG_FILE);
+  const { export: course } = parsed;
+  check(
+    "rubric index covers every rubric",
+    buildRubricIndex(buildCanvasCourseModel(parsed)).entries.length,
+    course.rubrics.length,
+  );
   const quizzes = [...course.items, ...course.orphans].filter((item) => item.kind === "quiz");
   check("rubric count", course.rubrics.length, 40);
   check("quiz count", quizzes.length, 30);

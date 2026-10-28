@@ -66,7 +66,8 @@ try {
 
   console.log("\nSite shell");
   await page.goto(BASE, { waitUntil: "networkidle" });
-  check("one current tool on the homepage", await page.locator('a[href="/tools/course-explorer"]').count(), 1);
+  check("Course Explorer on the homepage", await page.locator('a[href="/tools/course-explorer"]').count(), 1);
+  check("Rubric Explorer on the homepage", await page.locator('a[href="/tools/rubric-explorer"]').count(), 1);
   check("no theme switcher", await page.locator('[data-slot="theme-toggle"]').count(), 0);
   check(
     "light color scheme",
@@ -83,7 +84,8 @@ try {
   await page.emulateMedia({ colorScheme: "light" });
 
   await page.goto(`${BASE}/guides`, { waitUntil: "networkidle" });
-  check("one plain-language guide", await page.locator('a[href="/guides/course-explorer"]').count(), 2);
+  check("Course Explorer guide listed", await page.locator('a[href="/guides/course-explorer"]').count(), 2);
+  check("Rubric Explorer guide listed", await page.locator('a[href="/guides/rubric-explorer"]').count(), 2);
 
   console.log("\nCourse Explorer — import and browse");
   await page.goto(`${BASE}/tools/course-explorer`, { waitUntil: "networkidle" });
@@ -149,6 +151,72 @@ try {
   check("type filter finds two quizzes", await page.locator("[data-inventory-list] [data-entity-id]").count(), 2);
   await page.selectOption("[data-course-type-filter]", "all");
 
+  console.log("\nRubric Explorer — relationships and comparison");
+  await page.click('[data-course-view="modules"]');
+  await assignmentButton.focus();
+  await page.keyboard.press("Enter");
+  await page.getByRole("link", { name: "Open Sample Rubric in Rubric Explorer", exact: true }).click();
+  await page.waitForSelector("[data-rubric-content]:not([hidden])");
+  check("rubric handoff keeps the course", await page.textContent("[data-workspace-title]"), "Sample Course");
+  check(
+    "requested rubric is selected",
+    (await page.textContent("[data-rubric-detail]"))?.includes("Sample Rubric"),
+    true,
+  );
+  check("rubric criteria are readable", (await page.textContent("[data-rubric-detail]"))?.includes("Mechanics"), true);
+  check("rating levels are readable", (await page.textContent("[data-rubric-detail]"))?.includes("Exemplary"), true);
+  check("grading role is shown", (await page.textContent("[data-rubric-detail]"))?.includes("Used for grading"), true);
+  check("all four rubrics are listed", await page.locator("[data-rubric-list] [data-rubric-id]").count(), 4);
+  check(
+    "exact-copy group is shown",
+    (await page.textContent("[data-copy-groups]"))?.includes("Sample Rubric (copy)"),
+    true,
+  );
+  check("same-name group is shown", (await page.textContent("[data-name-groups]"))?.includes("2 versions"), true);
+
+  await page.selectOption("[data-rubric-filter]", "variations");
+  check("variation filter finds two rubrics", await page.locator("[data-rubric-list] [data-rubric-id]").count(), 2);
+  await page.fill("[data-rubric-search]", "Organization");
+  check("criterion search narrows the variation", await page.locator("[data-rubric-list] [data-rubric-id]").count(), 1);
+  await page.locator('[data-rubric-list] [data-rubric-id="g_rubric_4"]').focus();
+  await page.keyboard.press("Enter");
+  check("variation detail opens", (await page.textContent("[data-rubric-detail]"))?.includes("Organization"), true);
+  await page.fill("[data-rubric-search]", "");
+  await page.selectOption("[data-rubric-filter]", "all");
+  await page.click('[data-rubric-list] [data-rubric-id="g_rubric_3"]');
+  check(
+    "unlinked state is scoped to this export",
+    (await page.textContent("[data-rubric-detail]"))?.includes("No linked activities in this export."),
+    true,
+  );
+
+  await page.click('[data-rubric-view="compare"]');
+  await page.selectOption("[data-compare-left]", "g_rubric_1");
+  await page.selectOption("[data-compare-right]", "g_rubric_2");
+  check(
+    "exact copies compare as matching",
+    (await page.textContent("[data-comparison-result]"))?.includes("Same rubric content"),
+    true,
+  );
+  await page.selectOption("[data-compare-right]", "g_rubric_4");
+  const comparisonText = (await page.textContent("[data-comparison-result]")) ?? "";
+  check("variations compare as different", comparisonText.includes("Rubric content differs"), true);
+  check(
+    "criterion difference is identified",
+    comparisonText.includes("Different") && comparisonText.includes("Organization"),
+    true,
+  );
+
+  await page.click('[data-rubric-view="browse"]');
+  await page.click('[data-rubric-list] [data-rubric-id="g_rubric_1"]');
+  await page.click('[data-rubric-detail] a[href="/tools/course-explorer?item=g_assignment_1"]');
+  await page.waitForSelector("[data-course-content]:not([hidden])");
+  check(
+    "activity handoff selects the assignment",
+    (await page.textContent("[data-course-detail]"))?.includes("Sample Assignment"),
+    true,
+  );
+
   console.log("\nSession navigation and cleanup");
   await page.getByRole("link", { name: "Guide", exact: true }).click();
   await page.waitForURL(`${BASE}/guides/course-explorer`);
@@ -178,7 +246,16 @@ try {
   await page.click('[data-inventory-list] [data-entity-id="g_assignment_1"]');
   check("detail is visible at 320px", await page.locator("[data-course-detail]").isVisible(), true);
   check(
-    "no page-level horizontal overflow",
+    "no Course Explorer horizontal overflow at 320px",
+    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
+    true,
+  );
+  await page.getByRole("link", { name: "Open Sample Rubric in Rubric Explorer", exact: true }).click();
+  await page.waitForSelector("[data-rubric-content]:not([hidden])");
+  await page.click('[data-rubric-view="compare"]');
+  check("rubric comparison is visible at 320px", await page.locator("[data-comparison-result]").isVisible(), true);
+  check(
+    "no Rubric Explorer horizontal overflow at 320px",
     await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
     true,
   );

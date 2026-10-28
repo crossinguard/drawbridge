@@ -1,0 +1,37 @@
+@layer components {
+  .rubric-summary {
+    @apply grid grid-cols-2 gap-3 sm:grid-cols-4;
+  }
+
+  .rubric-groups {
+    @apply grid gap-4 lg:grid-cols-2;
+  }
+
+  .rubric-group {
+    @apply grid content-start gap-3 rounded-lg border border-border bg-card p-4;
+  }
+
+  .rubric-criteria {
+    @apply grid gap-4;
+  }
+
+  .rubric-criterion {
+    @apply grid min-w-0 gap-3 rounded-lg border border-border bg-background p-4;
+  }
+
+  .rubric-ratings {
+    @apply grid gap-2;
+  }
+
+  .rubric-rating {
+    @apply grid gap-1 rounded-md bg-muted/50 p-3 text-sm;
+  }
+
+  .comparison-pair {
+    @apply grid gap-3 md:grid-cols-2;
+  }
+
+  .comparison-cell {
+    @apply grid min-w-0 content-start gap-2 rounded-md border border-border/80 p-3 text-sm;
+  }
+}

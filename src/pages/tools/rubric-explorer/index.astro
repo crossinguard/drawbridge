@@ -1,0 +1,151 @@
+---
+import ToolShell from "@/components/drawbridge/patterns/ToolShell.astro";
+import SourcePicker from "@/components/drawbridge/patterns/SourcePicker.astro";
+import WorkspaceBar from "@/components/drawbridge/patterns/WorkspaceBar.astro";
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import { NativeSelect, NativeSelectOption } from "@/components/starwind/native-select";
+import { requireToolBySlug } from "@/lib/tools/registry";
+
+const tool = requireToolBySlug("rubric-explorer");
+---
+
+<ToolShell tool={tool}>
+  <Fragment slot="source">
+    <SourcePicker
+      inputId="rubric-file-input"
+      accept=".imscc,.zip"
+      title="Open a Canvas course export"
+      description="Choose the export file to read its rubrics, follow their activity links, and compare their content."
+      formats="Accepts .imscc files, or the same archive renamed to .zip."
+      chooseLabel="Choose a course export"
+      guideHref="/guides/rubric-explorer#what-you-need"
+    />
+    <WorkspaceBar />
+  </Fragment>
+
+  <div data-rubric-content class="grid gap-6" hidden>
+    <div data-no-rubrics class="detail-panel py-10 text-center" hidden>
+      <h2 class="section-title">No rubrics in this export</h2>
+      <p class="supporting-text mx-auto max-w-xl">
+        The course may not contain rubrics, or they may not have been selected when Canvas created this export.
+      </p>
+    </div>
+
+    <div data-rubric-library class="grid gap-6">
+      <div data-rubric-context class="grid gap-6">
+        <section aria-labelledby="rubric-overview-heading" class="grid gap-3">
+          <div>
+            <h2 id="rubric-overview-heading" class="section-title">
+              Rubric overview
+            </h2>
+            <p class="metadata-text">Relationships and content groups found in this export.</p>
+          </div>
+          <dl data-rubric-summary class="rubric-summary"></dl>
+        </section>
+
+        <section data-rubric-groups-section aria-labelledby="rubric-groups-heading" class="grid gap-3" hidden>
+          <div>
+            <h2 id="rubric-groups-heading" class="section-title">
+              Content groups
+            </h2>
+            <p class="supporting-text">
+              Matching content and same-name variations are grouped for exploration, not treated as quality judgments.
+            </p>
+          </div>
+          <div class="rubric-groups">
+            <div data-copy-groups></div>
+            <div data-name-groups></div>
+          </div>
+        </section>
+      </div>
+
+      <section aria-labelledby="rubric-browser-heading" class="grid gap-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div class="grid gap-1">
+            <h2 id="rubric-browser-heading" class="section-title">
+              Explore rubrics
+            </h2>
+            <p class="supporting-text">Read one rubric or place two side by side.</p>
+          </div>
+          <div
+            class="flex w-fit items-center gap-1 rounded-md border border-border p-1"
+            role="group"
+            aria-label="Rubric view"
+          >
+            <button
+              type="button"
+              data-rubric-view="browse"
+              aria-pressed="true"
+              class="rounded bg-accent px-3 py-1.5 text-sm font-medium"
+            >
+              Browse
+            </button>
+            <button
+              type="button"
+              data-rubric-view="compare"
+              aria-pressed="false"
+              class="rounded px-3 py-1.5 text-sm font-medium"
+            >
+              Compare
+            </button>
+          </div>
+        </div>
+
+        <div data-rubric-browse class="grid gap-4">
+          <div class="flex flex-col gap-3 md:flex-row md:items-end">
+            <div class="grid min-w-0 flex-1 gap-1.5">
+              <Label for="rubric-search">Search rubrics</Label>
+              <Input
+                id="rubric-search"
+                data-rubric-search
+                type="search"
+                placeholder="Titles, criteria, ratings, and activities"
+                autocomplete="off"
+              />
+            </div>
+            <div class="grid gap-1.5 md:w-56">
+              <Label for="rubric-filter">Relationship</Label>
+              <NativeSelect id="rubric-filter" data-rubric-filter>
+                <NativeSelectOption value="all">All rubrics</NativeSelectOption>
+                <NativeSelectOption value="linked">With linked activities</NativeSelectOption>
+                <NativeSelectOption value="unlinked">No linked activities</NativeSelectOption>
+                <NativeSelectOption value="copies">Exact-content copies</NativeSelectOption>
+                <NativeSelectOption value="variations">Same-name variations</NativeSelectOption>
+              </NativeSelect>
+            </div>
+          </div>
+
+          <p data-rubric-results class="metadata-text" role="status" aria-live="polite"></p>
+          <div class="master-detail">
+            <div class="master-detail-list">
+              <div data-rubric-list class="record-list"></div>
+              <p data-rubric-empty class="p-5 text-center text-sm text-muted-foreground" hidden>
+                No rubrics match your search and filter.
+              </p>
+            </div>
+            <article data-rubric-detail class="detail-panel" aria-label="Rubric details"></article>
+          </div>
+        </div>
+
+        <div data-rubric-compare class="grid gap-4" hidden>
+          <div class="grid gap-3 md:grid-cols-2">
+            <div class="grid gap-1.5">
+              <Label for="compare-left">Left rubric</Label>
+              <NativeSelect id="compare-left" data-compare-left />
+            </div>
+            <div class="grid gap-1.5">
+              <Label for="compare-right">Right rubric</Label>
+              <NativeSelect id="compare-right" data-compare-right />
+            </div>
+          </div>
+          <div data-comparison-result class="grid min-w-0 gap-4" aria-label="Rubric comparison"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    import "@/scripts/tools/rubric-explorer/app";
+  </script>
+</ToolShell>

@@ -4,7 +4,7 @@ Free, private tools for exploring course content. No login, no fee, no tracking 
 
 Drawbridge is a collection of small, focused tools that can share one opened source. Each tool runs entirely in the browser. The current rebuild begins with Canvas course exports and establishes the source, session, UI, and guide patterns that later tools will reuse.
 
-## Current tool
+## Current tools
 
 **Course Explorer** opens a Canvas `.imscc` export (or the same archive renamed to `.zip`) and provides:
 
@@ -17,7 +17,15 @@ Drawbridge is a collection of small, focused tools that can share one opened sou
 - Safe outbound links for embedded content without loading third-party frames
 - A plain-language guide available directly from the tool
 
-It does not produce QA findings, audit reports, or exports.
+**Rubric Explorer** uses the same opened course and provides:
+
+- Rubric criteria, ratings, long descriptions, and points
+- Unique linked activities with grading/reference roles and Course Explorer handoffs
+- Exact-content copy groups and same-name/different-content groups
+- Search, relationship filters, and criterion-by-criterion two-rubric comparison
+- A plain-language guide available directly from the tool
+
+The tools do not produce QA findings, audit reports, or exports.
 
 ## Privacy and sessions
 
@@ -70,17 +78,18 @@ src/
 ├── lib/
 │   ├── canvas/                      # cartridge parsing, normalized model, selectors
 │   │   ├── model.ts                 # unique entities and all module placements
-│   │   └── selectors/               # shared summaries, filters, and details
+│   │   └── selectors/               # shared summaries, relationships, comparisons
 │   ├── workspace/                   # source-agnostic in-memory session
 │   └── tools/registry.ts            # metadata for working tools only
 ├── content/guides/                  # one plain-language MDX guide per tool
 ├── pages/
 │   ├── tools/course-explorer/
+│   ├── tools/rubric-explorer/
 │   └── guides/                      # guide index and dynamic guide route
 ├── scripts/
-│   ├── canvas/                      # reusable Canvas content rendering
+│   ├── canvas/                      # shared source and content controllers
 │   ├── lib/                         # DOM, lifecycle, and PWA helpers
-│   └── tools/course-explorer/       # thin browser controller
+│   └── tools/                       # thin tool-specific browser controllers
 ├── styles/
 │   ├── starwind.css                 # Tailwind entry and light Starwind tokens
 │   ├── base/                        # global defaults and typography

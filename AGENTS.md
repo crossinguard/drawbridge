@@ -35,13 +35,14 @@ guides, or commit them. Committed tests use generated synthetic cartridges.
 
 ## Product direction
 
-Drawbridge is a set of focused tools connected by one opened source. The first
-tool is **Course Explorer**: import a Canvas export, see what it contains, and
-browse modules and content without QA judgments, reports, or exports.
+Drawbridge is a set of focused tools connected by one opened source. **Course
+Explorer** imports a Canvas export and browses its content. **Rubric Explorer**
+reads rubric details and relationships, groups matching content, and compares
+two rubrics. Neither produces QA judgments, reports, or exports.
 
-Rubric Explorer and Quiz Explorer should build on the same source, model,
-selectors, session, and UI patterns. Prefer small, independently useful tool
-releases. Do not build a visual workflow editor or a generic plugin framework.
+Quiz Explorer should build on the same source, model, selectors, session, and UI
+patterns. Prefer small, independently useful tool releases. Do not build a
+visual workflow editor or a generic plugin framework.
 
 Only working tools appear in `src/lib/tools/registry.ts`; do not fill the home
 page with planned placeholders.
@@ -65,11 +66,12 @@ src/
 ├── content/guides/                     # one plain-language MDX guide per tool
 ├── pages/
 │   ├── tools/course-explorer/
+│   ├── tools/rubric-explorer/
 │   └── guides/                         # index + generated guide routes
 ├── scripts/
-│   ├── canvas/content-view.ts          # safe body/images/internal navigation
+│   ├── canvas/                         # shared source/content controllers
 │   ├── lib/                            # DOM, lifecycle, PWA helpers
-│   └── tools/course-explorer/app.ts    # browser controller
+│   └── tools/                          # thin tool-specific controllers
 ├── styles/
 │   ├── starwind.css                    # Tailwind entry + light theme tokens
 │   ├── base/                           # global defaults and typography
@@ -91,6 +93,8 @@ src/
   shared by Canvas tools belongs in `src/lib/canvas/selectors/`.
 - Browser controllers belong in `src/scripts/tools/<slug>/` and should connect
   state to the DOM rather than reimplement domain rules.
+- Use `bindCanvasSource()` from `src/scripts/canvas/source-controller.ts` to
+  connect `SourcePicker` and `WorkspaceBar` to the shared session.
 - Use `mountToolController()` from `src/scripts/lib/lifecycle.ts`. Return a
   cleanup that releases subscriptions, object URLs, and other resources.
 - Every tool has exactly one guide at `src/content/guides/<slug>.mdx`, linked by
@@ -126,7 +130,8 @@ has no IndexedDB, localStorage, sessionStorage, cookie, or server adapter.
 Astro's `<ClientRouter />` keeps that module alive during internal navigation:
 
 - Course → guide → course retains the source.
-- Course Explorer → a future focused tool retains the source.
+- Course Explorer ↔ Rubric Explorer retains the source. Rubric/activity handoffs
+  use `?rubric=<id>` and `?item=<id>` to select the requested destination.
 - Refresh, a separate tab, closing the tab, or `clearWorkspace()` forgets it.
 
 PWA updates use prompt mode and a visible reload notice. Never automatically
@@ -249,6 +254,12 @@ Assignments, quizzes, and graded discussions link to rubrics with
 `<rubric_identifierref>`. `<rubric_use_for_grading>` distinguishes scoring from
 reference-only attachment. Rubrics are not module items. Say **no linked
 activities in this export**, not a universal claim that a rubric is unused.
+
+`selectors/rubrics.ts` owns all grouping and comparison rules. Exact-content
+signatures ignore generated IDs and titles but preserve criterion/rating order,
+long descriptions, and points. Same-name groups normalize title whitespace and
+case, then require distinct content signatures. Two-rubric comparisons align
+criteria by exported position; do not match them by generated criterion IDs.
 
 ### Sharp edges
 
