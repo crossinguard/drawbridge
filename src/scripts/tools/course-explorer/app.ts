@@ -121,7 +121,7 @@ mountToolController("course-explorer", (root) => {
   const itemButton = (entity: CourseEntity, title = entity.title) => `
     <button type="button" class="record-list-item" data-entity-id="${escAttr(entity.id)}" aria-current="${entity.id === selectedId}">
       <span class="min-w-0">
-        <span class="block wrap-break-words font-medium">${esc(title)}</span>
+        <span class="block wrap-break-word font-medium">${esc(title)}</span>
         <span class="mt-0.5 block text-xs text-muted-foreground">
           ${esc(KIND_LABELS[entity.kind])}${entity.placements.length === 0 ? " · Not in a module" : ""}
         </span>
@@ -221,7 +221,7 @@ mountToolController("course-explorer", (root) => {
           ${outsideBadge}
           ${entity.item.page?.frontPage ? `<span class="${badgeClasses({ variant: "info", size: "sm" })}">Front page</span>` : ""}
         </div>
-        <h3 class="font-heading text-2xl font-semibold wrap-break-words">${esc(entity.title)}</h3>
+        <h3 class="font-heading text-2xl font-semibold wrap-break-word">${esc(entity.title)}</h3>
       </header>
 
       ${navigationNote ? `<p role="status" class="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">${esc(navigationNote)}</p>` : ""}
@@ -237,7 +237,7 @@ mountToolController("course-explorer", (root) => {
               ({ label, value }) => `
             <div class="grid gap-0.5 border-b border-border/70 pb-2">
               <dt class="text-muted-foreground">${esc(label)}</dt>
-              <dd class="min-w-0 wrap-break-words">${esc(value)}</dd>
+              <dd class="min-w-0 wrap-break-word">${esc(value)}</dd>
             </div>`,
             )
             .join("")}

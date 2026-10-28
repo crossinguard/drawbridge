@@ -16,6 +16,6 @@
   }
 
   .sw-prose [data-canvas-equation] {
-    @apply inline-block max-w-full font-mono break-words whitespace-pre-wrap;
+    @apply inline-block max-w-full font-mono wrap-break-word whitespace-pre-wrap;
   }
 }

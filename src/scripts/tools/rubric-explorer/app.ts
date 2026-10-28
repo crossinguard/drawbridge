@@ -49,7 +49,7 @@ function criterionMarkup(criterion: RubricCriterion, index: number, compact = fa
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div class="grid gap-1">
           <p class="text-xs font-medium text-muted-foreground">Criterion ${index + 1}</p>
-          <h4 class="font-semibold break-words">${esc(criterion.description || "Untitled criterion")}</h4>
+          <h4 class="font-semibold wrap-break-word">${esc(criterion.description || "Untitled criterion")}</h4>
         </div>
         <span class="text-sm text-muted-foreground">${esc(pointText(criterion.points))}</span>
       </div>
@@ -99,7 +99,7 @@ mountToolController("rubric-explorer", (root) => {
   const groupButton = (rubricId: string, title: string, detailText: string) => `
     <button type="button" class="record-list-item" data-rubric-id="${escAttr(rubricId)}" aria-current="${rubricId === selectedId}">
       <span class="min-w-0">
-        <span class="block break-words font-medium">${esc(title)}</span>
+        <span class="block wrap-break-word font-medium">${esc(title)}</span>
         <span class="mt-0.5 block text-xs text-muted-foreground">${esc(detailText)}</span>
       </span>
       <span aria-hidden="true" class="shrink-0 text-muted-foreground">›</span>
@@ -234,7 +234,7 @@ mountToolController("rubric-explorer", (root) => {
           ${exactCopyIds.length > 0 ? `<span class="${badgeClasses({ variant: "secondary", size: "sm" })}">Exact-content copy</span>` : ""}
           ${hasSameNameVariation ? `<span class="${badgeClasses({ variant: "info", size: "sm" })}">Same-name variation</span>` : ""}
         </div>
-        <h3 class="font-heading text-2xl font-semibold break-words">${esc(rubric.title || "Untitled rubric")}</h3>
+        <h3 class="font-heading text-2xl font-semibold wrap-break-word">${esc(rubric.title || "Untitled rubric")}</h3>
       </header>
 
       <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
@@ -267,7 +267,7 @@ mountToolController("rubric-explorer", (root) => {
                     ({ entity, usedForGrading }) => `
                       <a class="record-list-item" href="${escAttr(`/tools/course-explorer?item=${encodeURIComponent(entity.id)}`)}">
                         <span class="min-w-0">
-                          <span class="block break-words font-medium">${esc(entity.title)}</span>
+                          <span class="block wrap-break-word font-medium">${esc(entity.title)}</span>
                           <span class="mt-0.5 block text-xs text-muted-foreground">${esc(KIND_LABELS[entity.kind])} · ${usedForGrading ? "Used for grading" : "Attached for reference"}</span>
                         </span>
                         <span aria-hidden="true" class="shrink-0 text-muted-foreground">›</span>
@@ -372,7 +372,7 @@ mountToolController("rubric-explorer", (root) => {
             (entry, entryIndex) => `
           <section class="grid gap-1 rounded-lg border border-border bg-card p-4">
             <p class="text-xs font-medium text-muted-foreground">${entryIndex === 0 ? "Left" : "Right"}</p>
-            <h3 class="font-semibold break-words">${esc(entry.rubric.title || "Untitled rubric")}</h3>
+            <h3 class="font-semibold wrap-break-word">${esc(entry.rubric.title || "Untitled rubric")}</h3>
             <p class="text-sm text-muted-foreground">${esc(pointText(entry.rubric.pointsPossible))} · ${entry.rubric.criteria.length} criteria</p>
           </section>`,
           )
