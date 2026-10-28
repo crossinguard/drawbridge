@@ -12,6 +12,8 @@ const { parseCourseExport } = await import("../src/lib/canvas/parse");
 const { buildCanvasCourseModel, entitiesOutsideModules } = await import("../src/lib/canvas/model");
 const { filterCourseEntities, getCourseSummary } = await import("../src/lib/canvas/selectors/course");
 const { getEntityDetailRows } = await import("../src/lib/canvas/selectors/details");
+const { buildRubricIndex, compareRubrics, filterRubricEntries, rubricContentSignature } =
+  await import("../src/lib/canvas/selectors/rubrics");
 const { processContent } = await import("../src/lib/canvas/content");
 const { hasBrokenNamespace, parseXml } = await import("../src/lib/canvas/xml");
 
@@ -46,7 +48,7 @@ const sample = await parseCourseExport(sampleStore, { sourceName: "sample.imscc"
 check("course title", sample.export.meta.title, "Sample Course");
 check("module count", sample.export.modules.length, 1);
 check("module item count", sample.export.items.length, 3);
-check("rubric count", sample.export.rubrics.length, 3);
+check("rubric count", sample.export.rubrics.length, 4);
 check("item bank count", sample.export.itemBanks.length, 1);
 check("quiz count", sample.export.items.filter((item) => item.kind === "quiz").length, 2);
 check(
@@ -88,7 +90,7 @@ check("summary counts", getCourseSummary(model), {
   quizzes: 2,
   discussions: 0,
   files: 0,
-  rubrics: 3,
+  rubrics: 4,
 });
 check(
   "outside-module selector",
@@ -106,6 +108,89 @@ ok(
   getEntityDetailRows(model, normalizedAssignment!).some(
     (row) => row.label === "Rubric" && row.value === "Sample Rubric",
   ),
+);
+
+console.log("\nRubric relationships and comparison");
+const rubricIndex = buildRubricIndex(model);
+check("rubric entries", rubricIndex.entries.length, 4);
+check(
+  "exact copies ignore titles and generated IDs",
+  rubricIndex.exactCopyGroups.map((group) => group.rubrics.map((rubric) => rubric.id)),
+  [["g_rubric_1", "g_rubric_2"]],
+);
+check(
+  "same-name variations have distinct content",
+  rubricIndex.sameNameGroups.map((group) => ({
+    title: group.title,
+    ids: group.rubrics.map((rubric) => rubric.id),
+    versions: group.versions,
+  })),
+  [{ title: "Sample Rubric", ids: ["g_rubric_1", "g_rubric_4"], versions: 2 }],
+);
+check(
+  "linked activity is unique and keeps its grading role",
+  rubricIndex.entriesById.get("g_rubric_1")?.activities.map((activity) => ({
+    id: activity.entity.id,
+    usedForGrading: activity.usedForGrading,
+  })),
+  [{ id: "g_assignment_1", usedForGrading: true }],
+);
+check("unlinked rubric copy", rubricIndex.entriesById.get("g_rubric_3")?.activities.length, 0);
+check("criteria points", rubricIndex.entriesById.get("g_rubric_1")?.criteriaPoints, 30);
+check(
+  "copy filter",
+  filterRubricEntries(rubricIndex, { kind: "copies" })
+    .map((entry) => entry.rubric.id)
+    .sort(),
+  ["g_rubric_1", "g_rubric_2"],
+);
+check(
+  "variation filter",
+  filterRubricEntries(rubricIndex, { kind: "variations" })
+    .map((entry) => entry.rubric.id)
+    .sort(),
+  ["g_rubric_1", "g_rubric_4"],
+);
+check(
+  "rubric content search",
+  filterRubricEntries(rubricIndex, { search: "Organization" }).map((entry) => entry.rubric.id),
+  ["g_rubric_4"],
+);
+
+const rubricOne = model.export.rubrics.find((rubric) => rubric.id === "g_rubric_1")!;
+const rubricCopy = model.export.rubrics.find((rubric) => rubric.id === "g_rubric_2")!;
+const rubricVariation = model.export.rubrics.find((rubric) => rubric.id === "g_rubric_4")!;
+check("copy comparison", compareRubrics(rubricOne, rubricCopy).sameContent, true);
+check("variation comparison", compareRubrics(rubricOne, rubricVariation).differentCriteria, 1);
+check("variation criterion position", compareRubrics(rubricOne, rubricVariation).criteria[1]?.status, "different");
+
+const changedIds = structuredClone(rubricOne);
+changedIds.id = "generated-copy";
+changedIds.criteria.forEach((criterion, criterionIndex) => {
+  criterion.id = `criterion-${criterionIndex}`;
+  criterion.ratings.forEach((rating, ratingIndex) => {
+    rating.id = `rating-${criterionIndex}-${ratingIndex}`;
+  });
+});
+ok(
+  "generated IDs do not change the signature",
+  rubricContentSignature(changedIds) === rubricContentSignature(rubricOne),
+);
+const changedDescription = structuredClone(rubricOne);
+changedDescription.criteria[0].ratings[0].longDescription += " Changed.";
+ok(
+  "long descriptions change the signature",
+  rubricContentSignature(changedDescription) !== rubricContentSignature(rubricOne),
+);
+
+const selectiveModel = buildCanvasCourseModel({
+  ...sample,
+  export: { ...sample.export, items: [], orphans: [], modules: [] },
+});
+const selectiveRubrics = buildRubricIndex(selectiveModel);
+ok(
+  "rubric-only exports have no linked activities in this export",
+  selectiveRubrics.entries.every((entry) => entry.activities.length === 0),
 );
 
 console.log("\nXML repair and content safety");

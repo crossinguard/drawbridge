@@ -286,6 +286,17 @@ const RUBRICS = `<?xml version="1.0" encoding="UTF-8"?>
       </criterion>
     </criteria>
   </rubric>
+  <rubric identifier="g_rubric_4">
+    <read_only>false</read_only>
+    <title>Sample Rubric</title>
+    <reusable>false</reusable>
+    <public>false</public>
+    <points_possible>30.0</points_possible>
+    <hide_score_total>false</hide_score_total>
+    <free_form_criterion_comments>false</free_form_criterion_comments>
+    <rating_order>descending</rating_order>
+    ${RUBRIC_CRITERIA.replace("<description>Mechanics</description>", "<description>Organization</description>")}
+  </rubric>
 </rubrics>
 `;
 
