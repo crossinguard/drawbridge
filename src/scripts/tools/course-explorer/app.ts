@@ -10,8 +10,8 @@ import {
 import { getEntityDetailRows } from "@/lib/canvas/selectors/details";
 import type { CourseEntity } from "@/lib/canvas/model";
 import { KIND_LABELS, type ContentType, type PublishState } from "@/lib/canvas/types";
-import { clearWorkspace, getWorkspaceState, openCanvasCourse, subscribeToWorkspace } from "@/lib/workspace/session";
 import { createCanvasContentView } from "@/scripts/canvas/content-view";
+import { bindCanvasSource } from "@/scripts/canvas/source-controller";
 import { esc, escAttr, within } from "@/scripts/lib/dom";
 import { mountToolController } from "@/scripts/lib/lifecycle";
 
@@ -26,16 +26,6 @@ const SUMMARY_KEYS: (keyof CourseSummary)[] = [
 ];
 
 mountToolController("course-explorer", (root) => {
-  const sourceRegion = within<HTMLElement>(root, "[data-source-region]");
-  const picker = within<HTMLElement>(root, "[data-source-picker]");
-  const fileInput = within<HTMLInputElement>(root, "[data-source-input]");
-  const chooseButton = within<HTMLButtonElement>(root, "[data-source-choose]");
-  const sourceStatus = within<HTMLElement>(root, "[data-source-status]");
-  const sourceError = within<HTMLElement>(root, "[data-source-error]");
-  const sourceErrorMessage = within<HTMLElement>(root, "[data-source-error-message]");
-  const workspaceBar = within<HTMLElement>(root, "[data-workspace-bar]");
-  const workspaceTitle = within<HTMLElement>(root, "[data-workspace-title]");
-  const workspaceMeta = within<HTMLElement>(root, "[data-workspace-meta]");
   const content = within<HTMLElement>(root, "[data-course-content]");
   const summary = within<HTMLElement>(root, "[data-course-summary]");
   const importNotes = within<HTMLDetailsElement>(root, "[data-import-notes]");
@@ -131,7 +121,7 @@ mountToolController("course-explorer", (root) => {
   const itemButton = (entity: CourseEntity, title = entity.title) => `
     <button type="button" class="record-list-item" data-entity-id="${escAttr(entity.id)}" aria-current="${entity.id === selectedId}">
       <span class="min-w-0">
-        <span class="block break-words font-medium">${esc(title)}</span>
+        <span class="block wrap-break-words font-medium">${esc(title)}</span>
         <span class="mt-0.5 block text-xs text-muted-foreground">
           ${esc(KIND_LABELS[entity.kind])}${entity.placements.length === 0 ? " · Not in a module" : ""}
         </span>
@@ -229,7 +219,7 @@ mountToolController("course-explorer", (root) => {
           ${outsideBadge}
           ${entity.item.page?.frontPage ? `<span class="${badgeClasses({ variant: "info", size: "sm" })}">Front page</span>` : ""}
         </div>
-        <h3 class="font-heading text-2xl font-semibold break-words">${esc(entity.title)}</h3>
+        <h3 class="font-heading text-2xl font-semibold wrap-break-words">${esc(entity.title)}</h3>
       </header>
 
       ${navigationNote ? `<p role="status" class="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">${esc(navigationNote)}</p>` : ""}
@@ -245,7 +235,7 @@ mountToolController("course-explorer", (root) => {
               ({ label, value }) => `
             <div class="grid gap-0.5 border-b border-border/70 pb-2">
               <dt class="text-muted-foreground">${esc(label)}</dt>
-              <dd class="min-w-0 break-words">${esc(value)}</dd>
+              <dd class="min-w-0 wrap-break-words">${esc(value)}</dd>
             </div>`,
             )
             .join("")}
@@ -290,20 +280,10 @@ mountToolController("course-explorer", (root) => {
     if (body && contentView) contentView.render(body, processed);
   }
 
-  const renderWorkspace = () => {
-    const state = getWorkspaceState();
-    const ready = state.status === "ready" && state.source?.kind === "canvas-course";
+  const renderWorkspace = (opened: CanvasCourseSource | null) => {
+    content.hidden = !opened;
 
-    sourceRegion.hidden = ready;
-    workspaceBar.hidden = !ready;
-    content.hidden = !ready;
-    chooseButton.disabled = state.status === "opening";
-    picker.setAttribute("aria-busy", String(state.status === "opening"));
-    sourceStatus.textContent = state.status === "opening" ? `Opening ${state.pendingFileName ?? "course export"}…` : "";
-    sourceError.hidden = state.status !== "error";
-    sourceErrorMessage.textContent = state.error ?? "";
-
-    if (!ready) {
+    if (!opened) {
       contentView?.destroy();
       contentView = null;
       source = null;
@@ -312,13 +292,11 @@ mountToolController("course-explorer", (root) => {
       return;
     }
 
-    const opened = state.source;
-    if (!opened) return;
-
     if (source !== opened) {
       contentView?.destroy();
       source = opened;
-      selectedId = null;
+      const requestedItem = new URLSearchParams(window.location.search).get("item");
+      selectedId = requestedItem && opened.model.entitiesById.has(requestedItem) ? requestedItem : null;
       navigationNote = "";
       contentView = createCanvasContentView({
         archive: opened.archive,
@@ -353,9 +331,6 @@ mountToolController("course-explorer", (root) => {
     }
 
     source = opened;
-    const course = opened.model.export;
-    workspaceTitle.textContent = course.meta.title;
-    workspaceMeta.textContent = [course.meta.code, opened.fileName].filter(Boolean).join(" · ");
     renderSummary();
     renderLists();
 
@@ -370,32 +345,6 @@ mountToolController("course-explorer", (root) => {
     }
   };
 
-  chooseButton.addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", () => {
-    const file = fileInput.files?.[0];
-    if (file) void openCanvasCourse(file);
-    fileInput.value = "";
-  });
-
-  picker.addEventListener("dragenter", (event) => {
-    event.preventDefault();
-    picker.dataset.dragging = "true";
-  });
-  picker.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    picker.dataset.dragging = "true";
-  });
-  picker.addEventListener("dragleave", (event) => {
-    if (!picker.contains(event.relatedTarget as Node | null)) picker.dataset.dragging = "false";
-  });
-  picker.addEventListener("drop", (event) => {
-    event.preventDefault();
-    picker.dataset.dragging = "false";
-    const file = event.dataTransfer?.files[0];
-    if (file) void openCanvasCourse(file);
-  });
-
-  within<HTMLButtonElement>(root, "[data-workspace-close]").addEventListener("click", clearWorkspace);
   search.addEventListener("input", renderLists);
   typeFilter.addEventListener("change", renderLists);
   root.querySelectorAll<HTMLButtonElement>("[data-course-view]").forEach((button) => {
@@ -406,9 +355,9 @@ mountToolController("course-explorer", (root) => {
     if (button?.dataset.entityId) selectEntity(button.dataset.entityId);
   });
 
-  const unsubscribe = subscribeToWorkspace(renderWorkspace);
+  const unbindSource = bindCanvasSource(root, renderWorkspace);
   return () => {
-    unsubscribe();
+    unbindSource();
     contentView?.destroy();
   };
 });
