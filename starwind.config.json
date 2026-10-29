@@ -127,6 +127,12 @@
       "version": "1.2.1",
       "framework": "astro",
       "registry": "default"
+    },
+    {
+      "name": "theme-toggle",
+      "version": "2.0.0",
+      "framework": "astro",
+      "registry": "default"
     }
   ],
   "tailwind": {

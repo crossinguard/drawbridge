@@ -51,6 +51,7 @@ page with planned placeholders.
 
 ```text
 reference/                              # git-ignored private development input
+docs/                                   # contributor how-to guides
 src/
 ├── layouts/DrawbridgeLayout.astro      # site shell, CSP, fonts, ClientRouter
 ├── content.config.ts                   # the guides collection
@@ -148,13 +149,15 @@ themselves.
 Drawbridge uses Astro, Starwind UI, Tailwind CSS v4, and vanilla TypeScript. No
 UI framework island is needed for these tools.
 
-### Light-only theme
+### Light and dark theme
 
-- There is no theme switcher, theme initialization, system dark mode, or saved
-  color preference.
-- Use `color-scheme: light` and no `dark:` utilities in application or vendored
-  component code.
-- `src/styles/starwind.css` owns the stone/green light `:root` tokens and all
+- Starwind's theme controller follows the system by default. `ThemeToggle`
+  saves only the `colorTheme` display preference in local storage, and
+  `ThemeInitScript` applies it before rendering and across client navigation.
+- Use class-based `.dark` theming and the matching `color-scheme`. Do not add
+  component-level dark color overrides; change the semantic tokens instead.
+- `src/styles/starwind.css` owns the Poseidon, Sea Goddess, Pompelmo,
+  Butternut, and Gruyrecheese scales plus all light `:root` and `.dark`
   semantic mappings. Do not create a second color or pigment system.
 - Keep Atkinson Hyperlegible Next/Mono and PaintFactory through Astro's Fonts
   API. Font mappings remain explicit in `@theme inline`.

@@ -65,25 +65,125 @@ try {
   });
 
   console.log("\nSite shell");
+  await page.emulateMedia({ colorScheme: "light" });
   await page.goto(BASE, { waitUntil: "networkidle" });
+  const themeToggle = page.locator('[data-slot="theme-toggle"]');
   check("Course Explorer on the homepage", await page.locator('a[href="/tools/course-explorer"]').count(), 1);
   check("Rubric Explorer on the homepage", await page.locator('a[href="/tools/rubric-explorer"]').count(), 1);
-  check("no theme switcher", await page.locator('[data-slot="theme-toggle"]').count(), 0);
+  check("theme toggle visible", await themeToggle.isVisible(), true);
+  check(
+    "theme toggle accessible name",
+    await themeToggle.getAttribute("aria-label"),
+    "Switch between light and dark themes",
+  );
   check(
     "light color scheme",
     await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme),
     "light",
   );
-  const lightBackground = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  await page.emulateMedia({ colorScheme: "dark" });
   check(
-    "OS dark preference does not change the theme",
+    "Gruyrecheese light background",
     await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
-    lightBackground,
+    "rgb(250, 244, 234)",
   );
-  await page.emulateMedia({ colorScheme: "light" });
+  check(
+    "Gruyrecheese light foreground",
+    await page.evaluate(() => getComputedStyle(document.body).color),
+    "rgb(27, 21, 9)",
+  );
+  check(
+    "Poseidon primary links",
+    await page
+      .getByRole("link", { name: "Read the privacy details" })
+      .evaluate((element) => getComputedStyle(element).color),
+    "rgb(15, 76, 114)",
+  );
+  check(
+    "Sea Goddess tool accents",
+    await page
+      .locator("#tools .bg-secondary")
+      .first()
+      .evaluate((element) => getComputedStyle(element).backgroundColor),
+    "rgb(210, 237, 250)",
+  );
+  check(
+    "Pompelmo source labels",
+    await page
+      .getByText("Canvas course export", { exact: true })
+      .first()
+      .evaluate((element) => getComputedStyle(element).color),
+    "rgb(172, 0, 34)",
+  );
 
-  await page.goto(`${BASE}/guides`, { waitUntil: "networkidle" });
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.waitForSelector("html.dark");
+  check(
+    "system dark color scheme",
+    await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme),
+    "dark",
+  );
+  check(
+    "Gruyrecheese dark background",
+    await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
+    "rgb(27, 21, 9)",
+  );
+  check(
+    "Gruyrecheese dark foreground",
+    await page.evaluate(() => getComputedStyle(document.body).color),
+    "rgb(250, 244, 234)",
+  );
+  check(
+    "dark Poseidon primary links",
+    await page
+      .getByRole("link", { name: "Read the privacy details" })
+      .evaluate((element) => getComputedStyle(element).color),
+    "rgb(114, 192, 249)",
+  );
+  check(
+    "dark Sea Goddess tool accents",
+    await page
+      .locator("#tools .bg-secondary")
+      .first()
+      .evaluate((element) => getComputedStyle(element).backgroundColor),
+    "rgb(10, 59, 77)",
+  );
+  check(
+    "dark Pompelmo source labels",
+    await page
+      .getByText("Canvas course export", { exact: true })
+      .first()
+      .evaluate((element) => getComputedStyle(element).color),
+    "rgb(255, 149, 145)",
+  );
+  check("system preference remains selected", await page.evaluate(() => localStorage.getItem("colorTheme")), "system");
+  check("dark toggle state", await themeToggle.getAttribute("aria-pressed"), "true");
+
+  await themeToggle.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));
+  check("keyboard toggles the theme", await page.evaluate(() => localStorage.getItem("colorTheme")), "light");
+  await page.reload({ waitUntil: "networkidle" });
+  check(
+    "saved light preference overrides the dark system theme",
+    await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
+    "rgb(250, 244, 234)",
+  );
+
+  await themeToggle.click();
+  await page.waitForSelector("html.dark");
+  check("manual dark preference saved", await page.evaluate(() => localStorage.getItem("colorTheme")), "dark");
+  await page.reload({ waitUntil: "networkidle" });
+  check(
+    "dark preference persists across reload",
+    await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
+    "rgb(27, 21, 9)",
+  );
+
+  await page.getByRole("link", { name: "Guides", exact: true }).first().click();
+  await page.waitForURL((url) => url.pathname === "/guides");
+  check("dark preference persists across client navigation", await page.locator("html.dark").count(), 1);
+  await themeToggle.click();
+  await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));
   check("Course Explorer guide listed", await page.locator('a[href="/guides/course-explorer"]').count(), 2);
   check("Rubric Explorer guide listed", await page.locator('a[href="/guides/rubric-explorer"]').count(), 2);
 
@@ -123,8 +223,17 @@ try {
 
   check("course title shown", await page.textContent("[data-workspace-title]"), "Sample Course");
   check("summary includes rubrics", (await page.textContent("[data-course-summary]"))?.includes("Rubrics"), true);
+  check(
+    "Butternut selected view",
+    await page.locator('[data-course-view="modules"]').evaluate((element) => getComputedStyle(element).backgroundColor),
+    "rgb(255, 197, 175)",
+  );
   check("three module items", await page.locator("[data-module-list] [data-entity-id]").count(), 3);
-  check("no course data persisted", await page.evaluate(() => localStorage.length), 0);
+  check(
+    "no course data persisted",
+    await page.evaluate(() => Object.keys(localStorage).filter((key) => key !== "colorTheme")),
+    [],
+  );
 
   const assignmentButton = page.locator('[data-module-list] [data-entity-id="g_assignment_1"]');
   await assignmentButton.focus();

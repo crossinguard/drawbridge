@@ -64,6 +64,10 @@ bun run test:e2e        # browser smoke test; run bun run build first
 
 The Canvas tests always generate a synthetic cartridge, so a clean checkout needs no course data. When files exist under `reference/canvas/course/`, selected real-export regressions run as well.
 
+### Theme customization
+
+See [Customizing the Drawbridge theme](docs/customizing-the-theme.md) for the palette scales, light/dark semantic tokens, PWA colors, accessibility checks, and browser-test expectations.
+
 ### Reference material
 
 `reference/` holds real course exports used only as development input. It is git-ignored, and nothing in `src/` or `public/` may depend on it. Real course content must never be bundled, quoted in a guide, or committed. `bun run check:isolation` enforces the application boundary.
@@ -91,7 +95,7 @@ src/
 │   ├── lib/                         # DOM, lifecycle, and PWA helpers
 │   └── tools/                       # thin tool-specific browser controllers
 ├── styles/
-│   ├── starwind.css                 # Tailwind entry and light Starwind tokens
+│   ├── starwind.css                 # Tailwind entry and light/dark Starwind tokens
 │   ├── base/                        # global defaults and typography
 │   └── components/                  # shared CSS component patterns
 └── components/

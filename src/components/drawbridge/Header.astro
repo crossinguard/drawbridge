@@ -2,6 +2,7 @@
 import Menu from "@tabler/icons/outline/menu.svg";
 
 import { Button } from "@/components/starwind/button";
+import { ThemeToggle } from "@/components/starwind/theme-toggle";
 import {
   Sheet,
   SheetContent,
@@ -32,6 +33,8 @@ const currentPath = Astro.url.pathname;
           <NavLink href={link.href} label={link.label} active={isActiveLink(currentPath, link.href)} size="sm" />
         ))}
       </nav>
+
+      <ThemeToggle ariaLabel="Switch between light and dark themes" />
 
       <Sheet>
         <SheetTrigger asChild>
