@@ -6,7 +6,7 @@ Drawbridge is a collection of small, focused tools that can share one opened sou
 
 ## Current tools
 
-**Course Explorer** opens a Canvas `.imscc` export (or the same archive renamed to `.zip`) and provides:
+**Course Explorer** opens a Canvas `.imscc` export and provides:
 
 - A high-level count of the course's modules, pages, assignments, quizzes, discussions, files, and rubrics
 - A searchable module outline

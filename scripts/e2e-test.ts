@@ -91,8 +91,26 @@ try {
   await page.goto(`${BASE}/tools/course-explorer`, { waitUntil: "networkidle" });
   check("source picker visible", await page.locator("[data-source-picker]").isVisible(), true);
   check("course content initially hidden", await page.locator("[data-course-content]").isVisible(), false);
+  check(
+    "course import accepts only .imscc",
+    await page.locator("[data-source-input]").getAttribute("accept"),
+    ".imscc",
+  );
 
   const cartridge = await buildSampleCartridge();
+  await page.setInputFiles("[data-source-input]", {
+    name: "sample.zip",
+    mimeType: "application/zip",
+    buffer: Buffer.from(cartridge),
+  });
+  await page.waitForSelector("[data-source-error]:not([hidden])");
+  check(
+    "renamed ZIP shows imscc-only guidance",
+    await page.textContent("[data-source-error-message]"),
+    "Choose a Canvas Common Cartridge course export with an .imscc filename.",
+  );
+  check("renamed ZIP does not open the course", await page.locator("[data-course-content]").isVisible(), false);
+
   const upload = async () => {
     await page.setInputFiles("[data-source-input]", {
       name: "sample.imscc",
@@ -157,6 +175,11 @@ try {
   await page.keyboard.press("Enter");
   await page.getByRole("link", { name: "Open Sample Rubric in Rubric Explorer", exact: true }).click();
   await page.waitForSelector("[data-rubric-content]:not([hidden])");
+  check(
+    "rubric import accepts only .imscc",
+    await page.locator("[data-source-input]").getAttribute("accept"),
+    ".imscc",
+  );
   check("rubric handoff keeps the course", await page.textContent("[data-workspace-title]"), "Sample Course");
   check(
     "requested rubric is selected",

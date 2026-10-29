@@ -194,10 +194,12 @@ README.md.
 
 Course Explorer and future Canvas tools share `src/lib/canvas/`. These format
 rules were learned from real exports and must remain intact when the model is
-extended. Canvas permits selective Common Cartridge exports, so absence always
-means “not in this export,” never proof that the original course lacks content.
-QTI-only and files-only ZIP exports are separate formats, not supported IMSCC
-input.
+extended. Canvas course import accepts only filenames ending in `.imscc`;
+renamed `.zip` archives are not accepted. Standalone QTI belongs to separate
+assessment tooling, not Canvas course import. Canvas permits selective Common
+Cartridge exports, so absence always means “not in this export,” never proof
+that the original course lacks content. QTI-only and files-only ZIP exports are
+separate formats, not supported IMSCC input.
 
 ### The join
 

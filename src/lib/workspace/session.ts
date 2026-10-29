@@ -35,7 +35,7 @@ function describeImportError(error: unknown): string {
     return "This is not a Canvas Common Cartridge course export. Choose the .imscc file, not a QTI or files-only ZIP export.";
   }
   if (message.includes("ZIP")) {
-    return "This file could not be opened as a course archive. Choose an .imscc or .zip file and try again.";
+    return "This file could not be opened as a course archive. Choose an .imscc file and try again.";
   }
   return "The course export could not be read. Try exporting the course from Canvas again, then open the new file.";
 }
@@ -43,6 +43,15 @@ function describeImportError(error: unknown): string {
 /** Open a Canvas course export and replace any previously opened source. */
 export async function openCanvasCourse(file: File): Promise<void> {
   const currentOperation = ++operation;
+  if (!file.name.toLowerCase().endsWith(".imscc")) {
+    setState({
+      status: "error",
+      source: null,
+      error: "Choose a Canvas Common Cartridge course export with an .imscc filename.",
+    });
+    return;
+  }
+
   setState({ status: "opening", source: null, pendingFileName: file.name });
 
   try {

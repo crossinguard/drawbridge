@@ -1,8 +1,8 @@
 /**
  * Reading files out of a Canvas course export.
  *
- * A course export arrives as a ZIP: the `.imscc` file Canvas writes, or the
- * same file renamed to `.zip`.
+ * A Canvas course export arrives as an `.imscc` file whose contents use the
+ * ZIP format.
  *
  * Files are read on demand: a course export can carry hundreds of megabytes
  * of video, and the viewer never needs most of it in memory at once.
@@ -89,7 +89,7 @@ class ZipStore implements FileStore {
 /**
  * Open a cartridge from a ZIP archive.
  *
- * @param source The `.imscc` file, or the same archive renamed to `.zip`.
+ * @param source The `.imscc` Canvas course export.
  */
 export async function openCartridge(source: File): Promise<FileStore> {
   return ZipStore.open(source);
