@@ -67,14 +67,13 @@ export default defineConfig({
         short_name: "Drawbridge",
         description:
           "Free, private tools for exploring course content. No login, no tracking — imported files stay on your device.",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
+        theme_color: "#0a3d5c",
+        background_color: "#f5deb3",
         display: "standalone",
         start_url: "/",
         icons: [
-          { src: "pwa-192.png", sizes: "192x192", type: "image/png" },
-          { src: "pwa-512.png", sizes: "512x512", type: "image/png" },
-          { src: "pwa-512-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          { src: "favicon-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "favicon-512x512.png", sizes: "512x512", type: "image/png" },
         ],
       },
       workbox: {
