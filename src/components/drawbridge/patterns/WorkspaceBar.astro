@@ -1,12 +1,19 @@
 ---
 import X from "@tabler/icons/outline/x.svg";
 import { Button } from "@/components/starwind/button";
+
+interface Props {
+  label?: string;
+  closeLabel?: string;
+}
+
+const { label = "Opened course", closeLabel = "Close course" } = Astro.props;
 ---
 
 <section
   data-workspace-bar
   class="flex flex-col gap-3 rounded-lg border border-border bg-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between"
-  aria-label="Opened course"
+  aria-label={label}
   hidden
 >
   <div class="grid min-w-0 gap-0.5">
@@ -15,6 +22,6 @@ import { Button } from "@/components/starwind/button";
   </div>
   <Button type="button" data-workspace-close variant="outline" size="sm" class="shrink-0">
     <X class="size-4" aria-hidden="true" />
-    Close course
+    {closeLabel}
   </Button>
 </section>

@@ -1,6 +1,7 @@
 import type { CanvasCourseSource } from "@/lib/workspace/types";
 import { clearWorkspace, openCanvasCourse, subscribeToWorkspace } from "@/lib/workspace/session";
 import { within } from "@/scripts/lib/dom";
+import { bindFilePicker } from "@/scripts/lib/file-picker";
 
 /**
  * Connect the shared SourcePicker and WorkspaceBar patterns to the one Canvas
@@ -10,7 +11,6 @@ import { within } from "@/scripts/lib/dom";
 export function bindCanvasSource(root: HTMLElement, onSourceChange: (source: CanvasCourseSource | null) => void) {
   const sourceRegion = within<HTMLElement>(root, "[data-source-region]");
   const picker = within<HTMLElement>(root, "[data-source-picker]");
-  const fileInput = within<HTMLInputElement>(root, "[data-source-input]");
   const chooseButton = within<HTMLButtonElement>(root, "[data-source-choose]");
   const sourceStatus = within<HTMLElement>(root, "[data-source-status]");
   const sourceError = within<HTMLElement>(root, "[data-source-error]");
@@ -22,50 +22,7 @@ export function bindCanvasSource(root: HTMLElement, onSourceChange: (source: Can
   const events = new AbortController();
   const options = { signal: events.signal };
 
-  chooseButton.addEventListener("click", () => fileInput.click(), options);
-  fileInput.addEventListener(
-    "change",
-    () => {
-      const file = fileInput.files?.[0];
-      if (file) void openCanvasCourse(file);
-      fileInput.value = "";
-    },
-    options,
-  );
-
-  picker.addEventListener(
-    "dragenter",
-    (event) => {
-      event.preventDefault();
-      picker.dataset.dragging = "true";
-    },
-    options,
-  );
-  picker.addEventListener(
-    "dragover",
-    (event) => {
-      event.preventDefault();
-      picker.dataset.dragging = "true";
-    },
-    options,
-  );
-  picker.addEventListener(
-    "dragleave",
-    (event) => {
-      if (!picker.contains(event.relatedTarget as Node | null)) picker.dataset.dragging = "false";
-    },
-    options,
-  );
-  picker.addEventListener(
-    "drop",
-    (event) => {
-      event.preventDefault();
-      picker.dataset.dragging = "false";
-      const file = event.dataTransfer?.files[0];
-      if (file) void openCanvasCourse(file);
-    },
-    options,
-  );
+  const unbindPicker = bindFilePicker(root, (file) => void openCanvasCourse(file));
   closeButton.addEventListener("click", clearWorkspace, options);
 
   const unsubscribe = subscribeToWorkspace((state) => {
@@ -91,6 +48,7 @@ export function bindCanvasSource(root: HTMLElement, onSourceChange: (source: Can
 
   return () => {
     events.abort();
+    unbindPicker();
     unsubscribe();
   };
 }

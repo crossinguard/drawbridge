@@ -1,5 +1,6 @@
 ---
 import FileZip from "@tabler/icons/outline/file-zip.svg";
+import type { SvgComponent } from "astro/types";
 import { Button } from "@/components/starwind/button";
 import { Alert, AlertDescription } from "@/components/starwind/alert";
 
@@ -11,9 +12,21 @@ interface Props {
   formats: string;
   chooseLabel?: string;
   guideHref?: string;
+  guideLinkLabel?: string;
+  icon?: SvgComponent;
 }
 
-const { inputId, accept, title, description, formats, chooseLabel = "Choose a file", guideHref } = Astro.props;
+const {
+  inputId,
+  accept,
+  title,
+  description,
+  formats,
+  chooseLabel = "Choose a file",
+  guideHref,
+  guideLinkLabel = "How to get an export",
+  icon: Icon = FileZip,
+} = Astro.props;
 ---
 
 <div data-source-region class="grid gap-3">
@@ -25,7 +38,7 @@ const { inputId, accept, title, description, formats, chooseLabel = "Choose a fi
 
     <div>
       <Button type="button" data-source-choose variant="outline">
-        <FileZip class="size-4" aria-hidden="true" />
+        <Icon class="size-4" aria-hidden="true" />
         {chooseLabel}
       </Button>
       <input data-source-input id={inputId} type="file" accept={accept} class="sr-only" />
@@ -43,7 +56,7 @@ const { inputId, accept, title, description, formats, chooseLabel = "Choose a fi
     <span>Your file stays in this browser tab and is never uploaded.</span>
     {guideHref && (
       <a href={guideHref} class="font-medium text-primary underline underline-offset-4">
-        How to get an export
+        {guideLinkLabel}
       </a>
     )}
   </div>

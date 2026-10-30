@@ -8,14 +8,16 @@ import ToolDirectory from "@/components/drawbridge/ToolDirectory.astro";
 
 <DrawbridgeLayout
   title="Drawbridge"
-  description="Free, private tools for exploring course content. No login, no tracking — everything stays on your device."
+  description="Free, private tools for exploring course content and reviewing transcripts. No login, no tracking — everything stays on your device."
 >
   <div class="mx-auto grid max-w-3xl gap-10 text-center">
     <section class="grid justify-items-center gap-5">
       <h1>
         <img src={drawbridgeLogo.src} alt="Drawbridge" class="mx-auto h-24 w-auto sm:h-32" />
       </h1>
-      <p class="lede mx-auto">Small, focused tools that help you understand course files without uploading them.</p>
+      <p class="lede mx-auto">
+        Small, focused tools that help you work with course files and transcripts without uploading them.
+      </p>
       <LocalBadge />
     </section>
 
@@ -32,8 +34,9 @@ import ToolDirectory from "@/components/drawbridge/ToolDirectory.astro";
     <section class="grid gap-3 rounded-lg border border-border bg-muted/40 p-6 text-left">
       <h2 class="section-title">Private by design</h2>
       <p class="supporting-text">
-        Drawbridge has no server, no analytics, and no imported-course storage. Files are processed in your browser.
-        Closing or refreshing the tab forgets the course. After the first load, the site itself also works offline.
+        Drawbridge has no server, no analytics, and no imported-file storage. Files are processed in your browser.
+        Closing or refreshing the tab forgets opened files and unsaved work. After the first load, the site itself also
+        works offline.
       </p>
       <div>
         <a

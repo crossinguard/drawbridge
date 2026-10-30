@@ -1,6 +1,6 @@
 # Drawbridge
 
-Free, private tools for exploring course content. No login, no fee, no tracking — imported files stay on your device.
+Free, private tools for exploring course content and reviewing transcripts. No login, no fee, no tracking — imported files stay on your device.
 
 Drawbridge is a collection of small, focused tools that can share one opened source. Each tool runs entirely in the browser. The current rebuild begins with Canvas course exports and establishes the source, session, UI, and guide patterns that later tools will reuse.
 
@@ -25,16 +25,23 @@ Drawbridge is a collection of small, focused tools that can share one opened sou
 - Search, relationship filters, and criterion-by-criterion two-rubric comparison
 - A plain-language guide available directly from the tool
 
-The tools do not produce QA findings, audit reports, or exports.
+**Transcript to Text** independently opens Microsoft Teams and other WebVTT `.vtt` files and provides:
+
+- Cue review with transcript search and people filters that do not limit the output
+- Global speaker-name corrections and configurable speaker/timestamp formatting
+- Editable plaintext with copy and `.txt` download actions
+- A plain-language guide available directly from the tool
+
+The Canvas tools do not produce QA findings, audit reports, or exports. Transcript to Text exports only the reviewed plaintext.
 
 ## Privacy and sessions
 
 - No server, API, analytics, cookies, or accounts
-- Imported course data lives only in memory
-- Astro client-side navigation keeps the opened course when moving between tools and guides
-- Refreshing, opening a new tab, closing the tab, or choosing **Close course** forgets the imported data
+- Imported files, speaker corrections, and transcript edits live only in memory
+- Astro client-side navigation keeps the opened course when moving between Canvas tools and guides, and keeps transcript work when visiting its guide
+- Refreshing, opening a new tab, closing the tab, or choosing the tool's clear or close action forgets the imported data and unsaved work
 - A restrictive Content Security Policy prevents third-party connections
-- The PWA caches the Drawbridge application for offline use, not imported courses
+- The PWA caches the Drawbridge application for offline use, not imported files or work
 - Application updates wait for user confirmation so they cannot unexpectedly reload an open course
 
 ## Development
@@ -59,6 +66,7 @@ bun run check           # Astro and TypeScript checks
 bun run check:isolation # the app must not depend on private reference material
 bun run format          # Prettier, including Tailwind class ordering
 bun run test:canvas     # synthetic parser/model tests plus optional private regressions
+bun run test:transcript # synthetic WebVTT parser, selector, and plaintext tests
 bun run test:e2e        # browser smoke test; run bun run build first
 ```
 

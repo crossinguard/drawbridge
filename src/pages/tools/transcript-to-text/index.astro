@@ -1,0 +1,173 @@
+---
+import Copy from "@tabler/icons/outline/copy.svg";
+import Download from "@tabler/icons/outline/download.svg";
+import FileText from "@tabler/icons/outline/file-text.svg";
+import Restore from "@tabler/icons/outline/restore.svg";
+import ToolShell from "@/components/drawbridge/patterns/ToolShell.astro";
+import SourcePicker from "@/components/drawbridge/patterns/SourcePicker.astro";
+import WorkspaceBar from "@/components/drawbridge/patterns/WorkspaceBar.astro";
+import { Alert, AlertDescription } from "@/components/starwind/alert";
+import { Button } from "@/components/starwind/button";
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
+import { Textarea } from "@/components/starwind/textarea";
+import { requireToolBySlug } from "@/lib/tools/registry";
+
+const tool = requireToolBySlug("transcript-to-text");
+---
+
+<ToolShell tool={tool}>
+  <Fragment slot="source">
+    <SourcePicker
+      inputId="transcript-file-input"
+      accept=".vtt"
+      title="Open a WebVTT transcript"
+      description="Choose a Microsoft Teams or other WebVTT transcript to review its speakers and create readable plaintext."
+      formats="Accepts WebVTT .vtt transcript files."
+      chooseLabel="Choose a transcript"
+      guideHref="/guides/transcript-to-text#getting-a-transcript-from-microsoft-teams"
+      guideLinkLabel="How to download a Teams transcript"
+      icon={FileText}
+    />
+    <WorkspaceBar label="Opened transcript" closeLabel="Clear transcript" />
+  </Fragment>
+
+  <div data-transcript-content class="grid gap-6" hidden>
+    <section aria-labelledby="transcript-overview-heading" class="grid gap-3">
+      <div>
+        <h2 id="transcript-overview-heading" class="section-title">
+          Transcript overview
+        </h2>
+        <p class="metadata-text">The cues, people, and timing found in this file.</p>
+      </div>
+      <dl data-transcript-summary class="summary-grid"></dl>
+      <details data-transcript-notes class="rounded-lg border border-border bg-muted/30 p-4 text-sm" hidden>
+        <summary class="cursor-pointer font-medium">Import notes</summary>
+        <ul data-transcript-notes-list class="mt-3 grid gap-2 text-muted-foreground"></ul>
+      </details>
+    </section>
+
+    <Tabs defaultValue="review" class="grid gap-4">
+      <TabsList>
+        <TabsTrigger value="review">Review transcript</TabsTrigger>
+        <TabsTrigger value="text">Plain text</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="review" keepMounted class="grid gap-4">
+        <div class="grid min-w-0 gap-1.5">
+          <Label for="transcript-search">Search this transcript</Label>
+          <Input
+            id="transcript-search"
+            data-transcript-search
+            type="search"
+            placeholder="Speaker names and transcript text"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="grid min-w-0 gap-4 lg:grid-cols-[16rem_minmax(0,1fr)]">
+          <aside
+            class="grid content-start gap-3 rounded-lg border border-border bg-muted/30 p-4"
+            aria-labelledby="transcript-people-heading"
+          >
+            <div class="grid gap-1">
+              <h3 id="transcript-people-heading" class="font-semibold">
+                People
+              </h3>
+              <p class="text-sm text-muted-foreground">Filter the review or correct a name everywhere it appears.</p>
+            </div>
+            <div data-transcript-speakers class="grid gap-3"></div>
+            <p data-transcript-no-speakers class="text-sm text-muted-foreground" hidden>
+              No speaker names are recorded in this transcript.
+            </p>
+          </aside>
+
+          <section class="grid min-w-0 content-start gap-3" aria-labelledby="transcript-cues-heading">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 id="transcript-cues-heading" class="font-semibold">
+                Transcript cues
+              </h3>
+              <p data-transcript-results class="metadata-text" role="status" aria-live="polite"></p>
+            </div>
+            <div data-transcript-active-filter class="flex flex-wrap items-center gap-2" hidden>
+              <p data-transcript-filter-description class="text-sm text-muted-foreground"></p>
+              <Button type="button" data-transcript-clear-filters variant="outline" size="sm">
+                Clear filters
+              </Button>
+            </div>
+            <div data-transcript-cues class="record-list"></div>
+            <p data-transcript-empty class="detail-panel p-5 text-center text-sm text-muted-foreground" hidden>
+              No cues match your search and people filter.
+            </p>
+          </section>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="text" keepMounted class="grid gap-5">
+        <fieldset class="grid gap-3 rounded-lg border border-border bg-muted/30 p-4">
+          <legend class="px-1 font-semibold">Plain text options</legend>
+          <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-6">
+            <label class="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                data-transcript-option="includeSpeakers"
+                class="rounded border-input text-primary"
+              />
+              Include speaker names
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                data-transcript-option="includeTimestamps"
+                class="rounded border-input text-primary"
+              />
+              Include start times
+            </label>
+            <label class="flex items-center gap-2 text-sm">
+              <input type="checkbox" data-transcript-option="mergeSpeakers" class="rounded border-input text-primary" />
+              Join consecutive cues from the same speaker
+            </label>
+          </div>
+        </fieldset>
+
+        <Alert data-transcript-edited variant="info" hidden>
+          <AlertDescription>
+            You have edited this text. Changing names or options will ask before replacing your edits.
+          </AlertDescription>
+        </Alert>
+
+        <div class="grid gap-1.5">
+          <Label for="transcript-output">Reviewed plaintext</Label>
+          <Textarea
+            id="transcript-output"
+            data-transcript-output
+            class="min-h-[28rem] resize-y leading-relaxed"
+            spellcheck="true"
+          />
+          <p class="metadata-text">Copy and download use exactly this text, including your edits.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <Button type="button" data-transcript-copy>
+            <Copy class="size-4" aria-hidden="true" />
+            Copy text
+          </Button>
+          <Button type="button" data-transcript-download variant="outline">
+            <Download class="size-4" aria-hidden="true" />
+            Download .txt
+          </Button>
+          <Button type="button" data-transcript-reset variant="ghost">
+            <Restore class="size-4" aria-hidden="true" />
+            Reset text
+          </Button>
+          <p data-transcript-export-status class="metadata-text" role="status" aria-live="polite"></p>
+        </div>
+      </TabsContent>
+    </Tabs>
+  </div>
+
+  <script>
+    import "@/scripts/tools/transcript-to-text/app";
+  </script>
+</ToolShell>

@@ -3,13 +3,15 @@ import Book from "@tabler/icons/outline/book.svg";
 import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
 import { Button } from "@/components/starwind/button";
 import LocalBadge from "./LocalBadge.astro";
-import type { ToolEntry } from "@/lib/tools/registry";
+import ToolSwitcher from "./ToolSwitcher.astro";
+import { getToolsBySourceKind, type ToolEntry } from "@/lib/tools/registry";
 
 interface Props {
   tool: ToolEntry;
 }
 
 const { tool } = Astro.props;
+const relatedTools = getToolsBySourceKind(tool.sourceKind);
 ---
 
 <DrawbridgeLayout title={tool.title} description={tool.metaDescription ?? tool.description} fullWidth>
@@ -28,6 +30,8 @@ const { tool } = Astro.props;
         </Button>
       </div>
     </header>
+
+    {relatedTools.length > 1 && <ToolSwitcher tools={relatedTools} currentTool={tool} />}
 
     <slot name="source" />
     <slot />

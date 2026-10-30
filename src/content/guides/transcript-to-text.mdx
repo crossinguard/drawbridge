@@ -1,0 +1,99 @@
+---
+title: "Transcript to Text guide"
+description: "Review a WebVTT transcript, correct speaker names, and copy or download readable plaintext."
+toolSlug: "transcript-to-text"
+---
+
+## What this tool helps you do
+
+Transcript to Text turns a WebVTT transcript into readable plaintext. You can search and review the original cues, correct speaker names, choose how paragraphs are formatted, and edit the final text before copying or downloading it.
+
+It does not check whether the transcription is accurate, identify speakers who were not named in the file, or correct individual words automatically.
+
+## What you need
+
+You need a **WebVTT** transcript with a **.vtt** filename. Transcript to Text is designed primarily for transcripts downloaded from Microsoft Teams, but it can read other WebVTT files that contain recognizable cues.
+
+The tool reads the transcript only. It does not connect to Microsoft Teams or retrieve a meeting, recording, or transcript for you.
+
+## Getting a transcript from Microsoft Teams
+
+Teams layouts and permissions can vary. For a meeting with an available transcript:
+
+1. Open **Chat** in Teams and select the past meeting's chat.
+2. Open **Recap**, then select **Transcript**.
+3. Open the download menu and choose the **.vtt** transcript format.
+4. Save the downloaded file to your device.
+
+If you do not see a transcript or download option, the meeting may not have been transcribed, the transcript may have been removed, or you may not have permission to download it. Contact the meeting organizer or the person who manages Teams for your organization.
+
+## Open and review a transcript
+
+1. Select **Choose a transcript**, or drop the .vtt file onto the import area.
+2. Review the number of cues and people, along with the last cue's end time.
+3. Open **Import notes** if Drawbridge reports parts of the file it could not read.
+4. Use **Search this transcript** to find words in speaker names or cue text. Search is not case-sensitive.
+5. In **People**, select a person's name to show only their cues. Select the name again or use **Clear filters** to return to the full review.
+
+Search and people filters change only the review list. They do **not** remove other people or cues from the plaintext output.
+
+Each review cue shows its original position and time range. Speaker names are visually separated from the spoken text. A file without speaker labels can still be converted, but Drawbridge does not invent names for it.
+
+## Correct a speaker name
+
+1. Find the person in the **People** list.
+2. Edit the name in the field beneath their filter button.
+3. Leave the field or press **Tab** to apply the correction.
+
+The correction applies everywhere that original speaker label appears, including the generated plaintext. If two different original labels need the same corrected name, edit each label separately.
+
+This changes a name throughout the transcript. It does not reassign an individual cue to another person. Clearing a corrected name restores the original label.
+
+## Format and edit the plaintext
+
+Open **Plain text** to review the generated output. The default combines consecutive cues from the same speaker into a paragraph and leaves out timestamps.
+
+You can change these options:
+
+- **Include speaker names** adds each corrected speaker name to the output.
+- **Include start times** adds the first cue's start time to each output paragraph.
+- **Join consecutive cues from the same speaker** controls whether those cues become one paragraph or remain separate.
+
+You can edit the plaintext directly. Copy and download use exactly the text shown, including those edits. If you later change a speaker name or formatting option, Drawbridge asks before replacing manual edits. **Reset text** also asks before discarding edits and restores the generated version.
+
+## Copy or download
+
+- Select **Copy text** to copy the complete reviewed plaintext to your clipboard.
+- Select **Download .txt** to create a UTF-8 plaintext file named after the original transcript.
+
+The tool exports plaintext only. It does not create a Word document, a revised WebVTT file, or an audio-aligned transcript. Review filters never create a partial export.
+
+## Session and privacy
+
+The transcript and your edits are processed entirely in your browser. Nothing is uploaded, saved to an account, or written to browser storage. Opening this guide and returning keeps the current transcript and your work.
+
+A browser refresh, a new tab, closing the tab, or **Clear transcript** forgets the file, name corrections, formatting choices, and unsaved edits. A plaintext file you explicitly download remains on your device.
+
+The Drawbridge site itself is cached for offline use after its first load. That site cache does not contain your transcript or work.
+
+## Troubleshooting
+
+### “This is not a WebVTT transcript”
+
+Check that you chose the downloaded **.vtt** file, not a Word transcript, a recording, or another text file renamed with a .vtt extension.
+
+### No readable cues appear
+
+The file may be incomplete or use a format Drawbridge does not recognize. Download a fresh transcript and try again. If some cues are readable, **Import notes** describes blocks that were skipped.
+
+### A name is wrong on only one cue
+
+Speaker corrections apply to every cue with the same original label. To fix an isolated attribution, edit the affected sentence in the plaintext view. The original cue review remains unchanged except for global name corrections.
+
+### Copying does not work
+
+Your browser or organization may restrict clipboard access. Drawbridge selects the text when automatic copying is unavailable so you can copy it with your keyboard or context menu.
+
+### The transcript text is inaccurate
+
+Automatic meeting transcripts can contain misheard words and incorrect speaker labels. Drawbridge preserves the source text for review; it does not verify it against the meeting audio. Use the plaintext editor for final corrections before exporting.

@@ -1,0 +1,28 @@
+---
+import { Button } from "@/components/starwind/button";
+import type { ToolEntry } from "@/lib/tools/registry";
+
+interface Props {
+  tools: readonly ToolEntry[];
+  currentTool: ToolEntry;
+}
+
+const { tools, currentTool } = Astro.props;
+---
+
+<nav
+  aria-label={`${currentTool.sourceLabel} tools`}
+  class="flex flex-wrap items-center gap-1 rounded-lg border border-border bg-muted/40 p-1.5"
+>
+  {tools.map((tool) => (
+    <Button
+      as="a"
+      href={tool.href}
+      variant={tool.slug === currentTool.slug ? "secondary" : "ghost"}
+      size="sm"
+      aria-current={tool.slug === currentTool.slug ? "page" : undefined}
+    >
+      {tool.title}
+    </Button>
+  ))}
+</nav>

@@ -1,5 +1,5 @@
-/** Browser smoke test for Course Explorer. Build first, then run bun run test:e2e. */
-import { existsSync } from "node:fs";
+/** Browser smoke test for Drawbridge. Build first, then run bun run test:e2e. */
+import { existsSync, readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { chromium } from "playwright";
 import { buildSampleCartridge } from "./make-sample-cartridge";
@@ -70,6 +70,7 @@ try {
   const themeToggle = page.locator('[data-slot="theme-toggle"]');
   check("Course Explorer on the homepage", await page.locator('a[href="/tools/course-explorer"]').count(), 1);
   check("Rubric Explorer on the homepage", await page.locator('a[href="/tools/rubric-explorer"]').count(), 1);
+  check("Transcript to Text on the homepage", await page.locator('a[href="/tools/transcript-to-text"]').count(), 1);
   check("theme toggle visible", await themeToggle.isVisible(), true);
   check(
     "theme toggle accessible name",
@@ -186,6 +187,7 @@ try {
   await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));
   check("Course Explorer guide listed", await page.locator('a[href="/guides/course-explorer"]').count(), 2);
   check("Rubric Explorer guide listed", await page.locator('a[href="/guides/rubric-explorer"]').count(), 2);
+  check("Transcript to Text guide listed", await page.locator('a[href="/guides/transcript-to-text"]').count(), 2);
 
   console.log("\nCourse Explorer — import and browse");
   await page.goto(`${BASE}/tools/course-explorer`, { waitUntil: "networkidle" });
@@ -222,6 +224,24 @@ try {
   await upload();
 
   check("course title shown", await page.textContent("[data-workspace-title]"), "Sample Course");
+  const canvasSwitcher = page.getByRole("navigation", { name: "Canvas course export tools" });
+  check("Canvas tool switcher is visible", await canvasSwitcher.isVisible(), true);
+  check(
+    "current Canvas tool is identified",
+    await canvasSwitcher.getByRole("link", { name: "Course Explorer" }).getAttribute("aria-current"),
+    "page",
+  );
+  check(
+    "transcript tool is not a Canvas sibling",
+    await canvasSwitcher.getByRole("link", { name: "Transcript to Text" }).count(),
+    0,
+  );
+  await canvasSwitcher.getByRole("link", { name: "Rubric Explorer" }).click();
+  await page.waitForSelector("[data-rubric-content]:not([hidden])");
+  check("switcher retains the Canvas course", await page.textContent("[data-workspace-title]"), "Sample Course");
+  await canvasSwitcher.getByRole("link", { name: "Course Explorer" }).click();
+  await page.waitForSelector("[data-course-content]:not([hidden])");
+  check("switcher returns to Course Explorer", await page.textContent("[data-workspace-title]"), "Sample Course");
   check("summary includes rubrics", (await page.textContent("[data-course-summary]"))?.includes("Rubrics"), true);
   check(
     "Butternut selected view",
@@ -364,6 +384,212 @@ try {
   await upload();
   await page.reload({ waitUntil: "networkidle" });
   check("refresh clears the course", await page.locator("[data-course-content]").isVisible(), false);
+
+  console.log("\nTranscript to Text — review, search, edit, and export");
+  await page.goto(`${BASE}/tools/transcript-to-text`, { waitUntil: "networkidle" });
+  check(
+    "transcript import accepts only .vtt",
+    await page.locator("[data-source-input]").getAttribute("accept"),
+    ".vtt",
+  );
+  check(
+    "standalone transcript has no source switcher",
+    await page.locator('nav[aria-label="WebVTT transcript tools"]').count(),
+    0,
+  );
+  const transcriptVtt = `WEBVTT
+
+1
+00:00:00.000 --> 00:00:02.000
+<v Alex Smith>Welcome to the review.</v>
+
+2
+00:00:02.000 --> 00:00:04.000
+<v Alex Smith>We will discuss the plan.</v>
+
+3
+00:00:04.000 --> 00:00:06.000
+<v Morgan Lee>I agree.</v>
+
+4
+00:00:06.000 --> 00:00:08.000
+<v Alex Smith>Action item follows.</v>
+`;
+  await page.setInputFiles("[data-source-input]", {
+    name: "transcript.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from(transcriptVtt),
+  });
+  await page.waitForSelector("[data-source-error]:not([hidden])");
+  check(
+    "wrong transcript extension is explained",
+    await page.textContent("[data-source-error-message]"),
+    "Choose a WebVTT transcript with a .vtt filename.",
+  );
+  await page.setInputFiles("[data-source-input]", {
+    name: "invalid.vtt",
+    mimeType: "text/vtt",
+    buffer: Buffer.from("Not a transcript"),
+  });
+  await page.waitForFunction(() =>
+    document.querySelector("[data-source-error-message]")?.textContent?.includes("WebVTT"),
+  );
+  check(
+    "invalid WebVTT header is explained",
+    await page.textContent("[data-source-error-message]"),
+    "This is not a WebVTT transcript. Choose a .vtt file with a WEBVTT header.",
+  );
+  const uploadTranscript = async () => {
+    await page.setInputFiles("[data-source-input]", {
+      name: "teams-call.vtt",
+      mimeType: "text/vtt",
+      buffer: Buffer.from(transcriptVtt),
+    });
+    await page.waitForSelector("[data-transcript-content]:not([hidden])");
+  };
+  await uploadTranscript();
+  check("transcript filename shown", await page.textContent("[data-workspace-title]"), "teams-call.vtt");
+  check("four transcript cues reviewed", await page.locator("[data-transcript-cue]").count(), 4);
+  check("two people listed", await page.locator("[data-speaker-filter]").count(), 2);
+  check("last cue time summarized", (await page.textContent("[data-transcript-summary]"))?.includes("00:00:08"), true);
+  check(
+    "no transcript data persisted",
+    await page.evaluate(() => Object.keys(localStorage).filter((key) => key !== "colorTheme")),
+    [],
+  );
+
+  await page.fill("[data-transcript-search]", "action");
+  check("text search finds one cue", await page.locator("[data-transcript-cue]").count(), 1);
+  check("review count describes filtering", await page.textContent("[data-transcript-results]"), "1 of 4 cues shown");
+  await page.click("[data-transcript-clear-filters]");
+  const alexFilter = page.locator('[data-speaker-filter="Alex Smith"]');
+  await alexFilter.focus();
+  await page.keyboard.press("Enter");
+  check("people filter finds Alex's cues", await page.locator("[data-transcript-cue]").count(), 3);
+  check(
+    "people filter does not limit plaintext",
+    (await page.locator("[data-transcript-output]").inputValue()).includes("Morgan Lee: I agree."),
+    true,
+  );
+  await page.fill("[data-transcript-search]", "I agree");
+  check("search and people filters combine", await page.locator("[data-transcript-cue]").count(), 0);
+  check("empty review state is visible", await page.locator("[data-transcript-empty]").isVisible(), true);
+  await page.click("[data-transcript-clear-filters]");
+  check("clearing review filters restores every cue", await page.locator("[data-transcript-cue]").count(), 4);
+
+  const alexName = page.locator('[data-speaker-name="Alex Smith"]');
+  await alexName.fill("Casey Smith");
+  await alexName.press("Tab");
+  await page.waitForFunction(() => document.querySelector("[data-transcript-output]")?.textContent !== undefined);
+  check(
+    "corrected name appears in people list",
+    await page.locator('[data-speaker-name="Alex Smith"]').inputValue(),
+    "Casey Smith",
+  );
+  await page.fill("[data-transcript-search]", "Casey");
+  check("corrected speaker names are searchable", await page.locator("[data-transcript-cue]").count(), 3);
+  await page.click("[data-transcript-clear-filters]");
+
+  const generatedTranscript =
+    "Casey Smith: Welcome to the review. We will discuss the plan.\n\nMorgan Lee: I agree.\n\nCasey Smith: Action item follows.";
+  check(
+    "speaker paragraphs are generated",
+    await page.locator("[data-transcript-output]").inputValue(),
+    generatedTranscript,
+  );
+  await page.getByRole("tab", { name: "Plain text" }).click();
+  await page.getByLabel("Include start times").check();
+  check(
+    "start times use each paragraph's first cue",
+    (await page.locator("[data-transcript-output]").inputValue()).startsWith("[00:00:00] Casey Smith:"),
+    true,
+  );
+  await page.getByLabel("Include start times").uncheck();
+  const reviewedTranscript = `${generatedTranscript}\n\nReviewed note.`;
+  await page.locator("[data-transcript-output]").fill(reviewedTranscript);
+  check("manual edit state is visible", await page.locator("[data-transcript-edited]").isVisible(), true);
+  page.once("dialog", async (dialog) => {
+    check(
+      "format changes warn before replacing edits",
+      dialog.message().includes("replace your manual plaintext edits"),
+      true,
+    );
+    await dialog.dismiss();
+  });
+  await page.getByLabel("Include speaker names").click();
+  check(
+    "canceling a format change preserves its setting",
+    await page.getByLabel("Include speaker names").isChecked(),
+    true,
+  );
+  check(
+    "canceling a format change preserves manual edits",
+    await page.locator("[data-transcript-output]").inputValue(),
+    reviewedTranscript,
+  );
+
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: BASE });
+  await page.click("[data-transcript-copy]");
+  check(
+    "copy uses the exact reviewed text",
+    await page.evaluate(() => navigator.clipboard.readText()),
+    reviewedTranscript,
+  );
+  const downloadEvent = page.waitForEvent("download");
+  await page.click("[data-transcript-download]");
+  const transcriptDownload = await downloadEvent;
+  check("plaintext download is named after the transcript", transcriptDownload.suggestedFilename(), "teams-call.txt");
+  check(
+    "download contains the exact reviewed text",
+    readFileSync((await transcriptDownload.path())!, "utf8"),
+    reviewedTranscript,
+  );
+
+  await page.getByRole("link", { name: "Guide", exact: true }).click();
+  await page.waitForURL(`${BASE}/guides/transcript-to-text`);
+  check("transcript guide opened", await page.locator("h1").textContent(), "Transcript to Text guide");
+  await page.getByRole("link", { name: "Back to Transcript to Text" }).click();
+  await page.waitForSelector("[data-transcript-content]:not([hidden])");
+  check(
+    "guide return retains transcript edits",
+    await page.locator("[data-transcript-output]").inputValue(),
+    reviewedTranscript,
+  );
+  await page.click("[data-workspace-close]");
+  check("clear transcript restores the source picker", await page.locator("[data-source-picker]").isVisible(), true);
+  await uploadTranscript();
+  await page.setViewportSize({ width: 320, height: 844 });
+  check(
+    "no Transcript to Text horizontal overflow at 320px",
+    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
+    true,
+  );
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  check(
+    "transcript respects reduced-motion availability",
+    await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches),
+    true,
+  );
+  check(
+    "transcript buttons have accessible names",
+    await page
+      .locator("button:visible")
+      .evaluateAll((buttons) =>
+        buttons.every((button) => Boolean(button.textContent?.trim() || button.getAttribute("aria-label"))),
+      ),
+    true,
+  );
+  // A 640 CSS-pixel layout is equivalent to a 1280px-wide window at 200% zoom.
+  await page.setViewportSize({ width: 640, height: 900 });
+  check(
+    "no Transcript to Text horizontal overflow at the 200% zoom-equivalent width",
+    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
+    true,
+  );
+  await page.reload({ waitUntil: "networkidle" });
+  check("refresh clears the transcript", await page.locator("[data-transcript-content]").isVisible(), false);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/tools/course-explorer`, { waitUntil: "networkidle" });
 
   console.log("\nResponsive layout and privacy");
   await upload();

@@ -15,6 +15,7 @@
     "check": "astro check",
     "check:isolation": "bun ./scripts/check-isolation.ts",
     "test:canvas": "bun ./scripts/canvas-parser-test.ts",
+    "test:transcript": "bun ./scripts/transcript-parser-test.ts",
     "test:e2e": "bun ./scripts/e2e-test.ts"
   },
   "dependencies": {

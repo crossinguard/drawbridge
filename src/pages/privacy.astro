@@ -6,7 +6,7 @@ import { Prose } from "@/components/starwind/prose";
 
 <DrawbridgeLayout title="Privacy" description="Drawbridge privacy: imported files stay in your browser session.">
   <div class="mx-auto grid max-w-3xl gap-8">
-    <PageHeader title="Privacy" description="Your course files stay on your device and are never uploaded." />
+    <PageHeader title="Privacy" description="Your imported files stay on your device and are never uploaded." />
 
     <Prose class="max-w-none text-foreground" style="--sw-prose-h2-size: 1.125rem;">
       <h2>What Drawbridge does not do</h2>
@@ -15,34 +15,41 @@ import { Prose } from "@/components/starwind/prose";
         <li>No analytics or tracking.</li>
         <li>No cookies.</li>
         <li>No account or login.</li>
-        <li>No database or browser storage for imported course data.</li>
+        <li>No database or browser storage for imported files, transcript edits, or other work.</li>
       </ul>
 
-      <h2>How course imports work</h2>
+      <h2>How imports work</h2>
       <p>
         Drawbridge is a static site. Your browser downloads the site's pages and code, then processes any file you
-        choose locally and in memory. Course content is not sent over the network.
+        choose locally and in memory. Course content and transcripts are not sent over the network.
       </p>
       <p>
-        Moving between connected tools keeps the opened course in the current browser session. Refreshing the page,
-        opening a separate tab, closing the tab, or choosing <strong>Close course</strong> forgets the imported data.
+        Moving between connected Canvas tools keeps the opened course in the current browser session. Transcript to Text
+        has its own in-memory session, including speaker corrections and plaintext edits. Refreshing the page, opening a
+        separate tab, closing the tab, or choosing the tool's clear or close action forgets the imported data and
+        unsaved work.
+      </p>
+      <p>
+        Copying text requires your permission to use the clipboard. Downloaded plaintext is created in your browser and
+        saved only when you request it; Drawbridge does not keep another copy.
       </p>
       <p>
         A restrictive Content Security Policy limits connections to the Drawbridge site itself. Course HTML is also
-        rebuilt against a safe allowlist, and externally hosted course images are not loaded.
+        rebuilt against a safe allowlist, externally hosted course images are not loaded, and transcript text is never
+        rendered as HTML.
       </p>
 
       <h2>Display preference</h2>
       <p>
         Drawbridge stores your light, dark, or system display preference in browser storage on this device. This setting
-        contains no course data and is not sent anywhere.
+        contains no imported data and is not sent anywhere.
       </p>
 
       <h2>Offline use</h2>
       <p>
         Drawbridge is an installable progressive web app. After the first load, a service worker caches the Drawbridge
-        site so it can work without a network connection. This cache contains the application, not your imported
-        courses. Clearing the site's cached data does not affect the privacy of a course session.
+        site so it can work without a network connection. This cache contains the application, not your imported files
+        or work. Clearing the site's cached data does not affect the privacy of an open session.
       </p>
 
       <h2>Recommendations for sensitive data</h2>
@@ -50,7 +57,7 @@ import { Prose } from "@/components/starwind/prose";
         <li>Use a private or incognito browser window when appropriate.</li>
         <li>Disable browser extensions you do not trust.</li>
         <li>Turn off your network connection after loading the site for an extra layer of assurance.</li>
-        <li>Close the course or the tab when you are finished.</li>
+        <li>Clear the opened file or close the tab when you are finished.</li>
       </ul>
     </Prose>
   </div>

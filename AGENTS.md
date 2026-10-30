@@ -16,6 +16,7 @@ bun run check:isolation # the app must not depend on private reference material
 bun run format          # prettier --write .
 bun run build           # astro build
 bun run test:canvas     # parser, normalized-model, selector, and sanitising checks
+bun run test:transcript # WebVTT parser, review-selector, and plaintext checks
 bun run test:e2e        # browser smoke test — build first
 ```
 
@@ -41,7 +42,9 @@ reads rubric details and relationships, groups matching content, and compares
 two rubrics. Neither produces QA judgments, reports, or exports.
 
 Quiz Explorer should build on the same source, model, selectors, session, and UI
-patterns. Prefer small, independently useful tool releases. Do not build a
+patterns. Transcript to Text is an independent WebVTT tool with its own
+in-memory session; it does not participate in the Canvas workspace or tool
+switcher. Prefer small, independently useful tool releases. Do not build a
 visual workflow editor or a generic plugin framework.
 
 Only working tools appear in `src/lib/tools/registry.ts`; do not fill the home
