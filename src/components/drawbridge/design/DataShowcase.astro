@@ -1,0 +1,103 @@
+---
+import { ScrollArea } from "@/components/starwind/scroll-area";
+import { Separator } from "@/components/starwind/separator";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFoot,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/starwind/table";
+import Specimen from "./Specimen.astro";
+
+const rows = [
+  { name: "Poseidon", role: "Primary and success", shades: 11 },
+  { name: "Sea Goddess", role: "Secondary and information", shades: 11 },
+  { name: "Pompelmo", role: "Emphasis and error", shades: 11 },
+  { name: "Butternut", role: "Accent and warning", shades: 11 },
+] as const;
+---
+
+<div class="grid gap-10">
+  <Specimen title="Table" description="Semantic table composition with caption, header, body, and footer.">
+    <Table>
+      <TableCaption>Palette families and their current semantic uses.</TableCaption>
+      <TableHeader>
+        <TableRow>
+          <TableHead scope="col">Palette</TableHead>
+          <TableHead scope="col">Current roles</TableHead>
+          <TableHead scope="col" class="text-right">
+            Shades
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map((row) => (
+          <TableRow>
+            <TableCell class="font-medium">{row.name}</TableCell>
+            <TableCell>{row.role}</TableCell>
+            <TableCell class="text-right">{row.shades}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+      <TableFoot>
+        <TableRow>
+          <TableCell colspan={2}>Four families shown</TableCell>
+          <TableCell class="text-right">44</TableCell>
+        </TableRow>
+      </TableFoot>
+    </Table>
+  </Specimen>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <Specimen title="Scroll area" description="A constrained viewport with themed scrollbar and overflow edges.">
+      <ScrollArea class="h-56 w-full rounded-lg border border-border bg-card">
+        <div class="grid gap-1 p-3">
+          {Array.from({ length: 12 }, (_, index) => (
+            <div class="flex items-center justify-between gap-4 rounded-md px-3 py-2 text-sm hover:bg-muted">
+              <span>Design inventory item {index + 1}</span>
+              <span class="metadata-text">{String(index + 1).padStart(2, "0")}</span>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </Specimen>
+
+    <Specimen title="Shape and elevation" description="Radius tokens, borders, and common shadow levels.">
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        {(["rounded-xs", "rounded-sm", "rounded-md", "rounded-lg", "rounded-xl", "rounded-2xl"] as const).map(
+          (radius) => (
+            <div class="grid gap-2">
+              <div class:list={["h-20 border border-border bg-secondary", radius]}></div>
+              <code class="font-mono text-xs text-muted-foreground">{radius}</code>
+            </div>
+          ),
+        )}
+      </div>
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="grid place-items-center rounded-lg border border-border bg-card p-5 shadow-xs">shadow-xs</div>
+        <div class="grid place-items-center rounded-lg border border-border bg-card p-5 shadow-sm">shadow-sm</div>
+      </div>
+    </Specimen>
+  </div>
+
+  <Specimen title="Separators" description="Horizontal and vertical separator primitives.">
+    <div class="grid gap-5 rounded-lg border border-border bg-card p-5">
+      <div class="flex items-center justify-between gap-4 text-sm">
+        <span>Above</span>
+        <span>Content</span>
+      </div>
+      <Separator />
+      <div class="flex h-10 items-center gap-4 text-sm">
+        <span>Left</span>
+        <Separator orientation="vertical" />
+        <span>Middle</span>
+        <Separator orientation="vertical" />
+        <span>Right</span>
+      </div>
+    </div>
+  </Specimen>
+</div>

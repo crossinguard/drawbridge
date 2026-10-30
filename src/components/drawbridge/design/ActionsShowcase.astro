@@ -1,0 +1,178 @@
+---
+import ArrowRight from "@tabler/icons/outline/arrow-right.svg";
+import Download from "@tabler/icons/outline/download.svg";
+import Plus from "@tabler/icons/outline/plus.svg";
+import { Badge } from "@/components/starwind/badge";
+import { Button } from "@/components/starwind/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/starwind/card";
+import Specimen from "./Specimen.astro";
+
+const buttonVariants = [
+  "default",
+  "primary",
+  "secondary",
+  "outline",
+  "ghost",
+  "info",
+  "success",
+  "warning",
+  "error",
+] as const;
+const buttonSizes = ["sm", "md", "lg"] as const;
+const badgeVariants = [
+  "default",
+  "primary",
+  "secondary",
+  "outline",
+  "ghost",
+  "info",
+  "success",
+  "warning",
+  "error",
+] as const;
+const badgeTones = [
+  "neutral",
+  "primary",
+  "primary-accent",
+  "secondary",
+  "secondary-accent",
+  "info",
+  "success",
+  "warning",
+  "error",
+] as const;
+const badgeAppearances = ["solid", "soft", "outline", "text", "frosted"] as const;
+---
+
+<div class="grid gap-10">
+  <Specimen title="Button variants" description="All installed action colors at the default medium size.">
+    <div class="flex flex-wrap items-center gap-3">
+      {buttonVariants.map((variant) => (
+        <Button variant={variant}>{variant}</Button>
+      ))}
+    </div>
+  </Specimen>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <Specimen title="Button sizes" description="Small, medium, and large text actions.">
+      <div class="flex flex-wrap items-center gap-3">
+        {buttonSizes.map((size) => (
+          <Button size={size} variant="primary">
+            Open {size}
+          </Button>
+        ))}
+      </div>
+    </Specimen>
+
+    <Specimen title="Icon sizes" description="Icon actions retain accessible names.">
+      <div class="flex flex-wrap items-center gap-3">
+        <Button size="icon-sm" variant="outline" aria-label="Add small">
+          <Plus />
+        </Button>
+        <Button size="icon" variant="outline" aria-label="Add medium">
+          <Plus />
+        </Button>
+        <Button size="icon-lg" variant="outline" aria-label="Add large">
+          <Plus />
+        </Button>
+      </div>
+    </Specimen>
+  </div>
+
+  <Specimen
+    title="Links and states"
+    description="Link actions, icons, and disabled presentation use the same variants."
+  >
+    <div class="flex flex-wrap items-center gap-3">
+      <Button as="a" href="#actions" variant="primary">
+        Linked action <ArrowRight />
+      </Button>
+      <Button variant="secondary">
+        <Download /> Download
+      </Button>
+      <Button variant="primary" disabled>
+        Disabled primary
+      </Button>
+      <Button variant="outline" disabled>
+        Disabled outline
+      </Button>
+    </div>
+  </Specimen>
+
+  <Specimen title="Badge variants" description="The installed badge variant API, including small and large sizing.">
+    <div class="grid gap-4">
+      <div class="flex flex-wrap items-center gap-2">
+        {badgeVariants.map((variant) => (
+          <Badge variant={variant}>{variant}</Badge>
+        ))}
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <Badge size="sm" variant="secondary">
+          Small
+        </Badge>
+        <Badge size="md" variant="secondary">
+          Medium
+        </Badge>
+        <Badge size="lg" variant="secondary">
+          Large
+        </Badge>
+        <Badge eyebrow variant="primary">
+          Eyebrow
+        </Badge>
+        <Badge href="#actions" variant="outline">
+          Linked badge
+        </Badge>
+      </div>
+    </div>
+  </Specimen>
+
+  <div class="grid gap-6">
+    {badgeAppearances.map((appearance) => (
+      <Specimen title={`Badge · ${appearance}`} description="Tone and appearance composition across all color roles.">
+        <div class="flex flex-wrap items-center gap-2 rounded-lg bg-card/50 p-3">
+          {badgeTones.map((tone) => (
+            <Badge tone={tone} appearance={appearance}>
+              {tone}
+            </Badge>
+          ))}
+        </div>
+      </Specimen>
+    ))}
+  </div>
+
+  <Specimen
+    title="Cards"
+    description="Complete card composition with headers, actions, descriptions, content, and footers."
+  >
+    <div class="grid gap-5 md:grid-cols-2">
+      {(["sm", "md"] as const).map((size) => (
+        <Card size={size}>
+          <CardHeader>
+            <CardTitle>{size === "sm" ? "Compact card" : "Standard card"}</CardTitle>
+            <CardDescription>Semantic surface, text, border, and muted supporting copy.</CardDescription>
+            <CardAction>
+              <Badge variant="secondary">{size}</Badge>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            <p>Use cards to group one focused subject without changing the underlying color roles.</p>
+          </CardContent>
+          <CardFooter class="justify-between gap-3">
+            <span class="metadata-text">Card footer</span>
+            <Button size="sm" variant="outline">
+              Action
+            </Button>
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  </Specimen>
+</div>

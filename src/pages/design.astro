@@ -1,0 +1,142 @@
+---
+import ActionsShowcase from "@/components/drawbridge/design/ActionsShowcase.astro";
+import BrandShowcase from "@/components/drawbridge/design/BrandShowcase.astro";
+import ColorRoleGrid from "@/components/drawbridge/design/ColorRoleGrid.astro";
+import DataShowcase from "@/components/drawbridge/design/DataShowcase.astro";
+import DesignSection from "@/components/drawbridge/design/DesignSection.astro";
+import FeedbackShowcase from "@/components/drawbridge/design/FeedbackShowcase.astro";
+import FormsShowcase from "@/components/drawbridge/design/FormsShowcase.astro";
+import NavigationShowcase from "@/components/drawbridge/design/NavigationShowcase.astro";
+import PaletteScale from "@/components/drawbridge/design/PaletteScale.astro";
+import PatternsShowcase from "@/components/drawbridge/design/PatternsShowcase.astro";
+import TypographyShowcase from "@/components/drawbridge/design/TypographyShowcase.astro";
+import PageHeader from "@/components/drawbridge/PageHeader.astro";
+import DrawbridgeLayout from "@/layouts/DrawbridgeLayout.astro";
+import { colorRoleGroups, designSections, palettes } from "@/lib/design/catalog";
+---
+
+<DrawbridgeLayout
+  title="Design"
+  description="Drawbridge's visual reference for color roles, palette scales, typography, branding, components, and shared patterns."
+>
+  <div data-design-root class="grid gap-10">
+    <div class="grid gap-5">
+      <PageHeader
+        title="Design reference"
+        description="One place to review Drawbridge's visual language while editing the theme. Change src/styles/starwind.css and Vite will refresh these specimens; use the header toggle to compare light and dark modes."
+        align="left"
+      />
+      <p class="metadata-text">
+        Color values come from the rendered CSS, not a second theme definition. Brand artwork and PWA colors are fixed
+        assets and are labeled separately.
+      </p>
+    </div>
+
+    <nav
+      aria-label="Design sections"
+      class="flex flex-wrap gap-1 rounded-lg border border-border bg-muted/40 p-1.5 text-sm"
+    >
+      {designSections.map((section) => (
+        <a
+          href={section.href}
+          class="rounded-md px-3 py-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          {section.label}
+        </a>
+      ))}
+    </nav>
+
+    <DesignSection
+      id="color-roles"
+      title="Color roles"
+      description="Semantic roles are the colors components actually consume. Shared theme buckets connect related roles so a retheme can start with a small set of values."
+    >
+      <div class="grid gap-8">
+        {colorRoleGroups.map((group) => (
+          <ColorRoleGrid group={group} />
+        ))}
+      </div>
+    </DesignSection>
+
+    <DesignSection
+      id="palettes"
+      title="Palette scales"
+      description="Each primary brand color retains its hand-tuned Tailwind-style 50–950 scale. Edit these literal values in the @theme block when a whole family needs adjustment."
+    >
+      <div class="grid gap-6">
+        {palettes.map((palette) => (
+          <PaletteScale palette={palette} />
+        ))}
+      </div>
+    </DesignSection>
+
+    <DesignSection
+      id="typography"
+      title="Typography"
+      description="Self-hosted font families, shared text utilities, page headers, and long-form content use the same type system throughout the site."
+    >
+      <TypographyShowcase />
+    </DesignSection>
+
+    <DesignSection
+      id="brand"
+      title="Brand artwork"
+      description="Review the real wordmark, compact mark, and browser/install icons alongside the themed interface."
+    >
+      <BrandShowcase />
+    </DesignSection>
+
+    <DesignSection
+      id="actions"
+      title="Actions, badges, and cards"
+      description="Real Starwind variants and compositions make color, typography, spacing, hover, and disabled changes visible together."
+    >
+      <ActionsShowcase />
+    </DesignSection>
+
+    <DesignSection
+      id="forms"
+      title="Form controls"
+      description="Control sizes and states expose input borders, focus outlines, placeholders, errors, disabled styling, and native-control behavior."
+    >
+      <FormsShowcase />
+    </DesignSection>
+
+    <DesignSection
+      id="feedback"
+      title="Feedback and overlays"
+      description="Inline alerts and interactive floating elements demonstrate status roles, popover surfaces, backdrops, and focus behavior."
+    >
+      <FeedbackShowcase />
+    </DesignSection>
+
+    <DesignSection
+      id="navigation"
+      title="Navigation and disclosure"
+      description="Links, breadcrumbs, tabs, and disclosure components show active, inactive, selected, and keyboard-focus treatments."
+    >
+      <NavigationShowcase />
+    </DesignSection>
+
+    <DesignSection
+      id="data"
+      title="Data and shape"
+      description="Tables, scrolling regions, separators, radii, and elevation complete the common visual vocabulary."
+    >
+      <DataShowcase />
+    </DesignSection>
+
+    <DesignSection
+      id="patterns"
+      title="Drawbridge patterns"
+      description="Source-agnostic product patterns appear with public registry metadata or synthetic labels, never imported course content."
+    >
+      <PatternsShowcase />
+    </DesignSection>
+  </div>
+
+  <script>
+    import { mountDesignPage } from "@/scripts/design/design-page";
+    mountDesignPage();
+  </script>
+</DrawbridgeLayout>

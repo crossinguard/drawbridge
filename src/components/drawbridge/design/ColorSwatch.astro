@@ -1,0 +1,40 @@
+---
+interface Props {
+  label: string;
+  token: string;
+  swatchClass: string;
+  textClass?: string;
+  showValue?: boolean;
+  compact?: boolean;
+}
+
+const { label, token, swatchClass, textClass, showValue = true, compact = false } = Astro.props;
+---
+
+<figure class="grid min-w-0 gap-2">
+  <div
+    data-color-swatch
+    class:list={[
+      "flex items-center justify-center rounded-md border border-border/40 font-medium",
+      compact ? "h-12" : "h-20",
+      swatchClass,
+      textClass,
+    ]}
+  >
+    {!compact && textClass && <span aria-hidden="true">Aa</span>}
+  </div>
+  <figcaption class="grid min-w-0 gap-0.5">
+    <span class="truncate text-xs font-medium" title={label}>
+      {label}
+    </span>
+    <code
+      class:list={["font-mono text-[0.6875rem] text-muted-foreground", compact ? "wrap-break-word" : "truncate"]}
+      title={token}
+    >
+      {token}
+    </code>
+    {showValue && (
+      <span data-color-value class="truncate font-mono text-[0.6875rem] text-muted-foreground uppercase"></span>
+    )}
+  </figcaption>
+</figure>

@@ -1,0 +1,25 @@
+---
+import type { ColorRoleGroup } from "@/lib/design/catalog";
+import ColorSwatch from "./ColorSwatch.astro";
+import Specimen from "./Specimen.astro";
+
+interface Props {
+  group: ColorRoleGroup;
+}
+
+const { group } = Astro.props;
+---
+
+<Specimen title={group.label} description={group.description}>
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    {group.roles.map((role) => (
+      <ColorSwatch
+        label={role.label}
+        token={role.token}
+        swatchClass={role.swatchClass}
+        textClass={role.textClass}
+        showValue={role.showValue}
+      />
+    ))}
+  </div>
+</Specimen>

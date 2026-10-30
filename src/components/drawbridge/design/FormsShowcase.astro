@@ -1,0 +1,129 @@
+---
+import { Input } from "@/components/starwind/input";
+import { Label } from "@/components/starwind/label";
+import { NativeSelect, NativeSelectOptGroup, NativeSelectOption } from "@/components/starwind/native-select";
+import { Textarea } from "@/components/starwind/textarea";
+import Specimen from "./Specimen.astro";
+---
+
+<div class="grid gap-10">
+  <Specimen title="Input sizes" description="Labels and controls use the same small, medium, and large scale.">
+    <div class="grid gap-5 md:grid-cols-3">
+      {(["sm", "md", "lg"] as const).map((size) => (
+        <div class="grid content-start gap-2">
+          <Label for={`design-input-${size}`} size={size}>
+            {size} input
+          </Label>
+          <Input id={`design-input-${size}`} name={`input-${size}`} size={size} placeholder="Type here" />
+        </div>
+      ))}
+    </div>
+  </Specimen>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <Specimen title="Input states" description="Placeholder, filled, error, and disabled presentations.">
+      <div class="grid gap-4">
+        <div class="grid gap-2">
+          <Label for="design-input-filled">Filled input</Label>
+          <Input id="design-input-filled" name="filled" value="Local workspace" />
+        </div>
+        <div class="grid gap-2">
+          <Label for="design-input-error">Error input</Label>
+          <Input
+            id="design-input-error"
+            name="error"
+            value="Check this value"
+            data-error-visible
+            aria-invalid="true"
+            aria-describedby="design-input-error-message"
+          />
+          <p id="design-input-error-message" class="text-sm text-error">
+            This demonstrates the visible error state.
+          </p>
+        </div>
+        <div class="grid gap-2">
+          <Label for="design-input-disabled">Disabled input</Label>
+          <Input id="design-input-disabled" name="disabled" value="Unavailable" disabled />
+        </div>
+      </div>
+    </Specimen>
+
+    <Specimen title="Textarea" description="The default control, visible error state, and disabled state.">
+      <div class="grid gap-4">
+        <div class="grid gap-2">
+          <Label for="design-textarea">Notes</Label>
+          <Textarea id="design-textarea" name="notes" class="min-h-24" placeholder="Add optional notes" />
+        </div>
+        <div class="grid gap-2">
+          <Label for="design-textarea-error">Needs attention</Label>
+          <Textarea
+            id="design-textarea-error"
+            name="notes-error"
+            class="min-h-20"
+            data-error-visible
+            aria-invalid="true"
+          >
+            Review this content.
+          </Textarea>
+        </div>
+        <div class="grid gap-2">
+          <Label for="design-textarea-disabled">Disabled</Label>
+          <Textarea id="design-textarea-disabled" name="notes-disabled" disabled>
+            Unavailable
+          </Textarea>
+        </div>
+      </div>
+    </Specimen>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <Specimen title="Native select" description="Native options and grouped choices with the installed select styling.">
+      <div class="grid gap-4">
+        {(["sm", "md", "lg"] as const).map((size) => (
+          <div class="grid gap-2">
+            <Label for={`design-select-${size}`} size={size}>
+              {size} select
+            </Label>
+            <NativeSelect id={`design-select-${size}`} name={`select-${size}`} size={size} class="w-full">
+              <NativeSelectOptGroup label="Palette families">
+                <NativeSelectOption value="poseidon">Poseidon</NativeSelectOption>
+                <NativeSelectOption value="seagoddess">Sea Goddess</NativeSelectOption>
+              </NativeSelectOptGroup>
+              <NativeSelectOptGroup label="Accents">
+                <NativeSelectOption value="pompelmo">Pompelmo</NativeSelectOption>
+                <NativeSelectOption value="butternut">Butternut</NativeSelectOption>
+              </NativeSelectOptGroup>
+            </NativeSelect>
+          </div>
+        ))}
+        <div class="grid gap-2">
+          <Label for="design-select-disabled">Disabled select</Label>
+          <NativeSelect id="design-select-disabled" name="select-disabled" disabled>
+            <NativeSelectOption>Unavailable</NativeSelectOption>
+          </NativeSelect>
+        </div>
+      </div>
+    </Specimen>
+
+    <Specimen
+      title="Native checkbox pattern"
+      description="The existing Tailwind Forms idiom used by Transcript to Text."
+    >
+      <fieldset class="grid gap-3 rounded-lg border border-border bg-muted/30 p-4">
+        <legend class="px-1 font-semibold">Preview options</legend>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="show-labels" class="rounded border-input text-primary" checked />
+          Show token labels
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="show-values" class="rounded border-input text-primary" />
+          Show resolved values
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="disabled-option" class="rounded border-input text-primary" disabled />
+          Disabled option
+        </label>
+      </fieldset>
+    </Specimen>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  class?: string;
+}
+
+const { title, description, class: className } = Astro.props;
+---
+
+<article class:list={["grid min-w-0 content-start gap-3", className]}>
+  <div class="grid gap-1">
+    <h3 class="font-medium">{title}</h3>
+    {description && <p class="metadata-text">{description}</p>}
+  </div>
+  <slot />
+</article>

@@ -1,0 +1,106 @@
+---
+import ChevronDown from "@tabler/icons/outline/chevron-down.svg";
+import NavLink from "@/components/drawbridge/NavLink.astro";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/starwind/breadcrumb";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/starwind/accordion";
+import { Button } from "@/components/starwind/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/starwind/collapsible";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/starwind/tabs";
+import Specimen from "./Specimen.astro";
+---
+
+<div class="grid gap-10">
+  <Specimen title="Breadcrumb" description="The complete ordered-list composition with a current page.">
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/guides">Guides</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Design</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  </Specimen>
+
+  <Specimen
+    title="Navigation links"
+    description="Drawbridge's active and inactive link treatments at both installed sizes."
+  >
+    <div class="grid gap-4 rounded-lg border border-border bg-card p-4 sm:grid-cols-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <NavLink href="#navigation" label="Small active" active size="sm" />
+        <NavLink href="#navigation" label="Small inactive" size="sm" />
+      </div>
+      <div class="grid gap-1">
+        <NavLink href="#navigation" label="Medium active" active size="md" />
+        <NavLink href="#navigation" label="Medium inactive" size="md" />
+      </div>
+    </div>
+  </Specimen>
+
+  <Specimen title="Tabs" description="Keyboard navigation, selected state, and panel presentation.">
+    <Tabs defaultValue="preview">
+      <TabsList>
+        <TabsTrigger value="preview">Preview</TabsTrigger>
+        <TabsTrigger value="tokens">Tokens</TabsTrigger>
+        <TabsTrigger value="usage">Usage</TabsTrigger>
+      </TabsList>
+      <TabsContent value="preview" class="rounded-lg border border-border bg-card p-5">
+        <p>The selected tab uses the page background and default foreground.</p>
+      </TabsContent>
+      <TabsContent value="tokens" class="rounded-lg border border-border bg-card p-5">
+        <p class="font-mono text-sm">bg-muted · bg-background · text-muted-foreground</p>
+      </TabsContent>
+      <TabsContent value="usage" class="rounded-lg border border-border bg-card p-5">
+        <p>Use tabs for a small set of peer views within one context.</p>
+      </TabsContent>
+    </Tabs>
+  </Specimen>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <Specimen title="Accordion" description="Single-open disclosure with animated content.">
+      <Accordion type="single" defaultValue="color" collapsible class="rounded-lg border border-border bg-card px-4">
+        <AccordionItem value="color">
+          <AccordionTrigger>Color roles</AccordionTrigger>
+          <AccordionContent>Semantic roles connect components to shared theme buckets.</AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="type">
+          <AccordionTrigger>Typography</AccordionTrigger>
+          <AccordionContent>Three self-hosted font families cover headings, body text, and code.</AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="disabled" disabled>
+          <AccordionTrigger>Disabled item</AccordionTrigger>
+          <AccordionContent>This content is not reachable while disabled.</AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </Specimen>
+
+    <Specimen title="Collapsible" description="The unstyled disclosure primitive composed with Drawbridge surfaces.">
+      <Collapsible class="grid gap-3">
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" class="justify-between">
+            Toggle details
+            <ChevronDown aria-hidden="true" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent class="grid gap-2 rounded-lg border border-border bg-muted/40 p-4">
+          <p class="font-medium">Additional details</p>
+          <p class="supporting-text">Collapsible supplies behavior while surrounding components own the visuals.</p>
+        </CollapsibleContent>
+      </Collapsible>
+    </Specimen>
+  </div>
+</div>

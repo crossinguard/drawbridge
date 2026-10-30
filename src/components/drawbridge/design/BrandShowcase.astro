@@ -1,0 +1,44 @@
+---
+import drawbridgeLogo from "@/assets/branding/drawbridge-logo.svg";
+import dbLogo from "@/assets/branding/db-logo.svg";
+import Specimen from "./Specimen.astro";
+---
+
+<div class="grid gap-8">
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(12rem,1fr)]">
+    <Specimen title="Drawbridge wordmark" description="The fixed-color SVG used on the home page.">
+      <div class="flex min-h-48 items-center justify-center rounded-lg border border-border bg-card p-8">
+        <img src={drawbridgeLogo.src} alt="Drawbridge" class="h-auto w-full max-w-lg" />
+      </div>
+    </Specimen>
+
+    <Specimen title="DB mark" description="Square artwork for compact brand placements.">
+      <div class="flex min-h-48 items-center justify-center rounded-lg border border-border bg-muted/40 p-8">
+        <img src={dbLogo.src} alt="Drawbridge DB mark" class="size-32" />
+      </div>
+    </Specimen>
+  </div>
+
+  <Specimen
+    title="Favicons and install icons"
+    description="Browser and install artwork is baked into SVG, PNG, and ICO files rather than driven by CSS theme tokens."
+  >
+    <div class="flex flex-wrap items-end gap-6 rounded-lg border border-border bg-card p-6">
+      {[16, 32, 48, 64].map((size) => (
+        <figure class="grid justify-items-center gap-2">
+          <img src="/favicon.svg" alt="" width={size} height={size} class="shrink-0" />
+          <figcaption class="font-mono text-xs text-muted-foreground">{size}px</figcaption>
+        </figure>
+      ))}
+      <figure class="grid justify-items-center gap-2">
+        <img src="/favicon-192x192.png" alt="Drawbridge install icon" width="96" height="96" />
+        <figcaption class="font-mono text-xs text-muted-foreground">192px PNG</figcaption>
+      </figure>
+    </div>
+  </Specimen>
+
+  <p class="metadata-text">
+    Brand artwork and the PWA manifest retain their own colors when CSS theme tokens change. Update those assets and
+    <code class="font-mono">astro.config.mjs</code> separately when a retheme should include them.
+  </p>
+</div>

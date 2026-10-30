@@ -1,0 +1,104 @@
+---
+import LocalBadge from "@/components/drawbridge/patterns/LocalBadge.astro";
+import SourcePicker from "@/components/drawbridge/patterns/SourcePicker.astro";
+import ToolSwitcher from "@/components/drawbridge/patterns/ToolSwitcher.astro";
+import ToolDirectory from "@/components/drawbridge/ToolDirectory.astro";
+import { getToolsBySourceKind, requireToolBySlug } from "@/lib/tools/registry";
+import Specimen from "./Specimen.astro";
+
+const canvasTools = getToolsBySourceKind("canvas-course");
+const courseExplorer = requireToolBySlug("course-explorer");
+---
+
+<div class="grid gap-10">
+  <div class="grid gap-6 lg:grid-cols-2">
+    <Specimen title="Local badge" description="The shared privacy indicator used on home and tool pages.">
+      <div>
+        <LocalBadge />
+      </div>
+    </Specimen>
+
+    <Specimen title="Tool switcher" description="Real registry metadata with Course Explorer selected.">
+      <ToolSwitcher tools={canvasTools} currentTool={courseExplorer} />
+    </Specimen>
+  </div>
+
+  <Specimen
+    title="Source picker"
+    description="A harmless text-file demonstration: choosing or dropping a file reports its name without reading its contents."
+  >
+    <div data-design-source-picker>
+      <SourcePicker
+        inputId="design-source-file"
+        accept=".txt,text/plain"
+        title="Preview a local source picker"
+        description="Exercise the shared picker visuals and drag state. No file content is read or retained."
+        formats="Design preview only · plain text files · nothing is uploaded"
+        chooseLabel="Choose a text file"
+        guideHref="/privacy"
+        guideLinkLabel="How local processing works"
+      />
+    </div>
+  </Specimen>
+
+  <Specimen
+    title="Master and detail"
+    description="The shared source-agnostic layout with synthetic, non-course content."
+  >
+    <div class="master-detail">
+      <div class="master-detail-list">
+        <div class="record-list">
+          <a href="#patterns" class="record-list-item" aria-current="true">
+            <span class="grid gap-0.5">
+              <strong>Color roles</strong>
+              <span class="metadata-text">Selected preview</span>
+            </span>
+            <span class="metadata-text">01</span>
+          </a>
+          <a href="#patterns" class="record-list-item">
+            <span class="grid gap-0.5">
+              <strong>Typography</strong>
+              <span class="metadata-text">Reusable styles</span>
+            </span>
+            <span class="metadata-text">02</span>
+          </a>
+          <a href="#patterns" class="record-list-item">
+            <span class="grid gap-0.5">
+              <strong>Components</strong>
+              <span class="metadata-text">Common elements</span>
+            </span>
+            <span class="metadata-text">03</span>
+          </a>
+        </div>
+      </div>
+      <div class="detail-panel">
+        <div class="grid gap-2">
+          <p class="metadata-text">Selected design section</p>
+          <h3 class="section-title">Color roles</h3>
+          <p class="supporting-text">The detail surface demonstrates card, border, text, and spacing treatments.</p>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-3">
+          <div class="summary-item">
+            <strong>5</strong>
+            <span class="metadata-text">Palettes</span>
+          </div>
+          <div class="summary-item">
+            <strong>11</strong>
+            <span class="metadata-text">Shades each</span>
+          </div>
+          <div class="summary-item">
+            <strong>2</strong>
+            <span class="metadata-text">Color schemes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Specimen>
+
+  <Specimen
+    title="Tool cards"
+    description="The real ToolDirectory and ToolCard compositions using public registry metadata."
+  >
+    <ToolDirectory />
+  </Specimen>
+</div>

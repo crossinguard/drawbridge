@@ -6,6 +6,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  --color-poseidon: #0a3d5c;
+  --color-seagoddess: #1a6b8a;
+  --color-pompelmo: #ff6b6b;
+  --color-butternut: #ffa07a;
+  --color-gruyrecheese: #f5deb3;
+
   --color-poseidon-50: #eff6fc;
   --color-poseidon-100: #d7ebfa;
   --color-poseidon-200: #afdafb;
@@ -140,81 +146,112 @@
 }
 
 :root {
-  --background: var(--color-gruyrecheese-50);
-  --foreground: var(--color-gruyrecheese-950);
-  --card: var(--color-gruyrecheese-50);
-  --card-foreground: var(--color-gruyrecheese-950);
-  --popover: var(--color-gruyrecheese-50);
-  --popover-foreground: var(--color-gruyrecheese-950);
-  --primary: var(--color-poseidon-700);
-  --primary-foreground: var(--color-gruyrecheese-50);
-  --primary-accent: var(--color-pompelmo-600);
-  --secondary: var(--color-seagoddess-100);
-  --secondary-foreground: var(--color-seagoddess-950);
-  --secondary-accent: var(--color-pompelmo-600);
-  --muted: var(--color-gruyrecheese-100);
-  --muted-foreground: var(--color-gruyrecheese-600);
-  --accent: var(--color-butternut-200);
-  --accent-foreground: var(--color-gruyrecheese-950);
-  --info: var(--color-seagoddess-700);
-  --info-foreground: var(--color-gruyrecheese-50);
-  --success: var(--color-poseidon-700);
-  --success-foreground: var(--color-gruyrecheese-50);
-  --warning: var(--color-butternut-300);
-  --warning-foreground: var(--color-gruyrecheese-950);
-  --error: var(--color-pompelmo-600);
-  --error-foreground: var(--color-gruyrecheese-50);
-  --border: var(--color-gruyrecheese-200);
-  --input: var(--color-gruyrecheese-300);
-  --outline: var(--color-poseidon-500);
+  /* Shared buckets: page and raised surfaces. */
+  --theme-page: var(--color-gruyrecheese-50);
+  --theme-page-foreground: var(--color-gruyrecheese-950);
+  --theme-raised: var(--color-gruyrecheese-50);
+  --theme-raised-foreground: var(--color-gruyrecheese-950);
+
+  /* Shared buckets: actions, emphasis, and selection. */
+  --theme-primary: var(--color-poseidon-700);
+  --theme-primary-foreground: var(--color-gruyrecheese-50);
+  --theme-secondary: var(--color-seagoddess-100);
+  --theme-secondary-foreground: var(--color-seagoddess-950);
+  --theme-emphasis: var(--color-pompelmo-600);
+  --theme-highlight: var(--color-butternut-200);
+  --theme-highlight-foreground: var(--color-gruyrecheese-950);
+
+  /* Shared buckets: quiet surfaces and overridable statuses. */
+  --theme-muted: var(--color-gruyrecheese-100);
+  --theme-muted-foreground: var(--color-gruyrecheese-600);
+  --theme-info: var(--color-seagoddess-700);
+  --theme-info-foreground: var(--color-gruyrecheese-50);
+  --theme-success: var(--theme-primary);
+  --theme-success-foreground: var(--theme-primary-foreground);
+  --theme-warning: var(--color-butternut-300);
+  --theme-warning-foreground: var(--color-gruyrecheese-950);
+  --theme-error: var(--theme-emphasis);
+  --theme-error-foreground: var(--color-gruyrecheese-50);
+
+  /* Shared buckets: boundaries and focus. */
+  --theme-border: var(--color-gruyrecheese-200);
+  --theme-input: var(--color-gruyrecheese-300);
+  --theme-focus: var(--color-poseidon-500);
+
+  /* Semantic roles are wired once as the stable component-facing API. */
+  --background: var(--theme-page);
+  --foreground: var(--theme-page-foreground);
+  --card: var(--theme-raised);
+  --card-foreground: var(--theme-raised-foreground);
+  --popover: var(--theme-raised);
+  --popover-foreground: var(--theme-raised-foreground);
+  --primary: var(--theme-primary);
+  --primary-foreground: var(--theme-primary-foreground);
+  --primary-accent: var(--theme-emphasis);
+  --secondary: var(--theme-secondary);
+  --secondary-foreground: var(--theme-secondary-foreground);
+  --secondary-accent: var(--theme-emphasis);
+  --muted: var(--theme-muted);
+  --muted-foreground: var(--theme-muted-foreground);
+  --accent: var(--theme-highlight);
+  --accent-foreground: var(--theme-highlight-foreground);
+  --info: var(--theme-info);
+  --info-foreground: var(--theme-info-foreground);
+  --success: var(--theme-success);
+  --success-foreground: var(--theme-success-foreground);
+  --warning: var(--theme-warning);
+  --warning-foreground: var(--theme-warning-foreground);
+  --error: var(--theme-error);
+  --error-foreground: var(--theme-error-foreground);
+  --border: var(--theme-border);
+  --input: var(--theme-input);
+  --outline: var(--theme-focus);
+
+  /* Sidebar roles intentionally mirror their main-role counterparts. */
+  --sidebar-background: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-outline: var(--outline);
+
+  /* Non-color foundations. */
   --radius: 0.5rem;
   --spacing: 0.25rem;
-
-  --sidebar-background: var(--color-gruyrecheese-50);
-  --sidebar-foreground: var(--color-gruyrecheese-950);
-  --sidebar-primary: var(--color-poseidon-700);
-  --sidebar-primary-foreground: var(--color-gruyrecheese-50);
-  --sidebar-accent: var(--color-butternut-200);
-  --sidebar-accent-foreground: var(--color-gruyrecheese-950);
-  --sidebar-border: var(--color-gruyrecheese-200);
-  --sidebar-outline: var(--color-poseidon-500);
 }
 
 .dark {
-  --background: var(--color-gruyrecheese-950);
-  --foreground: var(--color-gruyrecheese-50);
-  --card: var(--color-gruyrecheese-900);
-  --card-foreground: var(--color-gruyrecheese-50);
-  --popover: var(--color-gruyrecheese-900);
-  --popover-foreground: var(--color-gruyrecheese-50);
-  --primary: var(--color-poseidon-300);
-  --primary-foreground: var(--color-poseidon-950);
-  --primary-accent: var(--color-pompelmo-300);
-  --secondary: var(--color-seagoddess-800);
-  --secondary-foreground: var(--color-seagoddess-100);
-  --secondary-accent: var(--color-pompelmo-300);
-  --muted: var(--color-gruyrecheese-900);
-  --muted-foreground: var(--color-gruyrecheese-300);
-  --accent: var(--color-butternut-300);
-  --accent-foreground: var(--color-butternut-950);
-  --info: var(--color-seagoddess-300);
-  --info-foreground: var(--color-seagoddess-950);
-  --success: var(--color-poseidon-300);
-  --success-foreground: var(--color-poseidon-950);
-  --warning: var(--color-butternut-300);
-  --warning-foreground: var(--color-butternut-950);
-  --error: var(--color-pompelmo-300);
-  --error-foreground: var(--color-pompelmo-950);
-  --border: var(--color-gruyrecheese-800);
-  --input: var(--color-gruyrecheese-700);
-  --outline: var(--color-poseidon-300);
+  /* Dark mode overrides buckets; semantic wiring is inherited from :root. */
 
-  --sidebar-background: var(--color-gruyrecheese-950);
-  --sidebar-foreground: var(--color-gruyrecheese-50);
-  --sidebar-primary: var(--color-poseidon-300);
-  --sidebar-primary-foreground: var(--color-poseidon-950);
-  --sidebar-accent: var(--color-butternut-300);
-  --sidebar-accent-foreground: var(--color-butternut-950);
-  --sidebar-border: var(--color-gruyrecheese-800);
-  --sidebar-outline: var(--color-poseidon-300);
+  /* Page and raised surfaces. */
+  --theme-page: var(--color-gruyrecheese-950);
+  --theme-page-foreground: var(--color-gruyrecheese-50);
+  --theme-raised: var(--color-gruyrecheese-900);
+  --theme-raised-foreground: var(--color-gruyrecheese-50);
+
+  /* Actions, emphasis, and selection. */
+  --theme-primary: var(--color-poseidon-300);
+  --theme-primary-foreground: var(--color-poseidon-950);
+  --theme-secondary: var(--color-seagoddess-800);
+  --theme-secondary-foreground: var(--color-seagoddess-100);
+  --theme-emphasis: var(--color-pompelmo-300);
+  --theme-highlight: var(--color-butternut-300);
+  --theme-highlight-foreground: var(--color-butternut-950);
+
+  /* Quiet surfaces and overridable statuses. */
+  --theme-muted: var(--color-gruyrecheese-900);
+  --theme-muted-foreground: var(--color-gruyrecheese-300);
+  --theme-info: var(--color-seagoddess-300);
+  --theme-info-foreground: var(--color-seagoddess-950);
+  --theme-warning: var(--theme-highlight);
+  --theme-warning-foreground: var(--theme-highlight-foreground);
+  --theme-error: var(--theme-emphasis);
+  --theme-error-foreground: var(--color-pompelmo-950);
+
+  /* Boundaries and focus. */
+  --theme-border: var(--color-gruyrecheese-800);
+  --theme-input: var(--color-gruyrecheese-700);
+  --theme-focus: var(--theme-primary);
 }

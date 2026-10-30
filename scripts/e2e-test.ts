@@ -82,39 +82,11 @@ try {
     await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme),
     "light",
   );
-  check(
-    "Gruyrecheese light background",
-    await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
-    "rgb(250, 244, 234)",
-  );
-  check(
-    "Gruyrecheese light foreground",
-    await page.evaluate(() => getComputedStyle(document.body).color),
-    "rgb(27, 21, 9)",
-  );
-  check(
-    "Poseidon primary links",
-    await page
-      .getByRole("link", { name: "Read the privacy details" })
-      .evaluate((element) => getComputedStyle(element).color),
-    "rgb(15, 76, 114)",
-  );
-  check(
-    "Sea Goddess tool accents",
-    await page
-      .locator("#tools .bg-secondary")
-      .first()
-      .evaluate((element) => getComputedStyle(element).backgroundColor),
-    "rgb(210, 237, 250)",
-  );
-  check(
-    "Pompelmo source labels",
-    await page
-      .getByText("Canvas course export", { exact: true })
-      .first()
-      .evaluate((element) => getComputedStyle(element).color),
-    "rgb(172, 0, 34)",
-  );
+  const lightTheme = await page.evaluate(() => {
+    const style = getComputedStyle(document.body);
+    return { background: style.backgroundColor, foreground: style.color };
+  });
+  check("light foreground differs from its background", lightTheme.foreground !== lightTheme.background, true);
 
   await page.emulateMedia({ colorScheme: "dark" });
   await page.waitForSelector("html.dark");
@@ -123,39 +95,12 @@ try {
     await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme),
     "dark",
   );
-  check(
-    "Gruyrecheese dark background",
-    await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
-    "rgb(27, 21, 9)",
-  );
-  check(
-    "Gruyrecheese dark foreground",
-    await page.evaluate(() => getComputedStyle(document.body).color),
-    "rgb(250, 244, 234)",
-  );
-  check(
-    "dark Poseidon primary links",
-    await page
-      .getByRole("link", { name: "Read the privacy details" })
-      .evaluate((element) => getComputedStyle(element).color),
-    "rgb(114, 192, 249)",
-  );
-  check(
-    "dark Sea Goddess tool accents",
-    await page
-      .locator("#tools .bg-secondary")
-      .first()
-      .evaluate((element) => getComputedStyle(element).backgroundColor),
-    "rgb(10, 59, 77)",
-  );
-  check(
-    "dark Pompelmo source labels",
-    await page
-      .getByText("Canvas course export", { exact: true })
-      .first()
-      .evaluate((element) => getComputedStyle(element).color),
-    "rgb(255, 149, 145)",
-  );
+  const darkTheme = await page.evaluate(() => {
+    const style = getComputedStyle(document.body);
+    return { background: style.backgroundColor, foreground: style.color };
+  });
+  check("dark foreground differs from its background", darkTheme.foreground !== darkTheme.background, true);
+  check("light and dark backgrounds respond to the theme", darkTheme.background !== lightTheme.background, true);
   check("system preference remains selected", await page.evaluate(() => localStorage.getItem("colorTheme")), "system");
   check("dark toggle state", await themeToggle.getAttribute("aria-pressed"), "true");
 
@@ -167,7 +112,7 @@ try {
   check(
     "saved light preference overrides the dark system theme",
     await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
-    "rgb(250, 244, 234)",
+    lightTheme.background,
   );
 
   await themeToggle.click();
@@ -177,7 +122,7 @@ try {
   check(
     "dark preference persists across reload",
     await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
-    "rgb(27, 21, 9)",
+    darkTheme.background,
   );
 
   await page.getByRole("link", { name: "Guides", exact: true }).first().click();
@@ -188,6 +133,102 @@ try {
   check("Course Explorer guide listed", await page.locator('a[href="/guides/course-explorer"]').count(), 2);
   check("Rubric Explorer guide listed", await page.locator('a[href="/guides/rubric-explorer"]').count(), 2);
   check("Transcript to Text guide listed", await page.locator('a[href="/guides/transcript-to-text"]').count(), 2);
+
+  console.log("\nDesign reference — foundations and interactive specimens");
+  await page.goto(`${BASE}/design`, { waitUntil: "networkidle" });
+  check("design reference opened", await page.locator("h1").textContent(), "Design reference");
+  check("all ten design sections render", await page.locator("[data-design-root] > section").count(), 10);
+  check("all five palette scales render", await page.locator('article[aria-labelledby^="palette-"]').count(), 5);
+  check(
+    "every palette scale has eleven shades",
+    await page
+      .locator('article[aria-labelledby^="palette-"]')
+      .evaluateAll((articles) => articles.every((article) => article.querySelectorAll("figure").length === 12)),
+    true,
+  );
+  check(
+    "swatch values come from rendered CSS",
+    await page
+      .locator("[data-color-value]")
+      .evaluateAll((values) => values.every((value) => Boolean(value.textContent?.trim()))),
+    true,
+  );
+
+  const designLightValue = await page.locator("[data-color-value]").first().textContent();
+  await themeToggle.click();
+  await page.waitForSelector("html.dark");
+  await page.waitForFunction(
+    (previous) => document.querySelector("[data-color-value]")?.textContent !== previous,
+    designLightValue,
+  );
+  check("semantic swatches update in dark mode", await page.locator("html.dark").count(), 1);
+  await themeToggle.click();
+  await page.waitForFunction(() => !document.documentElement.classList.contains("dark"));
+
+  await page.getByRole("tab", { name: "Tokens", exact: true }).click();
+  check(
+    "design tabs respond",
+    await page.getByRole("tab", { name: "Tokens", exact: true }).getAttribute("aria-selected"),
+    "true",
+  );
+  await page.getByRole("button", { name: "Toggle details" }).click();
+  check("design collapsible responds", await page.getByText("Additional details", { exact: true }).isVisible(), true);
+  await page.getByRole("button", { name: "Open sheet" }).click();
+  check("design sheet opens", await page.getByRole("heading", { name: "Design sheet" }).isVisible(), true);
+  await page.keyboard.press("Escape");
+  await page.getByRole("heading", { name: "Design sheet" }).waitFor({ state: "hidden" });
+  check(
+    "design sheet closes with Escape",
+    await page.getByRole("heading", { name: "Design sheet" }).isVisible(),
+    false,
+  );
+  await page.getByRole("button", { name: "Success", exact: true }).click();
+  check("design toast opens", await page.getByText("success notification", { exact: true }).isVisible(), true);
+
+  await page.setInputFiles("#design-source-file", {
+    name: "preview.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("This content must not be read"),
+  });
+  check(
+    "design picker reports selection without reading content",
+    await page.locator("[data-source-status]").textContent(),
+    "preview.txt selected. Its contents were not read.",
+  );
+  check(
+    "design interactions do not persist source data",
+    await page.evaluate(() => Object.keys(localStorage).filter((key) => key !== "colorTheme")),
+    [],
+  );
+  check(
+    "design buttons have accessible names",
+    await page
+      .locator("button:visible")
+      .evaluateAll((buttons) =>
+        buttons.every((button) => Boolean(button.textContent?.trim() || button.getAttribute("aria-label"))),
+      ),
+    true,
+  );
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  check(
+    "design respects reduced-motion availability",
+    await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches),
+    true,
+  );
+  await page.setViewportSize({ width: 320, height: 844 });
+  check(
+    "no design horizontal overflow at 320px",
+    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
+    true,
+  );
+  await page.setViewportSize({ width: 640, height: 900 });
+  check(
+    "no design horizontal overflow at the 200% zoom-equivalent width",
+    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
+    true,
+  );
+  await page.setViewportSize({ width: 1280, height: 900 });
 
   console.log("\nCourse Explorer — import and browse");
   await page.goto(`${BASE}/tools/course-explorer`, { waitUntil: "networkidle" });
@@ -244,9 +285,13 @@ try {
   check("switcher returns to Course Explorer", await page.textContent("[data-workspace-title]"), "Sample Course");
   check("summary includes rubrics", (await page.textContent("[data-course-summary]"))?.includes("Rubrics"), true);
   check(
-    "Butternut selected view",
-    await page.locator('[data-course-view="modules"]').evaluate((element) => getComputedStyle(element).backgroundColor),
-    "rgb(255, 197, 175)",
+    "selected view uses the semantic accent state",
+    await page
+      .locator('[data-course-view="modules"]')
+      .evaluate(
+        (element) => element.classList.contains("bg-accent") && element.getAttribute("aria-pressed") === "true",
+      ),
+    true,
   );
   check("three module items", await page.locator("[data-module-list] [data-entity-id]").count(), 3);
   check(

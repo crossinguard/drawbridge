@@ -1,0 +1,113 @@
+---
+import PageHeader from "@/components/drawbridge/PageHeader.astro";
+import { Prose } from "@/components/starwind/prose";
+import Specimen from "./Specimen.astro";
+
+const sizes = [
+  { label: "Small", class: "text-sm" },
+  { label: "Body", class: "text-base" },
+  { label: "Large", class: "text-lg" },
+  { label: "Extra large", class: "text-xl" },
+  { label: "Display", class: "text-3xl" },
+] as const;
+---
+
+<div class="grid gap-10">
+  <div class="grid gap-6 lg:grid-cols-3">
+    <Specimen title="PaintFactory" description="Headings · font-heading · static 700 weight">
+      <div class="grid gap-4 rounded-lg border border-border bg-card p-5">
+        {sizes.slice(1).map((size) => (
+          <div class="grid gap-1">
+            <p class="metadata-text">{size.label}</p>
+            <p class:list={["font-heading leading-tight", size.class]}>Build a bridge to your content.</p>
+          </div>
+        ))}
+      </div>
+    </Specimen>
+
+    <Specimen title="Atkinson Hyperlegible Next" description="Body and interface · font-sans · variable 200–800">
+      <div class="grid gap-4 rounded-lg border border-border bg-card p-5">
+        {sizes.map((size) => (
+          <div class="grid gap-1">
+            <p class="metadata-text">{size.label}</p>
+            <p class:list={["font-sans", size.class]}>Clear tools keep every word within reach.</p>
+          </div>
+        ))}
+        <div class="flex flex-wrap gap-3 border-t border-border pt-3 text-sm">
+          <span class="font-light">Light 200</span>
+          <span>Regular 400</span>
+          <span class="font-medium">Medium 500</span>
+          <span class="font-bold">Bold 700</span>
+        </div>
+      </div>
+    </Specimen>
+
+    <Specimen title="Atkinson Hyperlegible Mono" description="Code and metadata · font-mono · variable 200–800">
+      <div class="grid gap-4 rounded-lg border border-border bg-card p-5">
+        {sizes.slice(0, 4).map((size) => (
+          <div class="grid gap-1">
+            <p class="metadata-text">{size.label}</p>
+            <p class:list={["font-mono wrap-break-word", size.class]}>--color-poseidon-700: #0f4c72;</p>
+          </div>
+        ))}
+        <p class="font-mono text-sm">0O 1lI 5S 8B · 0123456789</p>
+      </div>
+    </Specimen>
+  </div>
+
+  <Specimen title="Shared typography utilities" description="Reusable text treatments from src/styles/base/type.css.">
+    <div class="grid gap-5 rounded-lg border border-border bg-card p-6">
+      <div class="grid gap-1">
+        <code class="font-mono text-xs text-muted-foreground">page-title</code>
+        <p class="page-title">A clear page title</p>
+      </div>
+      <div class="grid gap-1">
+        <code class="font-mono text-xs text-muted-foreground">section-title</code>
+        <p class="section-title">A focused section title</p>
+      </div>
+      <div class="grid gap-1">
+        <code class="font-mono text-xs text-muted-foreground">lede</code>
+        <p class="lede">A concise introduction that explains what the page helps someone accomplish.</p>
+      </div>
+      <div class="grid gap-1">
+        <code class="font-mono text-xs text-muted-foreground">supporting-text</code>
+        <p class="supporting-text">Supporting copy adds context without competing with the main heading.</p>
+      </div>
+      <div class="grid gap-1">
+        <code class="font-mono text-xs text-muted-foreground">metadata-text</code>
+        <p class="metadata-text">Metadata · 10 items · Updated just now</p>
+      </div>
+    </div>
+  </Specimen>
+
+  <Specimen title="Page header" description="The shared Drawbridge header composition in its left-aligned h2 form.">
+    <div class="rounded-lg border border-border bg-card p-6">
+      <PageHeader
+        level="h2"
+        title="Explore one thing at a time"
+        description="PageHeader pairs the shared heading and supporting-text treatments."
+        align="left"
+      />
+    </div>
+  </Specimen>
+
+  <Specimen title="Rich text" description="Starwind Prose covers long-form guide content and inline elements.">
+    <Prose class="max-w-none rounded-lg border border-border bg-card p-6 text-foreground">
+      <h3>A readable content section</h3>
+      <p>
+        Body copy supports <strong>strong emphasis</strong>, <em>subtle emphasis</em>,<a href="/design">themed links</a>
+        , <mark>highlights</mark>, and <code>inline code</code>.
+      </p>
+      <blockquote>Good typography makes dense information feel approachable.</blockquote>
+      <ul>
+        <li>Readable line lengths and clear hierarchy</li>
+        <li>Consistent spacing between related content</li>
+        <li>
+          Keyboard-friendly <kbd>Ctrl</kbd> + <kbd>K</kbd> hints
+        </li>
+      </ul>
+      <pre><code>const source = "local";
+const uploaded = false;</code></pre>
+    </Prose>
+  </Specimen>
+</div>

@@ -6,31 +6,34 @@ you can change the entire interface without editing individual components.
 This guide is for someone working with the Drawbridge source code. It covers
 changing colors, adjusting light and dark modes, and checking the result.
 
-## Understand the three layers
+## Understand the four layers
 
-The theme has three layers:
+The theme has four layers:
 
 1. **Palette scales** such as `poseidon`, `seagoddess`, and `gruyrecheese`
-   define the available color shades.
-2. **Semantic tokens** such as `primary`, `muted`, and `accent` assign those
-   colors to interface roles.
-3. **Components** use semantic utilities such as `bg-primary`, `bg-card`, and
+   define the available hand-tuned color shades.
+2. **Shared color buckets** named `--theme-*` connect related roles to palette
+   shades and hold the light and dark color choices.
+3. **Semantic tokens** such as `primary`, `muted`, and `accent` assign buckets to
+   stable interface roles.
+4. **Components** use semantic utilities such as `bg-primary`, `bg-card`, and
    `text-muted-foreground`.
 
 Change a palette value to alter a color everywhere that shade is used. Change a
-semantic token to alter one interface role. Avoid adding raw color utilities to
-individual components when a semantic token already exists.
+bucket to alter a coordinated group of roles. Override a semantic token only
+when one role needs to diverge from its bucket. Avoid adding raw color utilities
+to individual components when a semantic token already exists.
 
 ## Theme files
 
-| File                                     | What it controls                                         |
-| ---------------------------------------- | -------------------------------------------------------- |
-| `src/styles/starwind.css`                | Palette scales, light `:root` tokens, and `.dark` tokens |
-| `src/styles/base/global.css`             | Browser `color-scheme` and global body colors            |
-| `src/layouts/DrawbridgeLayout.astro`     | No-flash theme initialization                            |
-| `src/components/drawbridge/Header.astro` | Light/dark theme toggle                                  |
-| `astro.config.mjs`                       | Installable app's manifest theme and background colors   |
-| `scripts/e2e-test.ts`                    | Browser assertions for the active theme                  |
+| File                                     | What it controls                                             |
+| ---------------------------------------- | ------------------------------------------------------------ |
+| `src/styles/starwind.css`                | Palettes, shared buckets, semantic roles, and dark overrides |
+| `src/styles/base/global.css`             | Browser `color-scheme` and global body colors                |
+| `src/layouts/DrawbridgeLayout.astro`     | No-flash theme initialization                                |
+| `src/components/drawbridge/Header.astro` | Light/dark theme toggle                                      |
+| `astro.config.mjs`                       | Installable app's manifest theme and background colors       |
+| `scripts/e2e-test.ts`                    | Theme-independent browser behavior assertions                |
 
 ## Start the site locally
 
@@ -44,6 +47,18 @@ bun dev
 Open the local address printed by Astro. Keep the site running while you edit;
 Astro will refresh the page as files change.
 
+## Use the visual design reference
+
+The `/design` page is available by direct URL on the local or deployed site. It
+pairs code with live previews of palette scales, semantic roles, typography,
+brand assets, components, and shared Drawbridge patterns. Use it alongside
+`starwind.css` to see how a bucket or role change affects real interface
+patterns in both themes.
+
+The page is a visual reference, not an interactive theme editor. Make theme
+changes in `src/styles/starwind.css`; the previews then reflect those source
+edits.
+
 ## Change an existing color
 
 Palette scales live inside `@theme` in `src/styles/starwind.css`. For example:
@@ -55,33 +70,90 @@ Palette scales live inside `@theme` in `src/styles/starwind.css`. For example:
 }
 ```
 
-Replace either hex value with your chosen color. The semantic tokens that
-reference that shade will update automatically.
+Replace either hex value with your chosen color. Every bucket and direct
+semantic override that references that shade will update automatically.
 
 Keep the numbered shade names meaningful: `50` should be the lightest shade and
 `950` the darkest. If your replacement has a very different lightness, update
 the whole scale rather than putting a dark color in a light-shade slot.
 
-## Change an interface role
+The unnumbered declarations such as `--color-poseidon` and
+`--color-pompelmo` are fixed brand swatches, separate from the numbered scales
+and mode-aware buckets. Changing a semantic theme does not automatically update
+brand assets or the static PWA colors described below.
 
-Light-mode assignments live in `:root`. Dark-mode assignments live in `.dark`.
-For example, this changes the primary action color without changing the
-Poseidon palette itself:
+## Change a shared color bucket
+
+Buckets live in `:root`, with their dark values in `.dark`. For example, this
+changes the primary action colors without changing the Poseidon palette itself:
 
 ```css
 :root {
-  --primary: var(--color-poseidon-800);
-  --primary-foreground: var(--color-gruyrecheese-50);
+  --theme-primary: var(--color-poseidon-800);
+  --theme-primary-foreground: var(--color-gruyrecheese-50);
 }
 
 .dark {
-  --primary: var(--color-poseidon-200);
-  --primary-foreground: var(--color-poseidon-950);
+  --theme-primary: var(--color-poseidon-200);
+  --theme-primary-foreground: var(--color-poseidon-950);
+}
+```
+
+The primary semantic roles, their sidebar equivalents, and the default success
+colors all follow this bucket. A trailing `*` in the table below abbreviates a
+base bucket and its `-foreground` partner.
+
+| Bucket                                             | Connected semantic roles                          |
+| -------------------------------------------------- | ------------------------------------------------- |
+| `--theme-page*`                                    | Page background and foreground                    |
+| `--theme-raised*`                                  | Card and popover pairs                            |
+| `--theme-primary*`                                 | Primary pair                                      |
+| `--theme-secondary*`                               | Secondary pair                                    |
+| `--theme-emphasis`                                 | Primary-accent and secondary-accent               |
+| `--theme-muted*`                                   | Muted pair                                        |
+| `--theme-highlight*`                               | Accent pair; dark warning pair by default         |
+| `--theme-info*`                                    | Information pair                                  |
+| `--theme-success*`                                 | Success pair; aliases the primary pair by default |
+| `--theme-warning*`                                 | Warning pair                                      |
+| `--theme-error*`                                   | Error pair; aliases the emphasis base by default  |
+| `--theme-border`, `--theme-input`, `--theme-focus` | Border, input, and outline roles                  |
+
+Status buckets remain separately named even when they alias another bucket. To
+change only success, replace `--theme-success` and
+`--theme-success-foreground`; primary will not change. Warning has its own light
+values and aliases the highlight bucket in dark mode, so give it explicit dark
+bucket values if it should diverge there too. Error aliases the emphasis base
+while keeping its own foreground; replace `--theme-error` if it should no longer
+follow primary and secondary emphasis.
+
+Sidebar roles do not need a second set of buckets: their semantic declarations
+mirror the corresponding main roles.
+
+## Decouple an interface role
+
+Most theme changes belong in a bucket. If just one semantic role must diverge,
+replace its bucket reference in the semantic-role section of `:root`. Add a
+`.dark` semantic override only when that decoupled role also needs a different
+dark value.
+
+For example, this changes cards while leaving popovers on the shared raised
+bucket:
+
+```css
+:root {
+  --card: var(--color-gruyrecheese-100);
+  --card-foreground: var(--color-gruyrecheese-950);
+}
+
+.dark {
+  --card: var(--color-gruyrecheese-800);
+  --card-foreground: var(--color-gruyrecheese-50);
 }
 ```
 
 Always review the base color and its `-foreground` partner together. The
-foreground is the text or icon color displayed on that base color.
+foreground is the text or icon color displayed on that base color. Keep these
+assignments in the existing blocks rather than creating another theme file.
 
 ### Current semantic roles
 
@@ -120,19 +192,26 @@ A typical pattern is:
 - Dark mode uses brighter accent shades on dark Gruyrecheese surfaces.
 - Bright buttons in dark mode use dark foreground text.
 
-For example:
+For example, the highlight bucket gives selected states different light and
+dark values while the `accent` semantic mapping remains unchanged in `:root`:
 
 ```css
 :root {
-  --accent: var(--color-butternut-200);
-  --accent-foreground: var(--color-gruyrecheese-950);
+  --theme-highlight: var(--color-butternut-200);
+  --theme-highlight-foreground: var(--color-gruyrecheese-950);
 }
 
 .dark {
-  --accent: var(--color-butternut-300);
-  --accent-foreground: var(--color-butternut-950);
+  --theme-highlight: var(--color-butternut-300);
+  --theme-highlight-foreground: var(--color-butternut-950);
 }
 ```
+
+Keep `.dark` focused on bucket overrides. Semantic roles inherit their wiring
+from `:root`, and aliases follow the active mode: success tracks the current
+primary pair, while dark warning tracks the current highlight pair. The only
+semantic declarations that need repeating in `.dark` are intentional exceptions
+like the decoupled card example above.
 
 Use the header toggle to check both modes. Also check your operating system's
 light and dark settings, because Drawbridge follows the system preference until
@@ -141,7 +220,7 @@ a visitor explicitly chooses a theme.
 ## Add another palette
 
 Add a new scale inside the existing `@theme` block in `starwind.css`, then point
-semantic tokens at it. Do not create a second theme CSS file.
+one or more buckets at it. Do not create a second theme CSS file.
 
 ```css
 @theme {
@@ -152,13 +231,13 @@ semantic tokens at it. Do not create a second theme CSS file.
 }
 
 :root {
-  --primary: var(--color-forest-700);
-  --primary-foreground: var(--color-forest-50);
+  --theme-primary: var(--color-forest-700);
+  --theme-primary-foreground: var(--color-forest-50);
 }
 
 .dark {
-  --primary: var(--color-forest-300);
-  --primary-foreground: var(--color-forest-950);
+  --theme-primary: var(--color-forest-300);
+  --theme-primary-foreground: var(--color-forest-950);
 }
 ```
 
@@ -173,12 +252,14 @@ but prefer the semantic utilities in application components.
 The installable app manifest has separate values in `astro.config.mjs`:
 
 ```js
-theme_color: "#0f4c72",
-background_color: "#faf4ea",
+theme_color: "#0a3d5c",
+background_color: "#f5deb3",
 ```
 
-Update these when your main brand or light background color changes. These are
-static manifest values, not light/dark CSS tokens.
+Update these when your fixed brand or light background color changes. These are
+static manifest values, not light/dark CSS tokens, and cannot reference a CSS
+bucket. The PWA caches application assets rather than imported course data;
+these colors do not affect that privacy behavior.
 
 ## Check accessibility
 
@@ -191,28 +272,20 @@ For every changed combination:
 - Do not use color as the only way to communicate meaning.
 - Check both themes at mobile width and with browser zoom.
 
-The browser tests verify selected color values, but they are not a complete
-accessibility audit.
+The browser tests verify theme behavior and semantic selected states, but they
+are not a complete accessibility audit.
 
-## Update the browser color assertions
+## Keep browser tests theme-agnostic
 
-`scripts/e2e-test.ts` intentionally checks the current theme. An intentional
-color change can therefore produce failures such as an expected RGB value not
-matching the new computed color.
+`scripts/e2e-test.ts` deliberately avoids fixed hex or RGB expectations. You can
+change the palette without rewriting tests. The suite checks the light/dark
+`color-scheme`, distinct foreground/background values, different light and dark
+surfaces, saved preferences, and semantic selected states such as `bg-accent`
+with `aria-pressed`.
 
-Search that file for names including:
-
-- `Gruyrecheese`
-- `Poseidon`
-- `Sea Goddess`
-- `Pompelmo`
-- `Butternut`
-- `color scheme`
-- `preference`
-
-Update the expected values when the new colors are intentional. Do not remove
-the assertions merely to make the suite pass; they protect the light/dark
-behavior and ensure the accent roles remain visible.
+Keep new assertions focused on these behaviors rather than particular colors.
+Contrast and the visibility of each accent role still need manual review when
+the theme changes.
 
 ## Verify the result
 
@@ -223,6 +296,7 @@ bun run format
 bun run check
 bun run check:isolation
 bun run test:canvas
+bun run test:transcript
 bun run build
 bun run test:e2e
 ```

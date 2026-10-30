@@ -1,0 +1,92 @@
+---
+import InfoCircle from "@tabler/icons/outline/info-circle.svg";
+import { Alert, AlertDescription, AlertTitle } from "@/components/starwind/alert";
+import { Button } from "@/components/starwind/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/starwind/sheet";
+import { Toaster } from "@/components/starwind/toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/starwind/tooltip";
+import Specimen from "./Specimen.astro";
+
+const alerts = ["default", "primary", "secondary", "info", "success", "warning", "error"] as const;
+---
+
+<div class="grid gap-10">
+  <Specimen title="Alerts" description="All installed alert variants with their real status and alert semantics.">
+    <div class="grid gap-4 md:grid-cols-2">
+      {alerts.map((variant) => (
+        <Alert variant={variant}>
+          <AlertTitle>
+            <InfoCircle aria-hidden="true" />
+            {variant}
+          </AlertTitle>
+          <AlertDescription>This is the {variant} feedback treatment with supporting detail.</AlertDescription>
+        </Alert>
+      ))}
+    </div>
+  </Specimen>
+
+  <div class="grid gap-6 lg:grid-cols-3">
+    <Specimen title="Tooltip" description="Hover or focus the trigger to inspect the floating surface.">
+      <Tooltip>
+        <TooltipTrigger>
+          <Button variant="outline">Show tooltip</Button>
+        </TooltipTrigger>
+        <TooltipContent side="top">A concise contextual hint.</TooltipContent>
+      </Tooltip>
+    </Specimen>
+
+    <Specimen title="Sheet" description="Open the right-side sheet to review its backdrop and floating surface.">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline">Open sheet</Button>
+        </SheetTrigger>
+        <SheetContent side="right">
+          <SheetHeader>
+            <SheetTitle>Design sheet</SheetTitle>
+            <SheetDescription>Sheets use popover, foreground, border, and outline roles.</SheetDescription>
+          </SheetHeader>
+          <div class="grid gap-3 p-4 text-sm">
+            <p>Use this space for secondary navigation or focused controls.</p>
+            <p class="supporting-text">Escape and the close action return focus to the trigger.</p>
+          </div>
+          <SheetFooter>
+            <SheetClose asChild>
+              <Button variant="primary">Done</Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </Specimen>
+
+    <Specimen title="Toasts" description="Buttons create real notifications in the single design-page viewport.">
+      <div class="flex flex-wrap gap-2">
+        <Button size="sm" variant="outline" data-design-toast="default">
+          Default
+        </Button>
+        <Button size="sm" variant="info" data-design-toast="info">
+          Info
+        </Button>
+        <Button size="sm" variant="success" data-design-toast="success">
+          Success
+        </Button>
+        <Button size="sm" variant="warning" data-design-toast="warning">
+          Warning
+        </Button>
+        <Button size="sm" variant="error" data-design-toast="error">
+          Error
+        </Button>
+      </div>
+    </Specimen>
+  </div>
+</div>
+
+<Toaster position="bottom-right" />
